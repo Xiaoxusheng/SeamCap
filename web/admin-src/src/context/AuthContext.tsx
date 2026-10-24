@@ -5,7 +5,13 @@ import type { LoginResult, MeResult } from '../api/types'
 interface AuthContextValue {
   admin: { id: number; username: string } | null
   ready: boolean
-  login: (username: string, password: string) => Promise<void>
+  login: (
+    username: string,
+    password: string,
+    captchaId: string,
+    captchaCode: string,
+    remember: boolean,
+  ) => Promise<void>
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }
@@ -47,11 +53,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     setUnauthorizedHandler(() => clear())
   }, [clear])
 
-  const login = useCallback(async (username: string, password: string): Promise<void> => {
-    const { data } = await post<LoginResult>('/admin/login', { username, password })
-    setAdmin(data.admin)
-    setCSRFToken(data.csrf_token)
-  }, [])
+  const login = useCallback(
+    async (
+      username: string,
+      password: string,
+      captchaId: string,
+      captchaCode: string,
+      remember: boolean,
+    ): Promise<void> => {
+      const { data } = await post<LoginResult>('/admin/login', {
+        username,
+        password,
+        captcha_id: captchaId,
+        captcha_code: captchaCode,
+        remember,
+      })
+      setAdmin(data.admin)
+      setCSRFToken(data.csrf_token)
+    },
+    [],
+  )
 
   const logout = useCallback(async (): Promise<void> => {
     try {

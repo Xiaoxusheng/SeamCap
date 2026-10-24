@@ -16,22 +16,23 @@ type CraftRepo struct {
 func NewCraftRepo(db *DB, media *MediaRepo) *CraftRepo { return &CraftRepo{db, media} }
 
 const craftCols = `c.id, c.title, c.slug, COALESCE(c.summary,''), COALESCE(c.body,''), c.cover_image_id,
-	m.filename, m.original_name, m.alt_text, m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
+	m.id, m.filename, m.original_name, m.alt_text, m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
 	COALESCE(c.video_url,''), c.sort_order, c.status, COALESCE(c.seo_title,''), COALESCE(c.seo_desc,''),
 	c.created_at, c.updated_at, c.published_at`
 
 const craftFrom = `FROM craftsmanship c LEFT JOIN media_assets m ON m.id = c.cover_image_id`
 
-// scanCraftRow 扫描带封面左连接的工艺行（23 列）。
+// scanCraftRow 扫描带封面左连接的工艺行（24 列）。
 func scanCraftRow(row interface{ Scan(...any) error }) (*model.Craftsmanship, error) {
 	var c model.Craftsmanship
 	var coverID sql.NullInt64
+	var mID sql.NullInt64
 	var mFilename, mOrig, mAlt, mMime, mSHA, mCreated sql.NullString
 	var mSize sql.NullInt64
 	var mW, mH sql.NullInt64
 	var publishedAt sql.NullString
 	err := row.Scan(&c.ID, &c.Title, &c.Slug, &c.Summary, &c.Body, &coverID,
-		&mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
+		&mID, &mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
 		&c.VideoURL, &c.SortOrder, &c.Status, &c.SEOTitle, &c.SEODesc,
 		&c.CreatedAt, &c.UpdatedAt, &publishedAt)
 	if err != nil {
@@ -40,6 +41,7 @@ func scanCraftRow(row interface{ Scan(...any) error }) (*model.Craftsmanship, er
 	c.CoverImageID = ni(coverID)
 	if mFilename.Valid {
 		c.CoverImage = &model.Media{
+			ID:       mID.Int64,
 			Filename: mFilename.String, URL: mediaURL(mFilename.String),
 			OriginalName: mOrig.String, AltText: mAlt.String, MimeType: mMime.String,
 			SizeBytes: mSize.Int64, Width: nint(mW), Height: nint(mH),

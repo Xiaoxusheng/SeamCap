@@ -57,11 +57,18 @@
 <section class="page-hero">
   <div class="wrap">
     <p class="crumbs"><a href="index.html">Home</a><span aria-hidden="true"> / </span><b>About</b></p>
-    <h1 class="page-hero__title">The <em>house.</em></h1>
+    <h1 class="page-hero__title" data-cms-page-title="about-us">The <em>house.</em></h1>
     <p class="lead">One contact point from product idea to bulk order — coordinated from Yiwu, the heart of China&rsquo;s headwear trade.</p>
   </div>
 </section>
 
+<!-- 页面管理驱动（cms.js：后台 about-us 页面内容，发布后显示） -->
+<section class="section section--tight" data-cms-page="about-us" hidden style="padding-top:12px">
+  <div class="wrap prose" data-cms-body></div>
+</section>
+
+<!-- 静态兜底：后台 about-us 有正文时由 cms.js 隐藏本区块 -->
+<div data-cms-static-for="about-us">
 <section class="section section--tight">
   <div class="wrap story__grid">
     <div class="story__copy reveal">
@@ -123,6 +130,7 @@
     </div>
   </div>
 </section>
+</div>
 </main>
 
 <footer class="footer">
@@ -148,5 +156,6 @@
 </a>
 
 <script src="static/js/main.js" defer></script>
+<script src="static/js/cms.js" defer></script>
 </body>
 </html>

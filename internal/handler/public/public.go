@@ -52,14 +52,18 @@ func (h *Public) Routes() chi.Router {
 	return r
 }
 
-// Health GET /api/v1/health。
+// Health GET /api/v1/health；数据库不可用时返回 503。
 func (h *Public) Health(w http.ResponseWriter, r *http.Request) {
 	dbStatus := "ok"
+	statusText := "ok"
+	status := http.StatusOK
 	if err := h.DB.Ping(); err != nil {
 		dbStatus = "error"
+		statusText = "degraded"
+		status = http.StatusServiceUnavailable
 	}
-	handler.JSON(w, http.StatusOK, map[string]any{
-		"status": "ok",
+	handler.JSON(w, status, map[string]any{
+		"status": statusText,
 		"uptime": time.Since(h.Started).Round(time.Second).String(),
 		"db":     dbStatus,
 	})

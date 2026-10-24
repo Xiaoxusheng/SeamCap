@@ -1,9 +1,20 @@
 example.com, www.example.com {
-  root * /opt/seamcap/web/static
   encode gzip zstd
-  @static path /static/* /uploads/*
-  header @static Cache-Control "public, max-age=31536000, immutable"
-  handle /static/* { file_server }
-  handle /uploads/* { file_server }
-  handle { reverse_proxy 127.0.0.1:8080 }
+
+  # handle_path 会剥掉前缀，再按各自 root 服务：/static/x -> web/static/x，/uploads/x -> uploads/x
+  handle_path /static/* {
+    root * /opt/seamcap/web/static
+    file_server
+    header Cache-Control "public, max-age=31536000, immutable"
+  }
+
+  handle_path /uploads/* {
+    root * /opt/seamcap/uploads
+    file_server
+    header Cache-Control "public, max-age=31536000, immutable"
+  }
+
+  handle {
+    reverse_proxy 127.0.0.1:8080
+  }
 }

@@ -19,6 +19,12 @@ export interface LoginResult {
   expires_at: string
 }
 
+export interface CaptchaChallenge {
+  id: string
+  image: string
+  expires_in: number
+}
+
 export interface MeResult {
   admin: AdminUser
   csrf_token: string

@@ -21,7 +21,7 @@ p.id, p.name, COALESCE(p.sku,''), p.slug, p.category_id,
 c.id, c.name, c.slug,
 COALESCE(p.short_desc,''), COALESCE(p.detail_desc,''), COALESCE(p.material,''), COALESCE(p.cap_shape,''),
 COALESCE(p.colors,''), COALESCE(p.sizes,''), COALESCE(p.customization,''),
-p.main_image_id, m.filename, m.original_name, COALESCE(m.alt_text,''), m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
+p.main_image_id, m.id, m.filename, m.original_name, COALESCE(m.alt_text,''), m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
 COALESCE(p.video_url,''), p.is_featured, p.sort_order, p.status, COALESCE(p.seo_title,''), COALESCE(p.seo_desc,''),
 p.created_at, p.updated_at, p.published_at`
 
@@ -34,6 +34,7 @@ func scanProductJoin(row interface{ Scan(...any) error }) (*model.Product, error
 	var p model.Product
 	var catID, mainImgID sql.NullInt64
 	var cID sql.NullInt64
+	var mID sql.NullInt64
 	var cName, cSlug sql.NullString
 	var mFilename, mOrig, mAlt, mMime, mSHA, mCreated sql.NullString
 	var mSize sql.NullInt64
@@ -44,7 +45,7 @@ func scanProductJoin(row interface{ Scan(...any) error }) (*model.Product, error
 		&cID, &cName, &cSlug,
 		&p.ShortDesc, &p.DetailDesc, &p.Material, &p.CapShape,
 		&p.Colors, &p.Sizes, &p.Customization,
-		&mainImgID, &mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
+		&mainImgID, &mID, &mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
 		&p.VideoURL, &p.IsFeatured, &p.SortOrder, &p.Status, &p.SEOTitle, &p.SEODesc,
 		&p.CreatedAt, &p.UpdatedAt, &publishedAt)
 	if err != nil {
@@ -57,7 +58,7 @@ func scanProductJoin(row interface{ Scan(...any) error }) (*model.Product, error
 	}
 	if mFilename.Valid {
 		p.MainImage = &model.Media{
-			ID: 0, // 主图 ID 与 MainImageID 一致，按需查询
+			ID:       mID.Int64,
 			Filename: mFilename.String, URL: mediaURL(mFilename.String),
 			OriginalName: mOrig.String, AltText: mAlt.String, MimeType: mMime.String,
 			SizeBytes: mSize.Int64, Width: nint(mW), Height: nint(mH),

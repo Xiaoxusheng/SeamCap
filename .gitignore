@@ -31,6 +31,7 @@ web/admin-src/node_modules/
 _diag/
 .smoke_*
 *.log
+tmp_verify/
 
 # 编辑器
 .qoder/

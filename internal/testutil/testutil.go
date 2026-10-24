@@ -59,8 +59,10 @@ func Cfg(dir string) *config.Config {
 
 		SecretFile: filepath.Join(dir, "secret.key"),
 
-		SessionTTLHours: 1,
-		SessionTTL:      time.Hour,
+		SessionTTLHours:  1,
+		SessionTTL:       time.Hour,
+		RememberTTLHours: 720,
+		RememberTTL:      720 * time.Hour,
 
 		SMTPPort:     465,
 		SMTPFromName: "SeamCap Test",

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -23,7 +24,8 @@ type Config struct {
 	// SecretFile 存放服务端随机密钥（CSRF 派生等），随 DB 数据目录持久化
 	SecretFile string
 
-	SessionTTLHours int
+	SessionTTLHours  int
+	RememberTTLHours int
 
 	InitialAdminUser     string
 	InitialAdminPassword string
@@ -40,7 +42,11 @@ type Config struct {
 	MaxImageMB              int
 	MaxVideoMB              int
 
-	SessionTTL time.Duration
+	// TrustedProxies 受信反代网段（CIDR）；仅这些来源的 X-Forwarded-For 会被信任
+	TrustedProxies []string
+
+	SessionTTL  time.Duration
+	RememberTTL time.Duration
 }
 
 func get(key, def string) string {
@@ -59,6 +65,17 @@ func getInt(key string, def int) int {
 	return def
 }
 
+func splitCSV(s string) []string {
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
 // Load 读取配置。开发期若存在 .env 则加载（已存在的环境变量优先）。
 func Load() (*Config, error) {
 	_ = godotenv.Load() // .env 不存在不报错（生产用 systemd Environment）
@@ -73,7 +90,8 @@ func Load() (*Config, error) {
 		UploadDir: get("UPLOAD_DIR", "./uploads"),
 		BackupDir: get("BACKUP_DIR", "./data/backups"),
 
-		SessionTTLHours: getInt("SESSION_TTL_HOURS", 168),
+		SessionTTLHours:  getInt("SESSION_TTL_HOURS", 168),
+		RememberTTLHours: getInt("REMEMBER_TTL_HOURS", 720),
 
 		InitialAdminUser:     get("INITIAL_ADMIN_USER", "admin"),
 		InitialAdminPassword: os.Getenv("INITIAL_ADMIN_PASSWORD"),
@@ -89,12 +107,22 @@ func Load() (*Config, error) {
 		RateLimitInquiryPerHour: getInt("RATE_LIMIT_INQUIRY_PER_HOUR", 10),
 		MaxImageMB:              getInt("MAX_IMAGE_MB", 10),
 		MaxVideoMB:              getInt("MAX_VIDEO_MB", 500),
+
+		TrustedProxies: splitCSV(get("TRUSTED_PROXIES",
+			"127.0.0.0/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7")),
 	}
 
 	if c.SessionTTLHours <= 0 {
 		c.SessionTTLHours = 168
 	}
+	if c.RememberTTLHours <= 0 {
+		c.RememberTTLHours = 720
+	}
 	c.SessionTTL = time.Duration(c.SessionTTLHours) * time.Hour
+	c.RememberTTL = time.Duration(c.RememberTTLHours) * time.Hour
+	if c.RememberTTL < c.SessionTTL {
+		c.RememberTTL = c.SessionTTL // 记住登录不应短于普通会话
+	}
 
 	if c.RateLimitInquiryPerHour <= 0 {
 		c.RateLimitInquiryPerHour = 10

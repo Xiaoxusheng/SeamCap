@@ -54,13 +54,13 @@ func (s *InquiryService) Submit(in InquiryInput, ip, ua string) (*model.Inquiry,
 	in.Email = strings.TrimSpace(in.Email)
 	in.Message = strings.TrimSpace(in.Message)
 	fields := map[string]string{}
-	if in.Name == "" || len(in.Name) > 100 {
-		fields["name"] = "required, max 100 chars"
+	if in.Name == "" || charCount(in.Name) > 100 || strings.ContainsAny(in.Name, "\r\n") {
+		fields["name"] = "required, max 100 chars, no line breaks"
 	}
-	if addr, err := mail.ParseAddress(in.Email); err != nil || addr.Address != in.Email || len(in.Email) > 200 {
+	if addr, err := mail.ParseAddress(in.Email); err != nil || addr.Address != in.Email || charCount(in.Email) > 200 {
 		fields["email"] = "must be a valid email, max 200 chars"
 	}
-	if len(in.Message) < 10 || len(in.Message) > 5000 {
+	if charCount(in.Message) < 10 || charCount(in.Message) > 5000 {
 		fields["message"] = "must be 10-5000 chars"
 	}
 	for k, v := range map[string]*string{
@@ -71,7 +71,7 @@ func (s *InquiryService) Submit(in InquiryInput, ip, ua string) (*model.Inquiry,
 		"customization":  &in.Customization,
 	} {
 		*v = strings.TrimSpace(*v)
-		if len(*v) > 500 {
+		if charCount(*v) > 500 {
 			fields[k] = "max 500 chars"
 		}
 	}
@@ -145,6 +145,11 @@ func (s *InquiryService) notifyAsync(q *model.Inquiry) {
 		return
 	}
 	go func() {
+		defer func() {
+			if rec := recover(); rec != nil {
+				slog.Error("inquiry notify panic", "inquiry_id", q.ID, "panic", rec)
+			}
+		}()
 		subject, text, htmlBody := email.InquiryNotification(q)
 		if err := s.mail.Send(subject, text, htmlBody); err != nil {
 			slog.Warn("inquiry notify mail failed", "inquiry_id", q.ID, "error", err.Error())
@@ -194,6 +199,9 @@ func (s *InquiryService) Get(id int64) (*model.Inquiry, []model.InquiryEvent, er
 	if err != nil {
 		return nil, nil, apperr.Internal(err.Error())
 	}
+	if events == nil {
+		events = []model.InquiryEvent{}
+	}
 	return q, events, nil
 }
 
@@ -230,7 +238,7 @@ func (s *InquiryService) Update(id int64, in InquiryUpdateInput, adminID int64) 
 		q.HandledAt = &now
 	}
 	if in.InternalNote != nil && *in.InternalNote != q.InternalNote {
-		if len(*in.InternalNote) > 5000 {
+		if charCount(*in.InternalNote) > 5000 {
 			return nil, apperr.InvalidField("internal_note", "max 5000 chars")
 		}
 		q.InternalNote = *in.InternalNote

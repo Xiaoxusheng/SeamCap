@@ -1,46 +1,65 @@
-import { Tag } from 'antd'
-import type { InquiryStatus, ProductStatus } from '../api/types'
+import type { CraftStatus, InquiryStatus, ProductStatus } from '../api/types'
 
-// 状态标签：色 + 文字双通道
-export function ProductStatusTag({ status }: { status: ProductStatus }): JSX.Element {
-  const map: Record<ProductStatus, { color: string; text: string }> = {
-    draft: { color: 'default', text: '草稿' },
-    published: { color: 'success', text: '已发布' },
-    archived: { color: 'warning', text: '已归档' },
-  }
-  const it = map[status] ?? { color: 'default', text: status }
-  return <Tag color={it.color}>{it.text}</Tag>
+// 状态标签：颜色 + 文字双通道，统一高度/圆角/字号
+function Status({ variant, children }: { variant: string; children: string }): JSX.Element {
+  return <span className={`sc-status sc-status--${variant}`}>{children}</span>
 }
 
-export function CraftStatusTag({ status }: { status: string }): JSX.Element {
-  const map: Record<string, { color: string; text: string }> = {
-    draft: { color: 'default', text: '草稿' },
-    published: { color: 'success', text: '已发布' },
-    hidden: { color: 'warning', text: '已隐藏' },
+export function ProductStatusTag({ status }: { status: ProductStatus }): JSX.Element {
+  const map: Record<ProductStatus, { variant: string; text: string }> = {
+    draft: { variant: 'draft', text: '草稿' },
+    published: { variant: 'published', text: '已发布' },
+    archived: { variant: 'archived', text: '已归档' },
   }
-  const it = map[status] ?? { color: 'default', text: status }
-  return <Tag color={it.color}>{it.text}</Tag>
+  const it = map[status] ?? { variant: 'default', text: status }
+  return <Status variant={it.variant}>{it.text}</Status>
+}
+
+export function CraftStatusTag({ status }: { status: CraftStatus | string }): JSX.Element {
+  const map: Record<string, { variant: string; text: string }> = {
+    draft: { variant: 'draft', text: '草稿' },
+    published: { variant: 'published', text: '已发布' },
+    hidden: { variant: 'hidden', text: '已隐藏' },
+  }
+  const it = map[status] ?? { variant: 'default', text: status }
+  return <Status variant={it.variant}>{it.text}</Status>
+}
+
+export function PageStatusTag({ status }: { status: 'draft' | 'published' }): JSX.Element {
+  return status === 'published' ? (
+    <Status variant="published">已发布</Status>
+  ) : (
+    <Status variant="draft">草稿</Status>
+  )
+}
+
+export function CategoryStatusTag({ status }: { status: 'active' | 'inactive' }): JSX.Element {
+  return status === 'active' ? (
+    <Status variant="active">启用</Status>
+  ) : (
+    <Status variant="inactive">停用</Status>
+  )
 }
 
 export function InquiryStatusTag({ status }: { status: InquiryStatus }): JSX.Element {
-  const map: Record<InquiryStatus, { color: string; text: string }> = {
-    new: { color: 'processing', text: '新询价' },
-    following: { color: 'warning', text: '跟进中' },
-    replied: { color: 'cyan', text: '已回复' },
-    completed: { color: 'success', text: '已完成' },
-    spam: { color: 'error', text: '垃圾' },
+  const map: Record<InquiryStatus, { variant: string; text: string }> = {
+    new: { variant: 'new', text: '新询价' },
+    following: { variant: 'following', text: '跟进中' },
+    replied: { variant: 'replied', text: '已回复' },
+    completed: { variant: 'completed', text: '已完成' },
+    spam: { variant: 'spam', text: '垃圾' },
   }
-  const it = map[status] ?? { color: 'default', text: status }
-  return <Tag color={it.color}>{it.text}</Tag>
+  const it = map[status] ?? { variant: 'default', text: status }
+  return <Status variant={it.variant}>{it.text}</Status>
 }
 
 export function NotifyStatusTag({ status }: { status: string }): JSX.Element {
-  const map: Record<string, { color: string; text: string }> = {
-    pending: { color: 'default', text: '待发送' },
-    sent: { color: 'success', text: '已发送' },
-    failed: { color: 'error', text: '发送失败' },
-    skipped: { color: 'default', text: '未启用' },
+  const map: Record<string, { variant: string; text: string }> = {
+    pending: { variant: 'pending', text: '待发送' },
+    sent: { variant: 'sent', text: '已发送' },
+    failed: { variant: 'failed', text: '发送失败' },
+    skipped: { variant: 'skipped', text: '未启用' },
   }
-  const it = map[status] ?? { color: 'default', text: status }
-  return <Tag color={it.color}>{it.text}</Tag>
+  const it = map[status] ?? { variant: 'default', text: status }
+  return <Status variant={it.variant}>{it.text}</Status>
 }

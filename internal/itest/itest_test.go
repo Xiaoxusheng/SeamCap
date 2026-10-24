@@ -17,9 +17,11 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
+	"seamcap/internal/captcha"
 	"seamcap/internal/handler/admin"
 	"seamcap/internal/handler/public"
 	"seamcap/internal/secret"
@@ -29,9 +31,10 @@ import (
 
 type server struct {
 	*httptest.Server
-	env  *testutil.Env
-	mux  *chi.Mux
-	auth *service.AuthService
+	env     *testutil.Env
+	mux     *chi.Mux
+	auth    *service.AuthService
+	captcha *captcha.Manager
 }
 
 func newServer(t *testing.T) *server {
@@ -66,11 +69,13 @@ func newServer(t *testing.T) *server {
 		Crafts: crafts, Pages: pages, Inqs: inqs,
 		DB: env.DB, BaseURL: env.Cfg.BaseURL,
 	}
+	captchaMgr := captcha.NewManager(5 * time.Minute)
 	admH := &admin.Admin{
 		Auth: auth, Prods: prods, Cats: cats, Media: media, Crafts: crafts,
 		Pages: pages, Home: home, Settings: settings, Inqs: inqs, Dash: dash,
 		Audit: env.Repos.Audit, Mail: env.Mail,
-		Cfg: env.Cfg, DB: env.DB,
+		Captcha: captchaMgr,
+		Cfg:     env.Cfg, DB: env.DB,
 	}
 
 	mux := chi.NewRouter()
@@ -81,7 +86,7 @@ func newServer(t *testing.T) *server {
 
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
-	return &server{Server: ts, env: env, mux: mux, auth: auth}
+	return &server{Server: ts, env: env, mux: mux, auth: auth, captcha: captchaMgr}
 }
 
 // ---- 请求辅助 ----
@@ -109,13 +114,21 @@ func (s *server) do(t *testing.T, client *http.Client, method, path string, body
 	return resp.StatusCode, parsed, raw
 }
 
-// adminClient 登录后的客户端（Cookie Jar + CSRF token）。
+// adminClient 登录后的客户端（Cookie Jar + CSRF token）。验证码由服务端直接签发。
 func (s *server) adminClient(t *testing.T) (*http.Client, string) {
 	t.Helper()
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{Jar: jar}
+	ch, err := s.captcha.NewChallenge("127.0.0.1")
+	if err != nil {
+		t.Fatalf("captcha: %v", err)
+	}
+	payload, _ := json.Marshal(map[string]string{
+		"username": "admin", "password": "password1234",
+		"captcha_id": ch.ID, "captcha_code": ch.Answer,
+	})
 	code, body, _ := s.do(t, client, "POST", "/api/v1/admin/login",
-		strings.NewReader(`{"username":"admin","password":"password1234"}`), nil)
+		strings.NewReader(string(payload)), nil)
 	if code != 200 {
 		t.Fatalf("login failed: %d %v", code, body)
 	}

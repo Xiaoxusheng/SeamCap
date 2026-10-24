@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"seamcap/internal/captcha"
 	"seamcap/internal/config"
 	"seamcap/internal/email"
 	"seamcap/internal/handler/admin"
@@ -34,6 +35,12 @@ func main() {
 	}
 	log := logger.New(cfg.LogLevel)
 	slog.SetDefault(log)
+
+	// 受信反代网段：非受信来源的 X-Forwarded-For 一律忽略
+	if err := mw.SetTrustedProxies(cfg.TrustedProxies); err != nil {
+		log.Error("invalid TRUSTED_PROXIES", "error", err.Error())
+		os.Exit(1)
+	}
 
 	// 数据库（WAL + busy_timeout + 迁移）
 	db, err := repository.Open(cfg.DBPath, "migrations")
@@ -110,7 +117,8 @@ func main() {
 		Auth: authSvc, Prods: prodSvc, Cats: catSvc, Media: mediaSvc, Crafts: craftSvc,
 		Pages: pageSvc, Home: homeSvc, Settings: settingsSvc, Inqs: inqSvc,
 		Dash: dashSvc, Audit: auditRepo, Mail: mailSender,
-		Cfg: cfg, DB: db, Logger: log,
+		Captcha: captcha.NewManager(5 * time.Minute),
+		Cfg:     cfg, DB: db, Logger: log,
 	}
 
 	r := chi.NewRouter()
@@ -142,15 +150,48 @@ func main() {
 		r.Handle("/admin/*", adminSPA)
 	}
 
-	// 前台 SSR 页面属前端阶段；当前返回服务状态页
-	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte("<!doctype html><html><head><meta charset='utf-8'><title>SeamCap</title></head>" +
-			"<body><h1>SeamCap backend is running</h1>" +
-			"<p>API: <a href='/api/v1/health'>/api/v1/health</a> · <a href='/api/v1/site'>/api/v1/site</a></p>" +
-			"<p>Admin API: /api/v1/admin/* (session required)</p></body></html>"))
-	})
+	// 前台页面（静态原型 + JS 渐进增强调后台 API；后续替换为 Go 模板 SSR）
+	pages := map[string]string{
+		"/":                   "index.html",
+		"/index.html":         "index.html",
+		"/products":           "products.html",
+		"/products.html":      "products.html",
+		"/product":            "product.html",
+		"/product.html":       "product.html",
+		"/craftsmanship":      "craftsmanship.html",
+		"/craftsmanship.html": "craftsmanship.html",
+		"/about":              "about.html",
+		"/about.html":         "about.html",
+		// 与 sitemap 一致：页面管理 slug 路由（about-us / privacy-policy 由后台页面管理驱动）
+		"/about-us":           "about.html",
+		"/privacy-policy":     "privacy.html",
+		"/contact":            "contact.html",
+		"/contact.html":       "contact.html",
+		"/privacy":            "privacy.html",
+		"/privacy.html":       "privacy.html",
+	}
+	if st, err := os.Stat("web"); err == nil && st.IsDir() {
+		for route, file := range pages {
+			full := filepath.Join("web", file)
+			if _, err := os.Stat(full); err != nil {
+				continue
+			}
+			r.Get(route, pageHandler(full))
+		}
+	}
 	r.NotFound(func(w http.ResponseWriter, req *http.Request) {
+		if strings.HasPrefix(req.URL.Path, "/api/") {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"error":{"code":"NOT_FOUND","message":"Resource not found"}}`))
+			return
+		}
+		// 前台未知路径 → 404 页面
+		if _, err := os.Stat(filepath.Join("web", "404.html")); err == nil {
+			w.WriteHeader(http.StatusNotFound)
+			http.ServeFile(w, req, filepath.Join("web", "404.html"))
+			return
+		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(`{"error":{"code":"NOT_FOUND","message":"Resource not found"}}`))
@@ -160,8 +201,8 @@ func main() {
 		Addr:              ":" + cfg.Port,
 		Handler:           r,
 		ReadHeaderTimeout: 10 * time.Second,
-		ReadTimeout:       60 * time.Second,
-		WriteTimeout:      300 * time.Second, // 大视频上传需要较长写超时
+		ReadTimeout:       15 * time.Minute, // 覆盖大视频上传的请求体读取（500MB）
+		WriteTimeout:      16 * time.Minute, // 必须大于 ReadTimeout，否则上传完成后响应写不出去
 		IdleTimeout:       120 * time.Second,
 	}
 
@@ -183,6 +224,14 @@ func main() {
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Error("graceful shutdown failed", "error", err.Error())
+	}
+}
+
+// pageHandler 前台 HTML 页面（不缓存，保证更新即生效）。
+func pageHandler(file string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
+		http.ServeFile(w, r, file)
 	}
 }
 

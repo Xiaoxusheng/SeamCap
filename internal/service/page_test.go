@@ -13,7 +13,13 @@ func TestSanitizeHTML(t *testing.T) {
 		{"event attrs removed", `<p onclick="evil()">x</p>`, "<p>x</p>", "onclick"},
 		{"js url removed", `<a href="javascript:evil()">x</a>`, "<a>x</a>", "javascript"},
 		{"nested script", `<scr<script>ipt>alert(1)</script>`, "", "<script"},
-		{"data url removed", `<img src="data:text/html;base64,xx">`, "<img>", "data:"},
+		{"data url removed", `<img src="data:text/html;base64,xx">`, "<img", "data:"},
+		{"event attr removed", `<img src=x onerror=alert(1)>`, "<img", "onerror"},
+		{"slash separated js url", `<a/href=javascript:alert(1)>x</a>`, "<a>x</a>", "javascript"},
+		{"entity encoded js url", `<a href="&#106;avascript:alert(1)">x</a>`, "<a>x</a>", "javascript"},
+		{"control char js url", "<a href=\"java\nscript:alert(1)\">x</a>", "<a>x</a>", "script:"},
+		{"svg onload removed", `<svg/onload=alert(1)></svg>ok`, "ok", "onload"},
+		{"unknown tag unwrapped", `<custom onclick="evil()">text</custom>`, "text", "custom"},
 	}
 	for _, c := range cases {
 		out := SanitizeHTML(c.in)
@@ -28,6 +34,10 @@ func TestSanitizeHTML(t *testing.T) {
 	keep := "<h2>Title</h2><p>Hello <strong>world</strong></p><ul><li>a</li></ul>"
 	if out := SanitizeHTML(keep); out != keep {
 		t.Errorf("allowed html should be kept: %q", out)
+	}
+	// 外链强制 noopener
+	if out := SanitizeHTML(`<a href="https://example.com" target="_blank">x</a>`); !strings.Contains(out, `rel="noopener noreferrer"`) {
+		t.Errorf("target=_blank should get safe rel: %q", out)
 	}
 }
 

@@ -2,7 +2,10 @@
 // service 层返回 *apperr.Error，handler 层映射为 HTTP 状态码 + 统一 JSON 结构。
 package apperr
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // 错误码与 HTTP 状态码的映射见 HTTPStatus()。
 const (
@@ -105,8 +108,11 @@ func HTTPStatus(code string) int {
 	}
 }
 
-// As 尝试将 err 断言为 *Error。
+// As 尝试从错误链中取出 *Error。
 func As(err error) (*Error, bool) {
-	e, ok := err.(*Error)
-	return e, ok
+	var e *Error
+	if errors.As(err, &e) {
+		return e, true
+	}
+	return nil, false
 }

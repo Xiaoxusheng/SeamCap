@@ -16,20 +16,21 @@ type CategoryRepo struct {
 func NewCategoryRepo(db *DB, media *MediaRepo) *CategoryRepo { return &CategoryRepo{db, media} }
 
 const catCols = `c.id, c.name, COALESCE(c.name_en,''), c.slug, COALESCE(c.description,''), c.image_id,
-	m.filename, m.original_name, m.alt_text, m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
+	m.id, m.filename, m.original_name, m.alt_text, m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
 	c.sort_order, c.status, c.created_at, c.updated_at`
 
 const catFrom = `FROM product_categories c LEFT JOIN media_assets m ON m.id = c.image_id`
 
-// scanCategoryRow 扫描带媒体左连接的分类行（19 列）。
+// scanCategoryRow 扫描带媒体左连接的分类行（20 列）。
 func scanCategoryRow(row interface{ Scan(...any) error }) (*model.Category, error) {
 	var c model.Category
 	var imgID sql.NullInt64
+	var mID sql.NullInt64
 	var mFilename, mOrig, mAlt, mMime, mSHA, mCreated sql.NullString
 	var mSize sql.NullInt64
 	var mW, mH sql.NullInt64
 	err := row.Scan(&c.ID, &c.Name, &c.NameEn, &c.Slug, &c.Description, &imgID,
-		&mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
+		&mID, &mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
 		&c.SortOrder, &c.Status, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -37,6 +38,7 @@ func scanCategoryRow(row interface{ Scan(...any) error }) (*model.Category, erro
 	c.ImageID = ni(imgID)
 	if mFilename.Valid {
 		c.Image = &model.Media{
+			ID:       mID.Int64,
 			Filename: mFilename.String, URL: mediaURL(mFilename.String),
 			OriginalName: mOrig.String, AltText: mAlt.String, MimeType: mMime.String,
 			SizeBytes: mSize.Int64, Width: nint(mW), Height: nint(mH),

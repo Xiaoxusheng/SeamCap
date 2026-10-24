@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Button, Space, Typography } from 'antd'
-import { LinkOutlined, PictureOutlined } from '@ant-design/icons'
+import { Button, Input, Space, Tooltip } from 'antd'
+import { CloseOutlined, PictureOutlined } from '@ant-design/icons'
 import type { Media } from '../api/types'
 import MediaPicker from './MediaPicker'
 
@@ -13,19 +13,24 @@ export default function MediaURLField(props: {
   const [pickerOpen, setPickerOpen] = useState(false)
 
   return (
-    <Space.Compact style={{ width: '100%' }}>
+    <Space.Compact className="sc-url-field">
       <Button icon={<PictureOutlined />} onClick={() => setPickerOpen(true)}>
         选图
       </Button>
-      <Typography.Text
-        code
-        style={{ flex: 1, padding: '4px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '30px' }}
-      >
-        {props.value || props.placeholder || '未选择（也可手填 /uploads/... 或外链）'}
-      </Typography.Text>
-      {props.value && (
-        <Button icon={<LinkOutlined />} onClick={() => props.onChange?.('')} title="清除" />
-      )}
+      <Input
+        value={props.value ?? ''}
+        onChange={(e) => props.onChange?.(e.target.value)}
+        placeholder={props.placeholder || '选图或手填 /uploads/... 或外链'}
+      />
+      {props.value ? (
+        <Tooltip title="清除图片">
+          <Button
+            icon={<CloseOutlined />}
+            aria-label="清除图片"
+            onClick={() => props.onChange?.('')}
+          />
+        </Tooltip>
+      ) : null}
       <MediaPicker
         open={pickerOpen}
         onCancel={() => setPickerOpen(false)}

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"seamcap/internal/apperr"
@@ -86,14 +87,16 @@ func CSRFFromContext(ctx context.Context) string {
 // SameOrigin 校验 Origin/Referer 与 Host 同源（公开询价接口 CSRF 防御）。
 // Origin 缺失（部分非浏览器客户端）时放行，由 honeypot+限流兜底。
 func SameOrigin(r *http.Request) bool {
-	origin := r.Header.Get("Origin")
-	if origin == "" {
-		referer := r.Header.Get("Referer")
-		if referer == "" {
-			return true
-		}
-		origin = referer
+	raw := r.Header.Get("Origin")
+	if raw == "" {
+		raw = r.Header.Get("Referer")
 	}
-	host := r.Host
-	return strings.Contains(origin, "://"+host) || strings.HasSuffix(origin, "://"+host+"/") || origin == "https://"+host || origin == "http://"+host
+	if raw == "" {
+		return true
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return false
+	}
+	return strings.EqualFold(u.Host, r.Host)
 }

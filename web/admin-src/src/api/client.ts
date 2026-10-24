@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import type { Media, Pagination } from './types'
 
 // 统一请求封装：自动带 CSRF、解包 {data,pagination}、统一错误、401 全局处理
@@ -120,7 +121,8 @@ export function fmtBytes(n: number): string {
 
 export function fmtTime(s: string | null | undefined): string {
   if (!s) return '—'
-  return s.replace('T', ' ').replace('Z', ' UTC').slice(0, 22)
+  const d = dayjs(s)
+  return d.isValid() ? d.format('YYYY-MM-DD HH:mm') : '—'
 }
 
 export function mediaFullURL(url: string): string {

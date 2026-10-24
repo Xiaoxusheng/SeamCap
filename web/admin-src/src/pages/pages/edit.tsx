@@ -1,44 +1,53 @@
-import { useEffect, useState } from 'react'
-import { App, Alert, Button, Card, Form, Input, Radio, Space, Spin, Tabs } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
+import { useCallback, useEffect, useState } from 'react'
+import { App, Button, Empty, Form, Input, Radio } from 'antd'
+import {
+  InfoCircleOutlined,
+  SaveOutlined,
+} from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { get, put } from '../../api/client'
 import type { PageContent } from '../../api/types'
 import PageHeader from '../../components/PageHeader'
+import PageSection from '../../components/PageSection'
+import PageLoading from '../../components/PageLoading'
+import PageError from '../../components/PageError'
 
-// 页面编辑：受控 HTML（Textarea + 沙箱预览）
+// 页面编辑：受控 HTML 编辑器 + 沙箱预览
 export default function PageEdit(): JSX.Element {
   const { slug } = useParams()
   const navigate = useNavigate()
   const { message } = App.useApp()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState('')
+  const [pageTitle, setPageTitle] = useState('')
+
+  const load = useCallback(async (): Promise<void> => {
+    setLoading(true)
+    setError('')
+    try {
+      const { data: p } = await get<PageContent>(`/admin/pages/${slug}`)
+      setPageTitle(p.title)
+      form.setFieldsValue({
+        title: p.title,
+        body: p.body,
+        status: p.status,
+        seo_title: p.seo_title,
+        seo_desc: p.seo_desc,
+      })
+      setPreview(p.body)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }, [form, slug])
 
   useEffect(() => {
-    let alive = true
-    get<PageContent>(`/admin/pages/${slug}`)
-      .then(({ data: p }) => {
-        if (!alive) return
-        form.setFieldsValue({
-          title: p.title,
-          body: p.body,
-          status: p.status,
-          seo_title: p.seo_title,
-          seo_desc: p.seo_desc,
-        })
-        setPreview(p.body)
-      })
-      .catch((e: Error) => message.error(e.message))
-      .finally(() => {
-        if (alive) setLoading(false)
-      })
-    return () => {
-      alive = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug])
+    void load()
+  }, [load])
 
   const submit = async (): Promise<void> => {
     try {
@@ -58,96 +67,151 @@ export default function PageEdit(): JSX.Element {
     }
   }
 
+  const header = (): JSX.Element => (
+    <PageHeader
+      variant="editor"
+      title={pageTitle || '编辑页面'}
+      description={
+        <>
+          公开站路径 <span className="sc-code">/{slug}/</span> · 内容保存前由服务端执行白名单过滤
+        </>
+      }
+    />
+  )
+
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', paddingTop: 120 }}>
-        <Spin size="large" />
+      <div>
+        {header()}
+        <PageLoading rows={10} />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div>
+        {header()}
+        <PageError message={error} onRetry={() => void load()} />
       </div>
     )
   }
 
   return (
     <div>
-      <PageHeader
-        title={`编辑页面：${slug}`}
-        description="内容为受控 HTML，服务端保存前执行白名单过滤"
-        extra={
-          <>
-            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/admin/pages')}>
-              返回列表
-            </Button>
-            <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={() => void submit()}>
-              保存
-            </Button>
-          </>
-        }
-      />
-      <Alert
-        type="info"
-        showIcon
-        style={{ marginBottom: 16 }}
-        message="仅允许常规 HTML 标签；script / iframe / on* 事件属性 / javascript: 链接将被服务端过滤"
-      />
-      <Card>
-        <Form form={form} layout="vertical" initialValues={{ status: 'draft' }}>
-          <Space wrap size={16} align="start">
-            <Form.Item name="title" label="标题 *" rules={[{ required: true, message: '请输入标题' }, { max: 200 }]} style={{ width: 360 }}>
+      {header()}
+
+      <div className="sc-note">
+        <InfoCircleOutlined />
+        <span>
+          仅允许常规 HTML 标签；script / iframe / on* 事件属性 / javascript: 链接将被服务端过滤。
+          右侧预览运行在禁用脚本的沙箱中。
+        </span>
+      </div>
+
+      <Form form={form} layout="vertical" initialValues={{ status: 'draft' }}>
+        <PageSection title="页面信息" description="标题显示在公开站页面与浏览器标签中">
+          <div className="sc-form-grid">
+            <Form.Item
+              name="title"
+              label="标题"
+              rules={[{ required: true, message: '请输入标题' }, { max: 200 }]}
+            >
               <Input maxLength={200} />
             </Form.Item>
-            <Form.Item name="status" label="状态">
-              <Radio.Group
-                options={[
-                  { value: 'draft', label: '草稿' },
-                  { value: 'published', label: '发布' },
-                ]}
-                optionType="button"
-              />
+            <Form.Item name="status" label="发布状态">
+              <Radio.Group>
+                <Radio value="draft">草稿</Radio>
+                <Radio value="published">发布</Radio>
+              </Radio.Group>
             </Form.Item>
-          </Space>
-          <Tabs
-            items={[
-              {
-                key: 'edit',
-                label: 'HTML 编辑',
-                children: (
-                  <Form.Item
-                    name="body"
-                    label="页面内容（HTML）"
-                    rules={[{ max: 500000 }]}
-                    extra="支持 h2/h3/p/ul/li/img/a/strong/em/table 等；粘贴前请确认来源安全"
-                  >
-                    <Input.TextArea
-                      rows={18}
-                      style={{ fontFamily: 'Consolas, Menlo, monospace', fontSize: 13 }}
-                      onChange={(e) => setPreview(e.target.value)}
-                    />
-                  </Form.Item>
-                ),
-              },
-              {
-                key: 'preview',
-                label: '预览',
-                children: (
+          </div>
+        </PageSection>
+
+        <div className="sc-editor-grid">
+          <div className="sc-editor-pane">
+            <PageSection
+              title="HTML 内容"
+              description="使用受控 HTML 编辑页面正文"
+              extra={<span className="sc-toolbar__meta">{preview.length.toLocaleString()} 字符</span>}
+            >
+              <Form.Item
+                name="body"
+                label="页面内容（HTML）"
+                rules={[{ max: 500000 }]}
+                extra="支持 h2/h3/p/ul/li/img/a/strong/em/table 等；粘贴前请确认来源安全"
+                style={{ marginBottom: 0 }}
+              >
+                <Input.TextArea
+                  rows={22}
+                  className="sc-code-editor"
+                  onChange={(e) => setPreview(e.target.value)}
+                />
+              </Form.Item>
+            </PageSection>
+          </div>
+
+          <div className="sc-editor-pane">
+            <PageSection
+              title="安全预览"
+              description="沙箱 iframe 渲染，脚本不会执行"
+              extra={<span className="sc-toolbar__meta">只读</span>}
+            >
+              {preview.trim() ? (
+                <>
                   <iframe
-                    title="page-preview"
+                    title="页面预览"
                     sandbox=""
-                    srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>body{font:14px/1.7 -apple-system,'Segoe UI',Arial;max-width:720px;margin:24px auto;color:#202735}img{max-width:100%}</style></head><body>${preview}</body></html>`}
-                    style={{ width: '100%', height: 460, border: '1px solid #E3E7ED', borderRadius: 8 }}
+                    className="sc-preview-frame"
+                    srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>
+                      body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',Arial,sans-serif;font-size:14px;line-height:1.75;max-width:720px;margin:24px auto;padding:0 16px;color:#20232c;background:#fff}
+                      h1,h2,h3{line-height:1.35;color:#20232c}
+                      h2{font-size:22px;margin:0 0 12px}
+                      h3{font-size:17px;margin:20px 0 8px}
+                      p{margin:0 0 12px}
+                      ul,ol{padding-left:22px;margin:0 0 12px}
+                      a{color:#199b78}
+                      img{max-width:100%;height:auto;border-radius:6px}
+                      table{width:100%;border-collapse:collapse}
+                      th,td{border:1px solid #e4ece9;padding:8px 10px;text-align:left}
+                    </style></head><body>${preview}</body></html>`}
                   />
-                ),
-              },
-            ]}
-          />
-          <Space wrap size={16}>
-            <Form.Item name="seo_title" label="SEO 标题" style={{ width: 420 }}>
+                  <p className="sc-preview-note">
+                    预览使用禁用脚本的沙箱，与公开站最终渲染可能存在细微样式差异。
+                  </p>
+                </>
+              ) : (
+                <div className="sc-preview-placeholder">
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="输入 HTML 后在此预览" />
+                </div>
+              )}
+            </PageSection>
+          </div>
+        </div>
+
+        <PageSection title="SEO" description="留空时使用页面标题">
+          <div className="sc-form-grid">
+            <Form.Item name="seo_title" label="SEO 标题" className="sc-span-2">
               <Input maxLength={200} />
             </Form.Item>
-            <Form.Item name="seo_desc" label="SEO 描述" style={{ width: 500 }}>
-              <Input.TextArea rows={2} maxLength={500} />
+            <Form.Item name="seo_desc" label="SEO 描述" className="sc-span-2">
+              <Input.TextArea rows={3} maxLength={500} />
             </Form.Item>
-          </Space>
-        </Form>
-      </Card>
+          </div>
+        </PageSection>
+
+        <div className="sc-form-footer">
+          <Button onClick={() => navigate('/admin/pages')}>取消</Button>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            loading={saving}
+            onClick={() => void submit()}
+          >
+            保存页面
+          </Button>
+        </div>
+      </Form>
     </div>
   )
 }

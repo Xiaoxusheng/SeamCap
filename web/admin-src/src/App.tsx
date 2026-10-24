@@ -21,7 +21,7 @@ function RequireAuth({ children }: { children: JSX.Element }): JSX.Element {
   const { admin, ready } = useAuth()
   if (!ready) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 160 }}>
+      <div className="sc-page-loading" style={{ minHeight: '100vh' }}>
         <Spin size="large" />
       </div>
     )

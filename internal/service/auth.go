@@ -188,10 +188,12 @@ type LoginResult struct {
 	Token     string
 	CSRFToken string
 	ExpiresAt time.Time
+	TTL       time.Duration
 }
 
 // Login 登录：限流（IP+账号 各 5 次/5 分钟）→ 校验 → 建会话 → 审计。
-func (s *AuthService) Login(username, password, ip, ua string) (*LoginResult, error) {
+// remember=true 时会话与 Cookie 使用 RememberTTL（默认 30 天）。
+func (s *AuthService) Login(username, password, ip, ua string, remember bool) (*LoginResult, error) {
 	if !s.loginLimiter.Allow("ip:" + ip) {
 		return nil, apperr.RateLimited("Too many login attempts from this IP, try again later")
 	}
@@ -215,13 +217,18 @@ func (s *AuthService) Login(username, password, ip, ua string) (*LoginResult, er
 	if err != nil {
 		return nil, apperr.Internal(err.Error())
 	}
+	ttl := s.cfg.SessionTTL
+	if remember {
+		ttl = s.cfg.RememberTTL
+	}
 	now := time.Now().UTC()
-	expiresAt := now.Add(s.cfg.SessionTTL)
+	expiresAt := now.Add(ttl)
 	sess := &model.Session{
 		TokenHash: tokenHash(token),
 		AdminID:   admin.ID,
 		IP:        ip,
 		UserAgent: ua,
+		Remember:  remember,
 		ExpiresAt: expiresAt.Format(time.RFC3339),
 	}
 	if _, err := s.admins.CreateSession(sess); err != nil {
@@ -232,7 +239,7 @@ func (s *AuthService) Login(username, password, ip, ua string) (*LoginResult, er
 	s.loginLimiter.Reset("user:" + username)
 	_ = s.audit.Insert(&admin.ID, "login", "admin", fmt.Sprint(admin.ID), "", ip)
 
-	return &LoginResult{Admin: admin, Token: token, CSRFToken: s.CSRFToken(token), ExpiresAt: expiresAt}, nil
+	return &LoginResult{Admin: admin, Token: token, CSRFToken: s.CSRFToken(token), ExpiresAt: expiresAt, TTL: ttl}, nil
 }
 
 // Validate 校验会话 token：查 sessions 表（未过期）→ 注入 admin；滑动续期。
@@ -259,9 +266,13 @@ func (s *AuthService) Validate(token string) (*model.AdminUser, *model.Session, 
 	if admin == nil {
 		return nil, nil, apperr.Unauthorized("Session expired")
 	}
-	// 滑动续期：剩余不足一半时延长至完整 TTL
-	if expiresAt.Sub(time.Now().UTC()) < s.cfg.SessionTTL/2 {
-		newExp := time.Now().UTC().Add(s.cfg.SessionTTL).Format(time.RFC3339)
+	// 滑动续期：剩余不足一半时延长至完整 TTL（记住登录使用 30 天 TTL）
+	ttl := s.cfg.SessionTTL
+	if sess.Remember {
+		ttl = s.cfg.RememberTTL
+	}
+	if expiresAt.Sub(time.Now().UTC()) < ttl/2 {
+		newExp := time.Now().UTC().Add(ttl).Format(time.RFC3339)
 		if err := s.admins.ExtendSession(sess.ID, newExp); err != nil {
 			slog.Warn("extend session failed", "error", err)
 		}

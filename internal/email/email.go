@@ -57,6 +57,16 @@ func (s *Sender) fromAddress() mail.Address {
 	return mail.Address{Name: s.cfg.FromName, Address: s.cfg.User}
 }
 
+// singleLine 去除邮件头中的换行/控制字符，防止头部注入。
+func singleLine(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '\r' || r == '\n' || r == 0 {
+			return ' '
+		}
+		return r
+	}, s)
+}
+
 // sendRaw 建立连接并发送（按 TLS 模式）。
 func (s *Sender) sendRaw(to []string, subject, textBody, htmlBody string) error {
 	from := s.fromAddress()
@@ -72,7 +82,7 @@ func (s *Sender) sendRaw(to []string, subject, textBody, htmlBody string) error 
 	boundary := "seamcap-boundary-7f3a"
 	headers["Content-Type"] = fmt.Sprintf("multipart/alternative; boundary=%q", boundary)
 	for k, v := range headers {
-		msg.WriteString(k + ": " + v + "\r\n")
+		msg.WriteString(k + ": " + singleLine(v) + "\r\n")
 	}
 	msg.WriteString("\r\n")
 	msg.WriteString("--" + boundary + "\r\n")
@@ -192,7 +202,7 @@ func (s *Sender) SendTestMail() error {
 
 // InquiryNotification 新询价通知邮件（纯文本 + 简单 HTML 双部分）。
 func InquiryNotification(q *model.Inquiry) (subject, text, htmlBody string) {
-	subject = fmt.Sprintf("[SeamCap] New inquiry #%d from %s", q.ID, q.Name)
+	subject = fmt.Sprintf("[SeamCap] New inquiry #%d from %s", q.ID, singleLine(q.Name))
 	b := &strings.Builder{}
 	row := func(label, value string) {
 		if value == "" {

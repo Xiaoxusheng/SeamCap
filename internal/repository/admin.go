@@ -61,8 +61,8 @@ func scanAdmin(row *sql.Row) (*model.AdminUser, error) {
 // ---- 会话 ----
 
 func (r *AdminRepo) CreateSession(s *model.Session) (int64, error) {
-	res, err := r.db.Exec(`INSERT INTO sessions(token_hash, admin_id, ip, user_agent, expires_at, created_at) VALUES(?,?,?,?,?,?)`,
-		s.TokenHash, s.AdminID, s.IP, s.UserAgent, s.ExpiresAt, Now())
+	res, err := r.db.Exec(`INSERT INTO sessions(token_hash, admin_id, ip, user_agent, remember, expires_at, created_at) VALUES(?,?,?,?,?,?,?)`,
+		s.TokenHash, s.AdminID, s.IP, s.UserAgent, s.Remember, s.ExpiresAt, Now())
 	if err != nil {
 		return 0, err
 	}
@@ -71,9 +71,9 @@ func (r *AdminRepo) CreateSession(s *model.Session) (int64, error) {
 
 func (r *AdminRepo) GetSession(tokenHash string) (*model.Session, error) {
 	var s model.Session
-	err := r.db.QueryRow(`SELECT id, token_hash, admin_id, COALESCE(ip,''), COALESCE(user_agent,''), expires_at, created_at
+	err := r.db.QueryRow(`SELECT id, token_hash, admin_id, COALESCE(ip,''), COALESCE(user_agent,''), remember, expires_at, created_at
 		FROM sessions WHERE token_hash = ?`, tokenHash).
-		Scan(&s.ID, &s.TokenHash, &s.AdminID, &s.IP, &s.UserAgent, &s.ExpiresAt, &s.CreatedAt)
+		Scan(&s.ID, &s.TokenHash, &s.AdminID, &s.IP, &s.UserAgent, &s.Remember, &s.ExpiresAt, &s.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}

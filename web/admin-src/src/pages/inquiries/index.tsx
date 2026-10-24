@@ -1,37 +1,111 @@
-import { useCallback, useEffect, useState } from 'react'
-import { App, Button, Card, DatePicker, Descriptions, Drawer, Empty, Input, Popconfirm, Select, Space, Spin, Table, Timeline } from 'antd'
-import { DownloadOutlined, RedoOutlined } from '@ant-design/icons'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  App,
+  Button,
+  DatePicker,
+  Input,
+  Pagination,
+  Popconfirm,
+  Select,
+  Skeleton,
+  Tooltip,
+} from 'antd'
+import {
+  ArrowLeftOutlined,
+  ClearOutlined,
+  DownloadOutlined,
+  InboxOutlined,
+  MailOutlined,
+  RedoOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { del, fmtTime, get, post, put } from '../../api/client'
 import type { Inquiry, InquiryEvent, InquiryStatus } from '../../api/types'
 import { InquiryStatusTag, NotifyStatusTag } from '../../components/StatusTag'
 import PageHeader from '../../components/PageHeader'
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
+import PageError from '../../components/PageError'
+import EmptyState from '../../components/EmptyState'
 
-// 询价管理：筛选/导出/详情抽屉（状态流转 + 备注 + 事件时间线 + 重发通知）
+const STATUS_LABEL: Record<string, string> = {
+  new: '新询价',
+  following: '跟进中',
+  replied: '已回复',
+  completed: '已完成',
+  spam: '垃圾',
+  '': '—',
+}
+
+const STATUS_OPTIONS = [
+  { value: 'new', label: '新询价' },
+  { value: 'following', label: '跟进中' },
+  { value: 'replied', label: '已回复' },
+  { value: 'completed', label: '已完成' },
+  { value: 'spam', label: '垃圾' },
+]
+
+function parseStatus(v: string | null): InquiryStatus | undefined {
+  return v === 'new' || v === 'following' || v === 'replied' || v === 'completed' || v === 'spam'
+    ? v
+    : undefined
+}
+
+function statusLabel(s: string): string {
+  return STATUS_LABEL[s] ?? s ?? '—'
+}
+
+function shortTime(s: string): string {
+  const d = dayjs(s)
+  return d.isValid() ? d.format('MM-DD HH:mm') : '—'
+}
+
+function eventLabel(e: InquiryEvent): string {
+  switch (e.event_type) {
+    case 'created':
+      return '客户提交询价'
+    case 'status_changed':
+      return `状态：${statusLabel(e.from_status)} → ${statusLabel(e.to_status)}`
+    case 'note':
+      return '更新内部备注'
+    case 'notify':
+      return '邮件通知'
+    default:
+      return e.event_type
+  }
+}
+
+// 询价工作台：桌面双栏 Inbox，移动端列表 / 详情切换
 export default function Inquiries(): JSX.Element {
   const { message } = App.useApp()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const [keyword, setKeyword] = useState('')
   const [q, setQ] = useState('')
-  const [status, setStatus] = useState<InquiryStatus | undefined>(undefined)
+  const [status, setStatus] = useState<InquiryStatus | undefined>(() =>
+    parseStatus(searchParams.get('status')),
+  )
   const [range, setRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [list, setList] = useState<Inquiry[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const [detail, setDetail] = useState<Inquiry | null>(null)
+  const [detailId, setDetailId] = useState<number | null>(null)
   const [events, setEvents] = useState<InquiryEvent[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
+  const [resending, setResending] = useState(false)
+  const detailReqRef = useRef(0)
+  const autoOpenedRef = useRef<string | null>(null)
 
-  // URL 参数初始化（仪表盘跳转 ?status=new）
-  const [searchParams] = useSearchParams()
   useEffect(() => {
-    const s = searchParams.get('status') as InquiryStatus | null
-    if (s) setStatus(s)
+    setStatus(parseStatus(searchParams.get('status')))
   }, [searchParams])
 
   const buildParams = useCallback((): string => {
@@ -45,47 +119,74 @@ export default function Inquiries(): JSX.Element {
 
   const load = useCallback(async (): Promise<void> => {
     setLoading(true)
+    setError('')
     try {
       const { data, pagination } = await get<Inquiry[]>('/admin/inquiries?' + buildParams())
       setList(data)
       setTotal(pagination?.total ?? 0)
     } catch (e) {
-      message.error((e as Error).message)
+      setError((e as Error).message)
     } finally {
       setLoading(false)
     }
-  }, [buildParams, message])
+  }, [buildParams])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  const openDetail = async (inq: Inquiry): Promise<void> => {
-    setDetail(inq)
+  const openDetailById = useCallback(async (id: number, seed?: Inquiry): Promise<void> => {
+    const req = ++detailReqRef.current
+    setDetailId(id)
+    setDetail(seed ?? null)
     setEvents([])
-    setNote(inq.internal_note)
+    setNote(seed?.internal_note ?? '')
+    setDetailError('')
     setDetailLoading(true)
     try {
-      const { data } = await get<{ inquiry: Inquiry; events: InquiryEvent[] }>(`/admin/inquiries/${inq.id}`)
+      const { data } = await get<{ inquiry: Inquiry; events: InquiryEvent[] }>(
+        `/admin/inquiries/${id}`,
+      )
+      if (req !== detailReqRef.current) return
       setDetail(data.inquiry)
       setEvents(data.events)
       setNote(data.inquiry.internal_note)
     } catch (e) {
-      message.error((e as Error).message)
+      if (req !== detailReqRef.current) return
+      setDetailError((e as Error).message)
     } finally {
-      setDetailLoading(false)
+      if (req === detailReqRef.current) setDetailLoading(false)
     }
-  }
+  }, [])
 
-  const updateInquiry = async (patch: { status?: InquiryStatus; internal_note?: string }): Promise<void> => {
+  // 支持仪表盘 / 外部链接直达：?inquiry=ID
+  useEffect(() => {
+    const param = searchParams.get('inquiry')
+    if (!param) {
+      autoOpenedRef.current = null
+      return
+    }
+    if (loading || autoOpenedRef.current === param) return
+    const id = Number(param)
+    if (!Number.isFinite(id) || id <= 0) return
+    autoOpenedRef.current = param
+    void openDetailById(id, list.find((i) => i.id === id))
+  }, [searchParams, loading, list, openDetailById])
+
+  const updateInquiry = async (patch: {
+    status?: InquiryStatus
+    internal_note?: string
+  }): Promise<void> => {
     if (!detail) return
     setSaving(true)
     try {
       const { data } = await put<Inquiry>(`/admin/inquiries/${detail.id}`, patch)
       setDetail(data)
+      setNote(data.internal_note)
       message.success('已保存')
-      // 刷新事件时间线
-      const { data: d2 } = await get<{ inquiry: Inquiry; events: InquiryEvent[] }>(`/admin/inquiries/${detail.id}`)
+      const { data: d2 } = await get<{ inquiry: Inquiry; events: InquiryEvent[] }>(
+        `/admin/inquiries/${detail.id}`,
+      )
       setDetail(d2.inquiry)
       setEvents(d2.events)
       void load()
@@ -98,15 +199,20 @@ export default function Inquiries(): JSX.Element {
 
   const resend = async (): Promise<void> => {
     if (!detail) return
+    setResending(true)
     try {
       await post(`/admin/inquiries/${detail.id}/resend-notify`)
       message.success('邮件已重新发送')
-      const { data } = await get<{ inquiry: Inquiry; events: InquiryEvent[] }>(`/admin/inquiries/${detail.id}`)
+      const { data } = await get<{ inquiry: Inquiry; events: InquiryEvent[] }>(
+        `/admin/inquiries/${detail.id}`,
+      )
       setDetail(data.inquiry)
       setEvents(data.events)
       void load()
     } catch (e) {
       message.error('重发失败：' + (e as Error).message)
+    } finally {
+      setResending(false)
     }
   }
 
@@ -114,10 +220,25 @@ export default function Inquiries(): JSX.Element {
     try {
       await del(`/admin/inquiries/${inq.id}`)
       message.success('询价已删除')
-      setDetail(null)
+      closeDetail()
       void load()
     } catch (e) {
       message.error((e as Error).message)
+    }
+  }
+
+  const closeDetail = (): void => {
+    detailReqRef.current += 1
+    setDetail(null)
+    setDetailId(null)
+    setEvents([])
+    setDetailError('')
+    setNote('')
+    setDetailLoading(false)
+    if (searchParams.get('inquiry')) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('inquiry')
+      setSearchParams(next, { replace: true })
     }
   }
 
@@ -125,252 +246,412 @@ export default function Inquiries(): JSX.Element {
     window.open('/api/v1/admin/inquiries/export?' + buildParams(), '_blank')
   }
 
-  const columns: ColumnsType<Inquiry> = [
-    { title: 'ID', dataIndex: 'id', width: 60 },
-    {
-      title: '客户',
-      dataIndex: 'name',
-      width: 180,
-      render: (_, r) => (
-        <div>
-          <div>{r.name}</div>
-          {r.company && <div style={{ fontSize: 12, color: '#9299A5' }}>{r.company}</div>}
-        </div>
-      ),
-    },
-    { title: '邮箱', dataIndex: 'email', width: 190, ellipsis: true },
-    { title: 'WhatsApp/电话', dataIndex: 'whatsapp_phone', width: 150, ellipsis: true, render: (v: string) => v || '—' },
-    {
-      title: '产品',
-      dataIndex: 'product_name_snapshot',
-      width: 170,
-      ellipsis: true,
-      render: (v: string, r) =>
-        v ? (
-          <div>
-            <div style={{ fontSize: 13 }}>{v}</div>
-            {r.product_sku_snapshot && <div style={{ fontSize: 11, color: '#9299A5' }}>{r.product_sku_snapshot}</div>}
-          </div>
-        ) : (
-          <span style={{ color: '#9299A5' }}>—</span>
-        ),
-    },
-    { title: '状态', dataIndex: 'status', width: 92, render: (v: InquiryStatus) => <InquiryStatusTag status={v} /> },
-    { title: '邮件', dataIndex: 'email_notify_status', width: 88, render: (v: string) => <NotifyStatusTag status={v} /> },
-    { title: '时间', dataIndex: 'created_at', width: 150, render: (v: string) => fmtTime(v) },
-    {
-      title: '操作',
-      key: 'actions',
-      width: 80,
-      render: (_, r) => (
-        <Button type="link" size="small" onClick={() => void openDetail(r)}>
-          详情
-        </Button>
-      ),
-    },
-  ]
+  const hasFilters = keyword !== '' || q !== '' || status != null || range != null
 
-  const pagination: TablePaginationConfig = {
-    current: page,
-    pageSize,
-    total,
-    showSizeChanger: true,
-    showTotal: (t) => `共 ${t} 条`,
-    onChange: (p, ps) => {
-      setPage(p)
-      setPageSize(ps)
-    },
+  const resetFilters = (): void => {
+    setKeyword('')
+    setQ('')
+    setStatus(undefined)
+    setRange(null)
+    setPage(1)
+    const next = new URLSearchParams(searchParams)
+    next.delete('status')
+    next.delete('inquiry')
+    setSearchParams(next, { replace: true })
   }
 
-  const eventColor = (t: string): string => {
-    switch (t) {
-      case 'created':
-        return 'blue'
-      case 'status_changed':
-        return 'green'
-      case 'note':
-        return 'gray'
-      case 'notify':
-        return 'gold'
-      default:
-        return 'gray'
-    }
+  const changeStatus = (v: InquiryStatus | undefined): void => {
+    setStatus(v)
+    setPage(1)
+    const next = new URLSearchParams(searchParams)
+    if (v) next.set('status', v)
+    else next.delete('status')
+    setSearchParams(next, { replace: true })
   }
 
-  const eventLabel = (e: InquiryEvent): string => {
-    switch (e.event_type) {
-      case 'created':
-        return '询价提交'
-      case 'status_changed':
-        return `状态：${e.from_status || '—'} → ${e.to_status || '—'}`
-      case 'note':
-        return '内部备注'
-      case 'notify':
-        return '邮件通知'
-      default:
-        return e.event_type
-    }
+  const handlePageChange = (p: number): void => {
+    setPage(p)
+    setPageSize(pageSize)
   }
+
+  const detailOpen = detailId != null
 
   return (
     <div>
       <PageHeader
         title="询价管理"
-        description="客户线索收集与跟进；删除询价将一并删除事件历史"
+        description="客户线索收集与跟进；选择左侧询价查看产品快照、留言与事件历史。"
         extra={
           <Button icon={<DownloadOutlined />} onClick={exportCSV}>
             导出 CSV
           </Button>
         }
       />
-      <Card size="small">
-        <Space wrap style={{ marginBottom: 12 }}>
-          <Input.Search
-            placeholder="搜索姓名/公司/邮箱/产品"
-            allowClear
-            style={{ width: 250 }}
-            onSearch={(v) => {
-              setQ(v)
-              setPage(1)
-            }}
-          />
-          <Select
-            placeholder="状态"
-            allowClear
-            style={{ width: 140 }}
-            value={status}
-            options={[
-              { value: 'new', label: '新询价' },
-              { value: 'following', label: '跟进中' },
-              { value: 'replied', label: '已回复' },
-              { value: 'completed', label: '已完成' },
-              { value: 'spam', label: '垃圾' },
-            ]}
-            onChange={(v) => {
-              setStatus(v)
-              setPage(1)
-            }}
-          />
-          <DatePicker.RangePicker
-            value={range}
-            onChange={(v) => {
-              setRange(v)
-              setPage(1)
-            }}
-          />
-        </Space>
-        <Table
-          rowKey="id"
-          columns={columns}
-          dataSource={list}
-          loading={loading}
-          pagination={pagination}
-          locale={{ emptyText: <Empty description="暂无询价" /> }}
-        />
-      </Card>
 
-      <Drawer
-        title={`询价 #${detail?.id ?? ''}`}
-        open={detail != null}
-        width={640}
-        onClose={() => setDetail(null)}
-        destroyOnHidden
-        extra={
-          detail && (
-            <Popconfirm title="确认删除该询价？" description="事件历史将一并删除" okText="删除" okButtonProps={{ danger: true }} cancelText="取消" onConfirm={() => void remove(detail)}>
-              <Button danger size="small">
-                删除
-              </Button>
-            </Popconfirm>
-          )
-        }
+      <div
+        className={`sc-filterbar sc-inquiries-filter${detailOpen ? ' is-detail-open' : ''}`}
       >
-        {detailLoading || !detail ? (
-          <Spin />
-        ) : (
-          <Space direction="vertical" style={{ width: '100%' }} size={16}>
-            <Descriptions column={2} size="small" bordered>
-              <Descriptions.Item label="姓名">{detail.name}</Descriptions.Item>
-              <Descriptions.Item label="公司">{detail.company || '—'}</Descriptions.Item>
-              <Descriptions.Item label="邮箱">{detail.email}</Descriptions.Item>
-              <Descriptions.Item label="WhatsApp/电话">{detail.whatsapp_phone || '—'}</Descriptions.Item>
-              <Descriptions.Item label="产品" span={2}>
-                {detail.product_name_snapshot
-                  ? `${detail.product_name_snapshot}${detail.product_sku_snapshot ? `（${detail.product_sku_snapshot}）` : ''}`
-                  : '产品已删除或未关联'}
-              </Descriptions.Item>
-              <Descriptions.Item label="预估数量">{detail.estimated_qty || '—'}</Descriptions.Item>
-              <Descriptions.Item label="定制要求">{detail.customization || '—'}</Descriptions.Item>
-              <Descriptions.Item label="来源页">{detail.source_page || '—'}</Descriptions.Item>
-              <Descriptions.Item label="提交时间">{fmtTime(detail.created_at)}</Descriptions.Item>
-              <Descriptions.Item label="IP">{detail.ip || '—'}</Descriptions.Item>
-              <Descriptions.Item label="邮件通知">
-                <NotifyStatusTag status={detail.email_notify_status} />
-                {(detail.email_notify_status === 'pending' || detail.email_notify_status === 'failed') && (
-                  <Button size="small" icon={<RedoOutlined />} style={{ marginLeft: 8 }} onClick={() => void resend()}>
-                    重发
-                  </Button>
-                )}
-              </Descriptions.Item>
-            </Descriptions>
+        <Input.Search
+          className="sc-toolbar__search"
+          placeholder="搜索姓名 / 公司 / 邮箱 / 产品"
+          allowClear
+          value={keyword}
+          onChange={(e) => {
+            setKeyword(e.target.value)
+            if (e.target.value === '' && q !== '') {
+              setQ('')
+              setPage(1)
+            }
+          }}
+          onSearch={(v) => {
+            setQ(v.trim())
+            setPage(1)
+          }}
+        />
+        <Select
+          placeholder="全部状态"
+          allowClear
+          style={{ width: 132 }}
+          value={status}
+          options={STATUS_OPTIONS}
+          onChange={(v) => changeStatus(v)}
+        />
+        <DatePicker.RangePicker
+          value={range}
+          style={{ width: 240 }}
+          onChange={(v) => {
+            setRange(v)
+            setPage(1)
+          }}
+        />
+        <Button
+          type="text"
+          icon={<ClearOutlined />}
+          disabled={!hasFilters}
+          onClick={resetFilters}
+        >
+          清除筛选
+        </Button>
+        <div className="sc-toolbar__spacer" />
+        <span className="sc-toolbar__meta">共 {total} 条询价</span>
+        <Tooltip title="刷新列表">
+          <Button
+            type="text"
+            className="sc-icon-btn"
+            aria-label="刷新列表"
+            icon={<ReloadOutlined />}
+            loading={loading}
+            onClick={() => void load()}
+          />
+        </Tooltip>
+      </div>
 
-            <div>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>客户留言</div>
-              <div style={{ whiteSpace: 'pre-wrap', background: '#F6F7F9', border: '1px solid #E3E7ED', borderRadius: 8, padding: 12, fontSize: 13 }}>
-                {detail.message}
-              </div>
+      {error ? (
+        <PageError message={error} onRetry={() => void load()} />
+      ) : (
+        <div className="sc-inbox">
+          <div className={`sc-inbox__list${detailOpen ? ' is-hidden-mobile' : ''}`}>
+            <div className="sc-inbox__list-head">
+              <span className="sc-inbox__list-title">询价列表</span>
+              <span className="sc-toolbar__meta">{total} 条</span>
             </div>
-
-            <div>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>状态与备注</div>
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Select
-                  value={detail.status}
-                  style={{ width: 200 }}
-                  onChange={(v: InquiryStatus) => void updateInquiry({ status: v })}
-                  options={[
-                    { value: 'new', label: '新询价' },
-                    { value: 'following', label: '跟进中' },
-                    { value: 'replied', label: '已回复' },
-                    { value: 'completed', label: '已完成' },
-                    { value: 'spam', label: '垃圾' },
-                  ]}
+            <div className="sc-inbox__items">
+              {loading && list.length === 0 ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div className="sc-inbox-item" key={i} aria-hidden="true">
+                    <Skeleton active title={{ width: '46%' }} paragraph={{ rows: 2 }} />
+                  </div>
+                ))
+              ) : list.length === 0 ? (
+                <EmptyState
+                  bare
+                  icon={<MailOutlined />}
+                  title={hasFilters ? '没有符合筛选条件的询价' : '暂无询价'}
+                  description={
+                    hasFilters
+                      ? '尝试调整关键词、状态或日期范围。'
+                      : '客户通过公开站提交询价后，会出现在这里。'
+                  }
+                  action={
+                    hasFilters ? (
+                      <Button size="small" onClick={resetFilters}>
+                        清除筛选
+                      </Button>
+                    ) : undefined
+                  }
                 />
-                <Input.TextArea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="内部备注（客户不会看到）" maxLength={5000} />
-                <Button
-                  type="primary"
-                  size="small"
-                  loading={saving}
-                  onClick={() => void updateInquiry({ internal_note: note })}
-                  disabled={note === detail.internal_note}
-                >
-                  保存备注
-                </Button>
-              </Space>
-            </div>
-
-            <div>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>事件历史</div>
-              {events.length === 0 ? (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
               ) : (
-                <Timeline
-                  items={events.map((e) => ({
-                    color: eventColor(e.event_type),
-                    children: (
-                      <div>
-                        <div style={{ fontSize: 13 }}>{eventLabel(e)}</div>
-                        {e.detail && <div style={{ fontSize: 12, color: '#626C7B', whiteSpace: 'pre-wrap' }}>{e.detail}</div>}
-                        <div style={{ fontSize: 11, color: '#9299A5' }}>{fmtTime(e.created_at)}</div>
-                      </div>
-                    ),
-                  }))}
-                />
+                list.map((inq) => (
+                  <button
+                    type="button"
+                    className={`sc-inbox-item${detailId === inq.id ? ' is-active' : ''}`}
+                    key={inq.id}
+                    onClick={() => void openDetailById(inq.id, inq)}
+                    aria-current={detailId === inq.id ? 'true' : undefined}
+                  >
+                    <span className="sc-inbox-item__top">
+                      <span className="sc-inbox-item__name">
+                        {inq.status === 'new' && (
+                          <span className="sc-inquiry-row__new" aria-label="新询价" />
+                        )}
+                        {inq.name}
+                      </span>
+                      <span className="sc-inbox-item__time">{shortTime(inq.created_at)}</span>
+                    </span>
+                    <span className="sc-inbox-item__company">
+                      {inq.company || '未填写公司'}
+                    </span>
+                    <span className="sc-inbox-item__product">
+                      {inq.product_name_snapshot || '未关联产品'}
+                    </span>
+                    <span className="sc-inbox-item__snippet">
+                      {inq.message || inq.customization || '客户未填写留言'}
+                    </span>
+                    <span className="sc-inbox-item__foot">
+                      <InquiryStatusTag status={inq.status} />
+                      <span className="sc-cell-secondary sc-mono">#{inq.id}</span>
+                    </span>
+                  </button>
+                ))
               )}
             </div>
-          </Space>
-        )}
-      </Drawer>
+            {total > pageSize && (
+              <div className="sc-inbox__list-foot">
+                <Pagination
+                  size="small"
+                  current={page}
+                  pageSize={pageSize}
+                  total={total}
+                  showSizeChanger={false}
+                  onChange={handlePageChange}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className={`sc-inbox__detail${detailOpen ? ' is-open-mobile' : ''}`}>
+            {!detailOpen ? (
+              <div className="sc-detail-placeholder">
+                <EmptyState
+                  bare
+                  icon={<InboxOutlined />}
+                  title="选择一条询价"
+                  description="左侧列表显示客户、产品与状态；选择后在右侧查看完整需求并跟进。"
+                />
+              </div>
+            ) : (
+              <>
+                <div className="sc-inbox__detail-head">
+                  <div className="sc-inbox__customer">
+                    <button type="button" className="sc-inbox__back" onClick={closeDetail}>
+                      <ArrowLeftOutlined /> 返回列表
+                    </button>
+                    <h2 className="sc-inbox__name">{detail?.name ?? '询价详情'}</h2>
+                    <div className="sc-inbox__company">
+                      {detail
+                        ? `${detail.company || '未填写公司'} · 询价 #${detail.id}`
+                        : `询价 #${detailId ?? ''}`}
+                    </div>
+                  </div>
+                  <div className="sc-inbox__head-actions">
+                    {detail && <InquiryStatusTag status={detail.status} />}
+                    <Popconfirm
+                      title="确认删除该询价？"
+                      description="事件历史将一并删除"
+                      okText="删除"
+                      okButtonProps={{ danger: true }}
+                      cancelText="取消"
+                      onConfirm={() => detail && remove(detail)}
+                    >
+                      <Button danger size="small" disabled={!detail}>
+                        删除
+                      </Button>
+                    </Popconfirm>
+                  </div>
+                </div>
+
+                <div className="sc-inbox__scroll">
+                  {detailError ? (
+                    <PageError
+                      message={detailError}
+                      onRetry={() => detailId != null && void openDetailById(detailId)}
+                    />
+                  ) : detailLoading && !detail ? (
+                    <div style={{ paddingTop: 20 }}>
+                      <Skeleton active title paragraph={{ rows: 12 }} />
+                    </div>
+                  ) : detail ? (
+                    <>
+                      <section className="sc-inbox-section">
+                        <div className="sc-inbox-section__label">客户信息</div>
+                        <div className="sc-contact-grid">
+                          <div className="sc-detail-field">
+                            <span className="sc-detail-field__label">邮箱</span>
+                            <span className="sc-detail-field__value">{detail.email}</span>
+                          </div>
+                          <div className="sc-detail-field">
+                            <span className="sc-detail-field__label">WhatsApp / 电话</span>
+                            <span className="sc-detail-field__value">
+                              {detail.whatsapp_phone || '—'}
+                            </span>
+                          </div>
+                          <div className="sc-detail-field">
+                            <span className="sc-detail-field__label">来源页</span>
+                            <span className="sc-detail-field__value">
+                              {detail.source_page || '—'}
+                            </span>
+                          </div>
+                          <div className="sc-detail-field">
+                            <span className="sc-detail-field__label">提交时间</span>
+                            <span className="sc-detail-field__value sc-tabular">
+                              {fmtTime(detail.created_at)}
+                            </span>
+                          </div>
+                          <div className="sc-detail-field">
+                            <span className="sc-detail-field__label">IP 地址</span>
+                            <span className="sc-detail-field__value sc-detail-field__value--mono">
+                              {detail.ip || '—'}
+                            </span>
+                          </div>
+                          <div className="sc-detail-field">
+                            <span className="sc-detail-field__label">邮件通知</span>
+                            <span className="sc-detail-field__value sc-status-row">
+                              <NotifyStatusTag status={detail.email_notify_status} />
+                              {(detail.email_notify_status === 'pending' ||
+                                detail.email_notify_status === 'failed') && (
+                                <Button
+                                  size="small"
+                                  type="text"
+                                  icon={<RedoOutlined />}
+                                  loading={resending}
+                                  onClick={() => void resend()}
+                                >
+                                  重发
+                                </Button>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="sc-inbox-section">
+                        <div className="sc-inbox-section__label">需求概览</div>
+                        <div className="sc-snapshot">
+                          <span className="sc-thumb" aria-hidden="true">
+                            <InboxOutlined />
+                          </span>
+                          <span className="sc-snapshot__body">
+                            <span className="sc-snapshot__name">
+                              {detail.product_name_snapshot || '产品已删除或未关联'}
+                            </span>
+                            {detail.product_sku_snapshot && (
+                              <span className="sc-snapshot__meta">
+                                {detail.product_sku_snapshot}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="sc-contact-grid" style={{ marginTop: 14 }}>
+                          <div className="sc-detail-field">
+                            <span className="sc-detail-field__label">预估数量</span>
+                            <span className="sc-detail-field__value">
+                              {detail.estimated_qty || '—'}
+                            </span>
+                          </div>
+                          <div className="sc-detail-field">
+                            <span className="sc-detail-field__label">定制要求</span>
+                            <span className="sc-detail-field__value">
+                              {detail.customization || '—'}
+                            </span>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="sc-inbox-section">
+                        <div className="sc-inbox-section__label">客户留言</div>
+                        <div
+                          className={`sc-message${detail.message ? '' : ' sc-message--empty'}`}
+                        >
+                          {detail.message || '客户未填写额外留言。'}
+                        </div>
+                      </section>
+
+                      <section className="sc-inbox-section">
+                        <div className="sc-inbox-section__label">
+                          <span>内部备注</span>
+                          <span className="sc-inbox-section__hint">仅后台可见，客户不会收到</span>
+                        </div>
+                        <div className="sc-note-block">
+                          <Input.TextArea
+                            rows={4}
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            placeholder="记录跟进进度、报价、样品寄送等信息…"
+                            maxLength={5000}
+                          />
+                          <div className="sc-note-block__foot">
+                            <span className="sc-note-block__hint">{note.length} / 5000</span>
+                            <Button
+                              type="primary"
+                              size="small"
+                              loading={saving}
+                              disabled={note === detail.internal_note}
+                              onClick={() => void updateInquiry({ internal_note: note })}
+                            >
+                              保存备注
+                            </Button>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="sc-inbox-section">
+                        <div className="sc-inbox-section__label">
+                          <span>处理状态</span>
+                          <span className="sc-inbox-section__hint">变更会记录到事件历史</span>
+                        </div>
+                        <div className="sc-status-row">
+                          <Select
+                            value={detail.status}
+                            disabled={saving}
+                            style={{ width: 168 }}
+                            onChange={(v: InquiryStatus) => void updateInquiry({ status: v })}
+                            options={STATUS_OPTIONS}
+                          />
+                          {saving && <span className="sc-helper">保存中…</span>}
+                        </div>
+                      </section>
+
+                      <section className="sc-inbox-section">
+                        <div className="sc-inbox-section__label">事件历史</div>
+                        {events.length === 0 ? (
+                          <p className="sc-helper">暂无事件记录。</p>
+                        ) : (
+                          <div className="sc-timeline">
+                            {events.map((e) => (
+                              <div
+                                className={`sc-timeline-item sc-timeline-item--${e.event_type}`}
+                                key={e.id}
+                              >
+                                <div className="sc-timeline-item__label">{eventLabel(e)}</div>
+                                {e.detail && (
+                                  <div className="sc-timeline-item__detail">{e.detail}</div>
+                                )}
+                                <div className="sc-timeline-item__time">
+                                  {fmtTime(e.created_at)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </section>
+                    </>
+                  ) : null}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

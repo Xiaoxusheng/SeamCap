@@ -2,6 +2,8 @@
 package admin
 
 import (
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"log/slog"
 	"mime/multipart"
@@ -14,6 +16,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"seamcap/internal/apperr"
+	"seamcap/internal/captcha"
 	"seamcap/internal/config"
 	"seamcap/internal/email"
 	"seamcap/internal/handler"
@@ -25,18 +29,20 @@ import (
 
 // Admin 管理端点集合。
 type Admin struct {
-	Auth  *service.AuthService
-	Prods *service.ProductService
-	Cats  *service.CategoryService
-	Media *service.MediaService
-	Crafts *service.CraftService
-	Pages *service.PageService
-	Home  *service.HomeService
+	Auth     *service.AuthService
+	Prods    *service.ProductService
+	Cats     *service.CategoryService
+	Media    *service.MediaService
+	Crafts   *service.CraftService
+	Pages    *service.PageService
+	Home     *service.HomeService
 	Settings *service.SettingsService
-	Inqs  *service.InquiryService
-	Dash  *service.DashboardService
-	Audit *repository.AuditRepo
-	Mail  *email.Sender
+	Inqs     *service.InquiryService
+	Dash     *service.DashboardService
+	Audit    *repository.AuditRepo
+	Mail     *email.Sender
+
+	Captcha *captcha.Manager
 
 	Cfg    *config.Config
 	DB     *repository.DB
@@ -51,6 +57,7 @@ func (h *Admin) Routes() chi.Router {
 	r.Use(mw.MaxBody(int64(h.Cfg.MaxVideoMB+2) << 20))
 
 	r.Post("/login", h.Login)
+	r.Get("/captcha", h.CaptchaImage)
 
 	r.Group(func(r chi.Router) {
 		r.Use(mw.AuthRequired(h.Auth))
@@ -132,24 +139,68 @@ func (h *Admin) setSessionCookie(w http.ResponseWriter, token string, maxAge int
 
 // Login POST /admin/login。
 func (h *Admin) Login(w http.ResponseWriter, r *http.Request) {
+	if !mw.SameOrigin(r) {
+		handler.Error(w, apperr.Forbidden("Cross-origin login rejected"))
+		return
+	}
 	var in struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+		Username    string `json:"username"`
+		Password    string `json:"password"`
+		CaptchaID   string `json:"captcha_id"`
+		CaptchaCode string `json:"captcha_code"`
+		Remember    bool   `json:"remember"`
 	}
 	if err := handler.Decode(r, &in); err != nil {
 		handler.Error(w, err)
 		return
 	}
-	res, err := h.Auth.Login(in.Username, in.Password, mw.ClientIP(r), r.UserAgent())
+	if h.Captcha == nil {
+		handler.Error(w, apperr.Internal("captcha not configured"))
+		return
+	}
+	ip := mw.ClientIP(r)
+	switch err := h.Captcha.Verify(ip, in.CaptchaID, in.CaptchaCode); {
+	case err == nil:
+	case errors.Is(err, captcha.ErrRateLimited):
+		handler.Error(w, apperr.RateLimited("Too many captcha attempts, try again later"))
+		return
+	default:
+		handler.Error(w, apperr.InvalidField("captcha_code", "captcha is invalid or expired"))
+		return
+	}
+	res, err := h.Auth.Login(in.Username, in.Password, ip, r.UserAgent(), in.Remember)
 	if err != nil {
 		handler.Error(w, err)
 		return
 	}
-	h.setSessionCookie(w, res.Token, h.Cfg.SessionTTLHours*3600)
+	h.setSessionCookie(w, res.Token, int(res.TTL.Seconds()))
 	handler.Data(w, map[string]any{
 		"admin":      res.Admin,
 		"csrf_token": res.CSRFToken,
 		"expires_at": res.ExpiresAt.Format(time.RFC3339),
+	})
+}
+
+// CaptchaImage GET /admin/captcha：下发一次性图形验证码（data URL PNG）。
+func (h *Admin) CaptchaImage(w http.ResponseWriter, r *http.Request) {
+	if h.Captcha == nil {
+		handler.Error(w, apperr.Internal("captcha not configured"))
+		return
+	}
+	ch, err := h.Captcha.NewChallenge(mw.ClientIP(r))
+	if err != nil {
+		if errors.Is(err, captcha.ErrRateLimited) {
+			handler.Error(w, apperr.RateLimited("Too many captcha requests, try again later"))
+			return
+		}
+		handler.Error(w, apperr.Internal(err.Error()))
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	handler.Data(w, map[string]any{
+		"id":         ch.ID,
+		"image":      "data:image/png;base64," + base64.StdEncoding.EncodeToString(ch.PNG),
+		"expires_in": ch.ExpiresIn,
 	})
 }
 
@@ -218,7 +269,7 @@ func (h *Admin) auditLog(r *http.Request, action, entityType, entityID, detail s
 func pathID(r *http.Request) (int64, error) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil || id <= 0 {
-		return 0, fmt.Errorf("invalid id")
+		return 0, apperr.InvalidField("id", "must be a positive integer")
 	}
 	return id, nil
 }
@@ -446,13 +497,29 @@ func (h *Admin) ListMedia(w http.ResponseWriter, r *http.Request) {
 	handler.List(w, items, page)
 }
 
+const multipartMemory = 32 << 20
+
+func parseMultipartForm(r *http.Request) error {
+	if err := r.ParseMultipartForm(multipartMemory); err != nil {
+		var mbe *http.MaxBytesError
+		if errors.As(err, &mbe) {
+			return apperr.TooLarge("Request body too large")
+		}
+		return apperr.InvalidField("file", "invalid multipart form")
+	}
+	return nil
+}
+
 func openMultipartFile(r *http.Request) (multipart.File, string, error) {
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		return nil, "", fmt.Errorf("parse multipart form: %w", err)
+	if err := parseMultipartForm(r); err != nil {
+		return nil, "", err
 	}
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		return nil, "", err
+		if errors.Is(err, http.ErrMissingFile) {
+			return nil, "", apperr.InvalidField("file", "file is required")
+		}
+		return nil, "", apperr.InvalidField("file", "cannot read uploaded file")
 	}
 	return file, header.Filename, nil
 }
@@ -499,7 +566,7 @@ func (h *Admin) UpdateMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	ct := r.Header.Get("Content-Type")
 	if strings.HasPrefix(ct, "multipart/form-data") {
-		if err := r.ParseMultipartForm(32 << 20); err != nil {
+		if err := parseMultipartForm(r); err != nil {
 			handler.Error(w, err)
 			return
 		}
@@ -511,6 +578,9 @@ func (h *Admin) UpdateMedia(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			file.Close()
+		} else if !errors.Is(ferr, http.ErrMissingFile) {
+			handler.Error(w, apperr.InvalidField("file", "cannot read uploaded file"))
+			return
 		}
 		// 可选：更新 ALT
 		if r.MultipartForm != nil {
@@ -868,11 +938,11 @@ func (h *Admin) Backup(w http.ResponseWriter, r *http.Request) {
 // TestEmail POST /admin/test-email：SMTP 配置自检。
 func (h *Admin) TestEmail(w http.ResponseWriter, r *http.Request) {
 	if !h.Mail.Enabled() {
-		handler.Error(w, fmt.Errorf("SMTP not configured: set SMTP_HOST and NOTIFY_EMAIL"))
+		handler.Error(w, apperr.Conflict("SMTP is not configured: set SMTP_HOST and NOTIFY_EMAIL"))
 		return
 	}
 	if err := h.Mail.SendTestMail(); err != nil {
-		handler.Error(w, err)
+		handler.Error(w, apperr.New(apperr.CodeInternal, "SMTP send failed: "+err.Error()))
 		return
 	}
 	h.auditLog(r, "email.test", "email", "", "")

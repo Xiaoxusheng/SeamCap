@@ -1,10 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
-import { App, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Radio, Select, Space, Table } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import {
+  App,
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Popconfirm,
+  Radio,
+  Select,
+  Table,
+  Tooltip,
+} from 'antd'
+import { PlusOutlined, ReloadOutlined, TagsOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { del, fmtTime, get, post, put } from '../../api/client'
 import type { Category } from '../../api/types'
 import MediaIDField from '../../components/MediaIDField'
+import MediaThumb from '../../components/MediaThumb'
 import PageHeader from '../../components/PageHeader'
+import PageError from '../../components/PageError'
+import { CategoryStatusTag } from '../../components/StatusTag'
+import EmptyState from '../../components/EmptyState'
+import TableSkeleton from '../../components/TableSkeleton'
 import type { ColumnsType } from 'antd/es/table'
 
 interface CatForm {
@@ -17,12 +35,14 @@ interface CatForm {
   status: 'active' | 'inactive'
 }
 
-// 分类管理：CRUD + 删除三策略（409 → 迁移或停用）
+// 分类管理：目录表格 + CRUD + 删除三策略（409 → 迁移或停用）
 export default function Categories(): JSX.Element {
   const { message } = App.useApp()
+  const navigate = useNavigate()
   const [form] = Form.useForm()
   const [list, setList] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [editing, setEditing] = useState<Category | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -31,18 +51,20 @@ export default function Categories(): JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
   const [deleteMode, setDeleteMode] = useState<'reassign' | 'archive'>('reassign')
   const [reassignTo, setReassignTo] = useState<number | undefined>(undefined)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async (): Promise<void> => {
     setLoading(true)
+    setError('')
     try {
       const { data } = await get<Category[]>('/admin/categories')
       setList(data)
     } catch (e) {
-      message.error((e as Error).message)
+      setError((e as Error).message)
     } finally {
       setLoading(false)
     }
-  }, [message])
+  }, [])
 
   useEffect(() => {
     void load()
@@ -119,15 +141,16 @@ export default function Categories(): JSX.Element {
 
   const confirmDelete = async (): Promise<void> => {
     if (!deleteTarget) return
+    if (deleteMode === 'reassign' && !reassignTo) {
+      message.warning('请选择迁移目标分类')
+      return
+    }
+    setDeleting(true)
     try {
       if (deleteMode === 'archive') {
         await del(`/admin/categories/${deleteTarget.id}?mode=archive`)
         message.success(`已停用「${deleteTarget.name}」（未删除）`)
       } else {
-        if (!reassignTo) {
-          message.warning('请选择迁移目标分类')
-          return
-        }
         const { data } = await del<{ deleted: boolean; reassigned: number }>(
           `/admin/categories/${deleteTarget.id}?mode=reassign&to=${reassignTo}`,
         )
@@ -137,74 +160,168 @@ export default function Categories(): JSX.Element {
       void load()
     } catch (e) {
       message.error((e as Error).message)
+    } finally {
+      setDeleting(false)
     }
   }
 
   const columns: ColumnsType<Category> = [
     {
-      title: '封面',
-      dataIndex: 'image',
-      width: 64,
-      render: (_, r) =>
-        r.image ? (
-          <img src={r.image.url} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6 }} />
+      title: '分类',
+      dataIndex: 'name',
+      ellipsis: true,
+      render: (v: string, r) => (
+        <div className="sc-entity">
+          <MediaThumb media={r.image} alt={`${r.name} 分类封面`} />
+          <div className="sc-entity__text">
+            <div className="sc-entity__title">{v}</div>
+            <div className="sc-entity__meta">{r.name_en || '未填写英文名'}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Slug',
+      dataIndex: 'slug',
+      width: 190,
+      responsive: ['xl'],
+      render: (v: string) =>
+        v ? <span className="sc-code">{v}</span> : <span className="sc-cell-secondary">—</span>,
+    },
+    {
+      title: '产品数',
+      dataIndex: 'product_count',
+      width: 94,
+      align: 'right',
+      responsive: ['md'],
+      render: (v: number | undefined, r) =>
+        v ? (
+          <button
+            type="button"
+            className="sc-action-link"
+            onClick={() => navigate(`/admin/products?category_id=${r.id}`)}
+            aria-label={`查看「${r.name}」的 ${v} 个产品`}
+          >
+            {v}
+          </button>
         ) : (
-          <span style={{ display: 'inline-block', width: 40, height: 40, borderRadius: 6, background: '#F1F3F6' }} />
+          <span className="sc-tabular sc-cell-secondary">0</span>
         ),
     },
-    { title: '名称', dataIndex: 'name', width: 180 },
-    { title: '英文名', dataIndex: 'name_en', width: 160, render: (v: string) => v || '—' },
-    { title: 'Slug', dataIndex: 'slug', width: 180, render: (v: string) => <Typography_Code v={v} /> },
-    { title: '产品数', dataIndex: 'product_count', width: 90, render: (v?: number) => v ?? 0 },
-    { title: '排序', dataIndex: 'sort_order', width: 70 },
+    {
+      title: '排序',
+      dataIndex: 'sort_order',
+      width: 72,
+      align: 'right',
+      responsive: ['lg'],
+      render: (v: number) => <span className="sc-tabular sc-cell-secondary">{v}</span>,
+    },
     {
       title: '状态',
       dataIndex: 'status',
-      width: 90,
-      render: (v: Category['status']) =>
-        v === 'active' ? <Button size="small" style={{ pointerEvents: 'none' }}>启用</Button> : <Button size="small" style={{ pointerEvents: 'none' }}>停用</Button>,
+      width: 92,
+      render: (v: Category['status']) => <CategoryStatusTag status={v} />,
     },
-    { title: '更新时间', dataIndex: 'updated_at', width: 160, render: (v: string) => fmtTime(v) },
     {
-      title: '操作',
+      title: '更新时间',
+      dataIndex: 'updated_at',
+      width: 152,
+      responsive: ['xl'],
+      render: (v: string) => <span className="sc-tabular sc-cell-secondary">{fmtTime(v)}</span>,
+    },
+    {
+      title: '',
       key: 'actions',
-      width: 130,
+      width: 116,
+      align: 'right',
       render: (_, r) => (
-        <Space size={0}>
+        <div className="sc-cell-actions">
           <Button type="link" size="small" onClick={() => openEdit(r)}>
             编辑
           </Button>
           <Popconfirm
             title={`删除「${r.name}」？`}
-            description={(r.product_count ?? 0) > 0 ? `仍有 ${r.product_count} 个产品关联，将进入处理流程` : '该分类无关联产品'}
+            description={
+              (r.product_count ?? 0) > 0
+                ? `仍有 ${r.product_count} 个产品关联，将进入迁移 / 停用流程`
+                : '该分类无关联产品'
+            }
             okText="删除"
             okButtonProps={{ danger: true }}
             cancelText="取消"
-            onConfirm={() => void tryDelete(r)}
+            onConfirm={() => tryDelete(r)}
           >
-            <Button type="link" size="small" danger>
+            <Button type="text" size="small" danger>
               删除
             </Button>
           </Popconfirm>
-        </Space>
+        </div>
       ),
     },
   ]
+
+  const activeCount = list.filter((c) => c.status === 'active').length
+  const totalProducts = list.reduce((sum, c) => sum + (c.product_count ?? 0), 0)
 
   return (
     <div>
       <PageHeader
         title="分类管理"
-        description="公开站仅显示启用分类；删除含产品的分类时可选迁移或停用"
+        description="维护产品分类目录、封面与启用状态；删除含产品的分类时可选迁移或停用。"
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             新建分类
           </Button>
         }
       />
-      <Card size="small">
-        <Table rowKey="id" columns={columns} dataSource={list} loading={loading} pagination={false} />
-      </Card>
+
+      {error ? (
+        <PageError message={error} onRetry={() => void load()} />
+      ) : (
+        <>
+          <div className="sc-table-panel">
+            <div className="sc-toolbar">
+              <span className="sc-toolbar__meta">
+                共 {list.length} 个分类 · {activeCount} 个启用 · {totalProducts} 个关联产品
+              </span>
+              <div className="sc-toolbar__spacer" />
+              <Tooltip title="刷新列表">
+                <Button
+                  type="text"
+                  className="sc-icon-btn"
+                  aria-label="刷新列表"
+                  icon={<ReloadOutlined />}
+                  loading={loading}
+                  onClick={() => void load()}
+                />
+              </Tooltip>
+            </div>
+            {loading && list.length === 0 ? (
+              <TableSkeleton rows={6} columns={5} thumb />
+            ) : list.length === 0 ? (
+              <EmptyState
+                icon={<TagsOutlined />}
+                title="还没有分类"
+                description="先创建一个分类，再将产品归类展示在公开站。"
+                action={
+                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+                    新建分类
+                  </Button>
+                }
+              />
+            ) : (
+              <Table
+                className="sc-table sc-table--categories"
+                rowKey="id"
+                columns={columns}
+                dataSource={list}
+                loading={loading}
+                pagination={false}
+              />
+            )}
+          </div>
+        </>
+      )}
 
       <Modal
         title={editing ? `编辑分类：${editing.name}` : '新建分类'}
@@ -214,40 +331,40 @@ export default function Categories(): JSX.Element {
         confirmLoading={saving}
         okText="保存"
         cancelText="取消"
-        width={560}
+        width={580}
+        destroyOnHidden
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 12 }}>
-          <Space wrap size={16}>
-            <Form.Item name="name" label="分类名称 *" rules={[{ required: true, message: '请输入分类名称' }, { max: 200 }]} style={{ width: 220 }}>
+        <Form form={form} layout="vertical" style={{ marginTop: 8 }}>
+          <div className="sc-form-grid">
+            <Form.Item
+              name="name"
+              label="分类名称"
+              rules={[{ required: true, message: '请输入分类名称' }, { max: 200 }]}
+            >
               <Input placeholder="纯色系列" maxLength={200} />
             </Form.Item>
-            <Form.Item name="name_en" label="英文名" style={{ width: 220 }} extra="留空时 slug 按中文名生成">
+            <Form.Item name="name_en" label="英文名称" extra="留空时 slug 按中文名生成">
               <Input placeholder="Solid Color" maxLength={200} />
             </Form.Item>
-          </Space>
-          <Form.Item name="slug" label="Slug" extra="留空自动生成">
-            <Input placeholder="solid-color" maxLength={100} />
-          </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea rows={2} maxLength={2000} />
-          </Form.Item>
-          <Form.Item name="image_id" label="封面图">
-            <MediaIDField />
-          </Form.Item>
-          <Space wrap size={16}>
-            <Form.Item name="sort_order" label="排序值" style={{ width: 140 }}>
+            <Form.Item name="slug" label="Slug" className="sc-span-2" extra="留空自动生成">
+              <Input placeholder="solid-color" maxLength={100} />
+            </Form.Item>
+            <Form.Item name="description" label="描述" className="sc-span-2">
+              <Input.TextArea rows={3} maxLength={2000} />
+            </Form.Item>
+            <Form.Item name="image_id" label="封面图" className="sc-span-2">
+              <MediaIDField />
+            </Form.Item>
+            <Form.Item name="sort_order" label="排序值">
               <InputNumber min={0} style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="status" label="状态">
-              <Radio.Group
-                options={[
-                  { value: 'active', label: '启用' },
-                  { value: 'inactive', label: '停用' },
-                ]}
-                optionType="button"
-              />
+              <Radio.Group>
+                <Radio value="active">启用</Radio>
+                <Radio value="inactive">停用</Radio>
+              </Radio.Group>
             </Form.Item>
-          </Space>
+          </div>
         </Form>
       </Modal>
 
@@ -256,35 +373,34 @@ export default function Categories(): JSX.Element {
         open={deleteTarget != null}
         onCancel={() => setDeleteTarget(null)}
         onOk={() => void confirmDelete()}
+        confirmLoading={deleting}
         okText={deleteMode === 'archive' ? '停用分类' : '迁移并删除'}
         cancelText="取消"
+        width={500}
       >
-        <Space direction="vertical" style={{ width: '100%', margin: '8px 0' }}>
-          <Radio.Group
-            value={deleteMode}
-            onChange={(e) => setDeleteMode(e.target.value as 'reassign' | 'archive')}
-            options={[
-              { value: 'reassign', label: `迁移 ${deleteTarget?.product_count ?? 0} 个产品到其他分类，然后删除本分类` },
-              { value: 'archive', label: '仅停用本分类（不删除，产品保留关联）' },
-            ]}
+        <p className="sc-helper" style={{ marginBottom: 12 }}>
+          该分类仍有 {deleteTarget?.product_count ?? 0} 个产品关联，请选择处理方式。
+        </p>
+        <Radio.Group
+          value={deleteMode}
+          onChange={(e) => setDeleteMode(e.target.value as 'reassign' | 'archive')}
+          style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}
+        >
+          <Radio value="reassign">迁移产品到其他分类，然后删除本分类</Radio>
+          <Radio value="archive">仅停用本分类（不删除，保留产品关联）</Radio>
+        </Radio.Group>
+        {deleteMode === 'reassign' && (
+          <Select
+            placeholder="选择迁移目标分类"
+            style={{ width: '100%' }}
+            value={reassignTo}
+            options={list
+              .filter((c) => c.id !== deleteTarget?.id)
+              .map((c) => ({ value: c.id, label: c.name }))}
+            onChange={setReassignTo}
           />
-          {deleteMode === 'reassign' && (
-            <Select
-              placeholder="选择迁移目标分类"
-              style={{ width: '100%' }}
-              value={reassignTo}
-              options={list.filter((c) => c.id !== deleteTarget?.id).map((c) => ({ value: c.id, label: c.name }))}
-              onChange={setReassignTo}
-            />
-          )}
-        </Space>
+        )}
       </Modal>
     </div>
-  )
-}
-
-function Typography_Code({ v }: { v: string }): JSX.Element {
-  return (
-    <code style={{ fontSize: 12, background: '#F1F3F6', padding: '2px 6px', borderRadius: 4 }}>{v}</code>
   )
 }

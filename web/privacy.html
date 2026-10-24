@@ -55,11 +55,18 @@
 <section class="page-hero" style="padding-bottom:24px">
   <div class="wrap">
     <p class="crumbs"><a href="index.html">Home</a><span aria-hidden="true"> / </span><b>Privacy Policy</b></p>
-    <h1 class="page-hero__title">Privacy <em>policy.</em></h1>
+    <h1 class="page-hero__title" data-cms-page-title="privacy-policy">Privacy <em>policy.</em></h1>
     <p class="lead">Last updated: October 2026. This policy describes how Yiwu Shirun Headwear (&ldquo;SHIRUN&rdquo;, &ldquo;we&rdquo;) handles information you choose to share with us.</p>
   </div>
 </section>
 
+<!-- 页面管理驱动（cms.js：后台 privacy-policy 页面内容，发布后显示于静态政策之前） -->
+<section class="section section--tight" data-cms-page="privacy-policy" hidden style="padding-top:12px">
+  <div class="wrap prose" data-cms-body></div>
+</section>
+
+<!-- 静态兜底：后台 privacy-policy 有正文时由 cms.js 隐藏本区块 -->
+<div data-cms-static-for="privacy-policy">
 <section class="section section--tight">
   <div class="wrap prose">
     <h2>1. What we collect</h2>
@@ -84,6 +91,7 @@
     <p>Questions about this policy: WhatsApp <a href="https://wa.me/8613388614562" target="_blank" rel="noopener">+86 133 8861 4562</a>, or use the <a href="contact.html">contact form</a>. Business address: Yiwu, Zhejiang, China.</p>
   </div>
 </section>
+</div>
 </main>
 
 <footer class="footer">
@@ -105,5 +113,6 @@
 </footer>
 
 <script src="static/js/main.js" defer></script>
+<script src="static/js/cms.js" defer></script>
 </body>
 </html>

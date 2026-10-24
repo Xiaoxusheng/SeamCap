@@ -84,7 +84,7 @@ func (s *SettingsService) AdminSet(kv map[string]string) (map[string]string, err
 		if !ok {
 			continue // 未知键忽略
 		}
-		if len(v) > maxLen {
+		if charCount(v) > maxLen {
 			fields[k] = "max " + fmt.Sprint(maxLen) + " chars"
 			continue
 		}

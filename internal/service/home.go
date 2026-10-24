@@ -42,6 +42,12 @@ func (s *HomeService) GetPublic() (*HomeResponse, error) {
 	if len(crafts) > 4 {
 		crafts = crafts[:4]
 	}
+	if featured == nil {
+		featured = []model.Product{}
+	}
+	if crafts == nil {
+		crafts = []model.Craftsmanship{}
+	}
 	return &HomeResponse{Hero: *h, Featured: featured, CraftPreview: crafts}, nil
 }
 
@@ -86,14 +92,24 @@ func (s *HomeService) Update(in HomeInput) (*model.HomeContent, error) {
 		return nil, apperr.InvalidField("process_steps", "max 12 items")
 	}
 	for _, a := range in.Advantages {
-		if len(a.Title) > 200 || len(a.Desc) > 1000 || len(a.Image) > 500 {
+		if charCount(a.Title) > 200 || charCount(a.Desc) > 1000 || charCount(a.Image) > 500 {
 			return nil, apperr.InvalidField("advantages", "item fields too long (title≤200, desc≤1000, image≤500)")
 		}
 	}
 	for _, st := range in.ProcessSteps {
-		if len(st.Step) > 100 || len(st.Desc) > 500 {
+		if charCount(st.Step) > 100 || charCount(st.Desc) > 500 {
 			return nil, apperr.InvalidField("process_steps", "item fields too long (step≤100, desc≤500)")
 		}
+	}
+	if charCount(in.HeroTitle) > 200 || charCount(in.HeroSubtitle) > 300 || charCount(in.HeroVideoURL) > 500 {
+		return nil, apperr.InvalidField("hero", "hero fields too long (title≤200, subtitle≤300, video_url≤500)")
+	}
+	if charCount(in.CTA1Text) > 100 || charCount(in.CTA1URL) > 500 ||
+		charCount(in.CTA2Text) > 100 || charCount(in.CTA2URL) > 500 {
+		return nil, apperr.InvalidField("cta", "cta fields too long (text≤100, url≤500)")
+	}
+	if charCount(in.FactoryIntro) > 2000 || charCount(in.ContactBlurb) > 1000 || charCount(in.FooterText) > 500 {
+		return nil, apperr.InvalidField("content", "content too long (factory_intro≤2000, contact_blurb≤1000, footer_text≤500)")
 	}
 	if in.HeroImageID != nil {
 		m, err := s.media.GetByID(*in.HeroImageID)

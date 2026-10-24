@@ -28,6 +28,7 @@
     var panel = drawer.querySelector('.drawer__panel');
     function closeDrawer() {
       drawer.hidden = true;
+      document.body.classList.remove('drawer-open');
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Open menu');
     }
@@ -35,6 +36,7 @@
       var open = toggle.getAttribute('aria-expanded') === 'true';
       if (open) { closeDrawer(); } else {
         drawer.hidden = false;
+        document.body.classList.add('drawer-open');
         toggle.setAttribute('aria-expanded', 'true');
         toggle.setAttribute('aria-label', 'Close menu');
       }
@@ -220,4 +222,106 @@
       });
     });
   }
+  /* ---------- 7. 自定义下拉：暗色弹层替代原生 select（保留原 select 供表单/JS 使用） ---------- */
+  function initLuxSelect(select) {
+    if (select.dataset.luxsel || select.multiple) return;
+    select.dataset.luxsel = '1';
+
+    var isField = !!select.closest('.field');
+    var wrap = document.createElement('span');
+    wrap.className = 'luxsel-wrap' + (isField ? ' luxsel-wrap--full' : '');
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.classList.add('lux-hidden-select');
+    select.setAttribute('tabindex', '-1');
+    select.setAttribute('aria-hidden', 'true');
+
+    var opts = Array.prototype.slice.call(select.options);
+    var listId = 'luxsel-' + Math.random().toString(36).slice(2, 8);
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'luxsel' + (isField ? ' luxsel--field' : '');
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', listId);
+    var label = document.createElement('span');
+    label.className = 'luxsel__label';
+    var chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    chev.setAttribute('class', 'luxsel__chev');
+    chev.setAttribute('viewBox', '0 0 24 24');
+    chev.setAttribute('aria-hidden', 'true');
+    chev.innerHTML = '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+    btn.appendChild(label);
+    btn.appendChild(chev);
+
+    var pop = document.createElement('div');
+    pop.className = 'luxsel__pop';
+    pop.id = listId;
+    pop.hidden = true;
+    pop.setAttribute('role', 'listbox');
+
+    var optEls = opts.map(function (o, i) {
+      var d = document.createElement('div');
+      d.className = 'luxsel__opt';
+      d.id = listId + '-o' + i;
+      d.setAttribute('role', 'option');
+      d.setAttribute('aria-selected', o.selected ? 'true' : 'false');
+      d.dataset.value = o.value;
+      d.textContent = o.textContent;
+      pop.appendChild(d);
+      return d;
+    });
+
+    wrap.appendChild(btn);
+    wrap.appendChild(pop);
+
+    function syncUI() {
+      var idx = select.selectedIndex;
+      label.textContent = idx >= 0 ? select.options[idx].textContent : '';
+      optEls.forEach(function (el, j) { el.setAttribute('aria-selected', j === idx ? 'true' : 'false'); });
+    }
+    select.__luxsync = syncUI;
+    syncUI();
+
+    var open = false, active = -1;
+    function renderActive() {
+      optEls.forEach(function (el, i) { el.classList.toggle('is-active', i === active); });
+      if (active >= 0) optEls[active].scrollIntoView({ block: 'nearest' });
+    }
+    function setOpen(v) {
+      open = v;
+      pop.hidden = !v;
+      btn.setAttribute('aria-expanded', v ? 'true' : 'false');
+      if (v) { active = select.selectedIndex; renderActive(); }
+    }
+    function commit(i) {
+      if (i < 0 || i >= optEls.length) return;
+      select.value = optEls[i].dataset.value;
+      syncUI();
+      setOpen(false);
+      btn.focus();
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    btn.addEventListener('click', function () { setOpen(!open); });
+    optEls.forEach(function (el, i) {
+      el.addEventListener('click', function () { commit(i); });
+    });
+    btn.addEventListener('keydown', function (e) {
+      if (!open && (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setOpen(true); return; }
+      if (!open) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, optEls.length - 1); renderActive(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); renderActive(); }
+      else if (e.key === 'Home') { e.preventDefault(); active = 0; renderActive(); }
+      else if (e.key === 'End') { e.preventDefault(); active = optEls.length - 1; renderActive(); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); commit(active); }
+      else if (e.key === 'Escape') { e.preventDefault(); setOpen(false); }
+      else if (e.key === 'Tab') { setOpen(false); }
+    });
+    document.addEventListener('click', function (e) {
+      if (open && !wrap.contains(e.target)) setOpen(false);
+    });
+  }
+  document.querySelectorAll('select').forEach(initLuxSelect);
 })();

@@ -67,5 +67,11 @@ func (s *DashboardService) Get() (*DashboardResponse, error) {
 	if out.RecentProducts, err = s.products.RecentUpdated(5); err != nil {
 		return nil, apperr.Internal(err.Error())
 	}
+	if out.RecentInquiries == nil {
+		out.RecentInquiries = []model.Inquiry{}
+	}
+	if out.RecentProducts == nil {
+		out.RecentProducts = []model.Product{}
+	}
 	return out, nil
 }

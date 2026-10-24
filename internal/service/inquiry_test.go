@@ -43,6 +43,12 @@ func TestSubmitInquiryValidation(t *testing.T) {
 	if _, err := env.Inqs.Submit(in, "1.1.1.1", "ua"); !isValidation(err, "whatsapp_phone") {
 		t.Errorf("bad phone should fail: %v", err)
 	}
+	// 姓名含换行（邮件头注入）
+	in = validInquiryInput()
+	in.Name = "Eve\r\nBcc: victim@example.com"
+	if _, err := env.Inqs.Submit(in, "1.1.1.1", "ua"); !isValidation(err, "name") {
+		t.Errorf("newline in name should fail: %v", err)
+	}
 }
 
 func isValidation(err error, field string) bool {

@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Empty, Select, Space, App } from 'antd'
-import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { App, Button, Select, Tooltip } from 'antd'
+import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  DeleteOutlined,
+  PictureOutlined,
+  PlayCircleFilled,
+  PlusOutlined,
+} from '@ant-design/icons'
 import { fetchMedia } from '../api/client'
 import type { Media, MediaLink } from '../api/types'
 import MediaPicker from './MediaPicker'
@@ -57,70 +64,110 @@ export default function GalleryEditor(props: {
     const existing = new Set(props.value.map((l) => l.media_id))
     const add = items
       .filter((m) => !existing.has(m.id))
-      .map((m, i) => ({ media_id: m.id, role: props.withRole ? 'gallery' : undefined, sort_order: props.value.length + i }))
+      .map((m, i) => ({
+        media_id: m.id,
+        role: props.withRole ? 'gallery' : undefined,
+        sort_order: props.value.length + i,
+      }))
     if (items.some((m) => existing.has(m.id))) message.info('部分图片已在画廊中，已跳过重复项')
     if (add.length > 0) update([...props.value, ...add])
   }
 
   return (
-    <Card
-      size="small"
-      title={`画廊（${props.value.length} 张）`}
-      extra={
-        <Button icon={<PlusOutlined />} onClick={() => setPickerOpen(true)}>
+    <div className="sc-gallery-editor">
+      <div className="sc-gallery-editor__head">
+        <span className="sc-gallery-editor__title">画廊 · {props.value.length} 张</span>
+        <Button size="small" icon={<PlusOutlined />} onClick={() => setPickerOpen(true)}>
           添加图片
         </Button>
-      }
-    >
+      </div>
+
       {props.value.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无画廊图片，点击右上角添加" />
+        <div className="sc-gallery-empty">
+          <PictureOutlined />
+          <p className="sc-gallery-empty__text">暂无画廊图片，点击「添加图片」按顺序选择素材</p>
+        </div>
       ) : (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+        <div className="sc-gallery">
           {props.value.map((link, i) => {
             const m = thumbs[link.media_id]
+            const isVideo = m?.mime_type.startsWith('video')
+            const isMain = link.role === 'main'
             return (
               <div
                 key={`${link.media_id}-${i}`}
-                style={{
-                  width: 150,
-                  border: '1px solid #E3E7ED',
-                  borderRadius: 8,
-                  padding: 8,
-                  background: '#fff',
-                }}
+                className={`sc-gallery__item${isMain ? ' is-main' : ''}`}
               >
-                <div style={{ height: 90, background: '#F1F3F6', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {m && !m.mime_type.startsWith('video') ? (
-                    <img src={m.url} alt={m.alt_text} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div className="sc-gallery__thumb">
+                  {m && !isVideo ? (
+                    <img src={m.url} alt={m.alt_text || m.original_name} loading="lazy" />
+                  ) : isVideo ? (
+                    <span className="sc-gallery__placeholder">
+                      <PlayCircleFilled />
+                    </span>
                   ) : (
-                    <span style={{ color: '#9299A5', fontSize: 12 }}>#{link.media_id}</span>
+                    <span className="sc-gallery__placeholder">#{link.media_id}</span>
                   )}
+                  <span className="sc-gallery__index">{i + 1}</span>
+                  {isMain && <span className="sc-gallery__main">主图</span>}
                 </div>
-                <div style={{ display: 'flex', gap: 4, marginTop: 6, justifyContent: 'center' }}>
-                  <Button size="small" icon={<ArrowUpOutlined />} disabled={i === 0} onClick={() => move(i, -1)} />
-                  <Button size="small" icon={<ArrowDownOutlined />} disabled={i === props.value.length - 1} onClick={() => move(i, 1)} />
-                  <Button size="small" danger icon={<DeleteOutlined />} onClick={() => update(props.value.filter((_, idx) => idx !== i))} />
+                <div className="sc-gallery__actions">
+                  <Tooltip title="前移">
+                    <Button
+                      size="small"
+                      aria-label="前移"
+                      disabled={i === 0}
+                      icon={<ArrowUpOutlined />}
+                      onClick={() => move(i, -1)}
+                    />
+                  </Tooltip>
+                  <Tooltip title="后移">
+                    <Button
+                      size="small"
+                      aria-label="后移"
+                      disabled={i === props.value.length - 1}
+                      icon={<ArrowDownOutlined />}
+                      onClick={() => move(i, 1)}
+                    />
+                  </Tooltip>
+                  <span className="sc-toolbar__spacer" />
+                  <Tooltip title="从画廊移除">
+                    <Button
+                      size="small"
+                      danger
+                      aria-label="从画廊移除"
+                      icon={<DeleteOutlined />}
+                      onClick={() => update(props.value.filter((_, idx) => idx !== i))}
+                    />
+                  </Tooltip>
                 </div>
                 {props.withRole && (
-                  <Select
-                    size="small"
-                    value={link.role ?? 'gallery'}
-                    onChange={(v) => setRole(i, v)}
-                    style={{ width: '100%', marginTop: 6 }}
-                    options={[
-                      { value: 'main', label: '主图 (main)' },
-                      { value: 'gallery', label: '画廊 (gallery)' },
-                      { value: 'detail', label: '细节 (detail)' },
-                    ]}
-                  />
+                  <div className="sc-gallery__role">
+                    <Select
+                      size="small"
+                      value={link.role ?? 'gallery'}
+                      onChange={(v) => setRole(i, v)}
+                      style={{ width: '100%' }}
+                      options={[
+                        { value: 'main', label: '主图 (main)' },
+                        { value: 'gallery', label: '画廊 (gallery)' },
+                        { value: 'detail', label: '细节 (detail)' },
+                      ]}
+                    />
+                  </div>
                 )}
               </div>
             )
           })}
         </div>
       )}
-      <MediaPicker open={pickerOpen} multiple onCancel={() => setPickerOpen(false)} onOk={addItems} />
-      <Space />
-    </Card>
+
+      <MediaPicker
+        open={pickerOpen}
+        multiple
+        onCancel={() => setPickerOpen(false)}
+        onOk={addItems}
+      />
+    </div>
   )
 }

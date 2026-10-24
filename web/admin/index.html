@@ -4,8 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>SeamCap 管理后台</title>
-    <script type="module" crossorigin src="/admin/assets/index-CerVVaM5.js"></script>
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg" />
+    <title>SeamCap Studio · 内容工作台</title>
+    <script>
+      // 首屏防闪烁：在样式加载前把已保存的主题写到 <html data-theme>。
+      (function () {
+        try {
+          var mode = localStorage.getItem('seamcap.admin.theme') || 'light'
+          var dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          var resolved = mode === 'system' ? (dark ? 'dark' : 'light') : mode
+          if (resolved !== 'dark') resolved = 'light'
+          document.documentElement.dataset.theme = resolved
+          document.documentElement.style.colorScheme = resolved
+        } catch (e) {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/admin/assets/index-s2ET2WvG.js"></script>
+    <link rel="stylesheet" crossorigin href="/admin/assets/index-BWF26mCY.css">
   </head>
   <body>
     <div id="root"></div>

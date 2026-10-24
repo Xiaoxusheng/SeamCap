@@ -88,3 +88,8 @@ func (s *LocalStorage) Delete(filename string) error {
 	}
 	return err
 }
+
+// AbsPathForTest 仅供测试读取落盘文件路径。
+func (s *LocalStorage) AbsPathForTest(filename string) (string, error) {
+	return s.abs(filename)
+}

@@ -49,7 +49,7 @@ type ProductInput struct {
 
 var slugRe = regexp.MustCompile(`[^a-z0-9]+`)
 
-// slugify 生成 URL 友好 slug；结果为空时用随机后缀兜底。
+// slugify 生成 URL 友好 slug；无法从名称派生时返回空串（由调用方按类型兜底）。
 func slugify(name string) string {
 	s := strings.ToLower(strings.TrimSpace(name))
 	s = slugRe.ReplaceAllString(s, "-")
@@ -57,10 +57,12 @@ func slugify(name string) string {
 	if len(s) > 80 {
 		s = strings.Trim(s[:80], "-")
 	}
-	if s == "" {
-		s = "product-" + strings.ToLower(storage.NewULID())
-	}
 	return s
+}
+
+// fallbackSlug 名称无法转成 ASCII slug（如中文）时的类型前缀兜底。
+func fallbackSlug(prefix string) string {
+	return prefix + "-" + strings.ToLower(storage.NewULID())
 }
 
 // ProductListParams 公开列表参数。
@@ -138,10 +140,10 @@ func (s *ProductService) GetAdminByID(id int64) (*model.Product, error) {
 func validateProductInput(in *ProductInput) error {
 	fields := map[string]string{}
 	in.Name = strings.TrimSpace(in.Name)
-	if in.Name == "" || len(in.Name) > 200 {
+	if in.Name == "" || charCount(in.Name) > 200 {
 		fields["name"] = "required, max 200 chars"
 	}
-	if len(in.SKU) > 100 {
+	if charCount(in.SKU) > 100 {
 		fields["sku"] = "max 100 chars"
 	}
 	switch in.Status {
@@ -149,13 +151,13 @@ func validateProductInput(in *ProductInput) error {
 	default:
 		fields["status"] = "must be draft|published|archived"
 	}
-	if len(in.VideoURL) > 500 {
+	if charCount(in.VideoURL) > 500 {
 		fields["video_url"] = "max 500 chars"
 	}
-	if len(in.SEOTitle) > 200 {
+	if charCount(in.SEOTitle) > 200 {
 		fields["seo_title"] = "max 200 chars"
 	}
-	if len(in.SEODesc) > 500 {
+	if charCount(in.SEODesc) > 500 {
 		fields["seo_desc"] = "max 500 chars"
 	}
 	if in.CategoryID != nil && *in.CategoryID <= 0 {
@@ -241,10 +243,16 @@ func (s *ProductService) Create(in ProductInput) (*model.Product, error) {
 	}
 	slug := strings.TrimSpace(in.Slug)
 	explicit := slug != ""
-	if !explicit {
-		slug = slugify(in.Name)
-	} else {
+	if explicit {
 		slug = slugify(slug)
+		if slug == "" {
+			return nil, apperr.InvalidField("slug", "must contain a-z, 0-9 or hyphen")
+		}
+	} else {
+		slug = slugify(in.Name)
+		if slug == "" {
+			slug = fallbackSlug("product")
+		}
 	}
 	finalSlug, aerr := s.uniqueSlug(slug, 0, !explicit)
 	if aerr != nil {
@@ -300,9 +308,19 @@ func (s *ProductService) Update(id int64, in ProductInput) (*model.Product, erro
 	}
 	slug := strings.TrimSpace(in.Slug)
 	if slug == "" {
-		slug = slugify(in.Name)
+		// 自动派生；中文等无法派生时保留原 slug，避免每次保存都换 URL
+		if derived := slugify(in.Name); derived != "" {
+			slug = derived
+		} else if existing.Slug != "" {
+			slug = existing.Slug
+		} else {
+			slug = fallbackSlug("product")
+		}
 	} else {
 		slug = slugify(slug)
+		if slug == "" {
+			return nil, apperr.InvalidField("slug", "must contain a-z, 0-9 or hyphen")
+		}
 	}
 	if slug != existing.Slug {
 		if _, aerr := s.uniqueSlug(slug, id, false); aerr != nil {
@@ -363,16 +381,23 @@ func (s *ProductService) Duplicate(id int64) (*model.Product, error) {
 		return nil, apperr.NotFound("Product not found")
 	}
 	base := src.Slug + "-copy"
-	finalSlug := base
-	for i := 2; i < 100; i++ {
-		existing, err := s.repo.GetBySlug(finalSlug)
+	finalSlug := ""
+	for i := 0; i < 100; i++ {
+		cand := base
+		if i > 0 {
+			cand = fmt.Sprintf("%s-%d", base, i+1)
+		}
+		existing, err := s.repo.GetBySlug(cand)
 		if err != nil {
 			return nil, apperr.Internal(err.Error())
 		}
 		if existing == nil {
+			finalSlug = cand
 			break
 		}
-		finalSlug = fmt.Sprintf("%s-%d", base, i)
+	}
+	if finalSlug == "" {
+		return nil, apperr.Conflict("cannot derive a unique slug for the copy")
 	}
 	p := &model.Product{
 		Name: src.Name + " (Copy)", SKU: src.SKU, Slug: finalSlug,

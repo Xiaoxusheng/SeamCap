@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"path/filepath"
 	"strings"
 
@@ -65,17 +66,16 @@ func (s *MediaService) Upload(originalName string, r io.Reader, altText string) 
 	if err != nil {
 		return nil, err
 	}
-	// 原始名仅存元数据：剥离路径成分
+	// 原始名仅存元数据：剥离路径成分并按字符截断（保留扩展名）
 	originalName = filepath.Base(strings.ReplaceAll(originalName, "\\", "/"))
-	if len(originalName) > 255 {
-		originalName = originalName[len(originalName)-255:]
-	}
+	originalName = truncateTail(originalName, 255)
 	filename, size, sha, mime2, w, h, serr := s.store.Save(reader, limit)
 	if serr != nil {
 		return nil, mapStorageErr(serr)
 	}
 	_ = mime2
 
+	altText = truncateChars(altText, 500)
 	// 内容去重：同 sha256 复用已有资产
 	if existing, gerr := s.repo.GetBySHA256(sha); gerr == nil && existing != nil {
 		_ = s.store.Delete(filename)
@@ -85,9 +85,6 @@ func (s *MediaService) Upload(originalName string, r io.Reader, altText string) 
 	m := &model.Media{
 		Filename: filename, OriginalName: originalName, AltText: altText,
 		MimeType: mime, SizeBytes: size, Width: w, Height: h, SHA256: sha,
-	}
-	if len(altText) > 500 {
-		m.AltText = altText[:500]
 	}
 	if _, err := s.repo.Create(m); err != nil {
 		_ = s.store.Delete(filename)
@@ -135,9 +132,7 @@ func (s *MediaService) UpdateAlt(id int64, alt string) (*model.Media, error) {
 	if m == nil {
 		return nil, apperr.NotFound("Media not found")
 	}
-	if len(alt) > 500 {
-		alt = alt[:500]
-	}
+	alt = truncateChars(alt, 500)
 	if err := s.repo.UpdateAlt(id, alt); err != nil {
 		return nil, apperr.Internal(err.Error())
 	}
@@ -192,11 +187,13 @@ func (s *MediaService) Delete(id int64) error {
 			Fields:  map[string]string{"reference_count": itoa(n), "references": strings.Join(refs, "; ")},
 		}
 	}
-	if err := s.store.Delete(m.Filename); err != nil {
-		return apperr.Internal(err.Error())
-	}
+	// 先删数据库记录：失败时文件仍在，可重试；
+	// 删文件失败只留下孤儿文件，不会出现“记录在但文件没了”。
 	if err := s.repo.Delete(id); err != nil {
 		return apperr.Internal(err.Error())
+	}
+	if err := s.store.Delete(m.Filename); err != nil {
+		slog.Warn("media file delete failed", "media_id", id, "filename", m.Filename, "error", err.Error())
 	}
 	return nil
 }

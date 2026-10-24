@@ -73,15 +73,18 @@ func (s *CategoryService) GetAdminByID(id int64) (*model.Category, error) { retu
 func validateCategoryInput(in *CategoryInput) error {
 	fields := map[string]string{}
 	in.Name = strings.TrimSpace(in.Name)
-	if in.Name == "" || len(in.Name) > 200 {
+	if in.Name == "" || charCount(in.Name) > 200 {
 		fields["name"] = "required, max 200 chars"
+	}
+	if charCount(in.NameEn) > 200 {
+		fields["name_en"] = "max 200 chars"
 	}
 	switch in.Status {
 	case "active", "inactive":
 	default:
 		fields["status"] = "must be active|inactive"
 	}
-	if len(in.Description) > 2000 {
+	if charCount(in.Description) > 2000 {
 		fields["description"] = "max 2000 chars"
 	}
 	if len(fields) > 0 {
@@ -115,13 +118,21 @@ func (s *CategoryService) Create(in CategoryInput) (*model.Category, error) {
 			return nil, apperr.InvalidField("image_id", "media not found")
 		}
 	}
-	slug := slugify(strings.TrimSpace(in.Slug))
-	if strings.TrimSpace(in.Slug) == "" {
+	explicitSlug := strings.TrimSpace(in.Slug)
+	slug := slugify(explicitSlug)
+	if explicitSlug != "" {
+		if slug == "" {
+			return nil, apperr.InvalidField("slug", "must contain a-z, 0-9 or hyphen")
+		}
+	} else {
 		base := in.NameEn
 		if strings.TrimSpace(base) == "" {
 			base = in.Name
 		}
 		slug = slugify(base)
+		if slug == "" {
+			slug = fallbackSlug("category")
+		}
 	}
 	if aerr := s.ensureUniqueSlug(slug, 0); aerr != nil {
 		return nil, aerr
@@ -160,9 +171,17 @@ func (s *CategoryService) Update(id int64, in CategoryInput) (*model.Category, e
 		if strings.TrimSpace(base) == "" {
 			base = in.Name
 		}
-		slug = slugify(base)
+		// 无法派生（如中文名）时保留原 slug，避免每次保存都换 URL
+		if derived := slugify(base); derived != "" {
+			slug = derived
+		} else {
+			slug = c.Slug
+		}
 	} else {
 		slug = slugify(slug)
+		if slug == "" {
+			return nil, apperr.InvalidField("slug", "must contain a-z, 0-9 or hyphen")
+		}
 	}
 	if slug != c.Slug {
 		if aerr := s.ensureUniqueSlug(slug, id); aerr != nil {

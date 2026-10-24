@@ -14,7 +14,7 @@ type HomeRepo struct{ db *DB }
 func NewHomeRepo(db *DB) *HomeRepo { return &HomeRepo{db} }
 
 const homeCols = `COALESCE(h.hero_title,''), COALESCE(h.hero_subtitle,''), h.hero_image_id,
-	m.filename, m.original_name, m.alt_text, m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
+	m.id, m.filename, m.original_name, m.alt_text, m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
 	COALESCE(h.hero_video_url,''), COALESCE(h.cta1_text,''), COALESCE(h.cta1_url,''), COALESCE(h.cta2_text,''), COALESCE(h.cta2_url,''),
 	COALESCE(h.factory_intro,''), COALESCE(h.contact_blurb,''), COALESCE(h.advantages_json,'[]'), COALESCE(h.process_steps_json,'[]'),
 	COALESCE(h.footer_text,''), h.updated_at`
@@ -24,12 +24,13 @@ const homeFrom = `FROM home_content h LEFT JOIN media_assets m ON m.id = h.hero_
 func scanHome(row interface{ Scan(...any) error }) (*model.HomeContent, error) {
 	var h model.HomeContent
 	var heroID sql.NullInt64
+	var mID sql.NullInt64
 	var mFilename, mOrig, mAlt, mMime, mSHA, mCreated sql.NullString
 	var mSize sql.NullInt64
 	var mW, mH sql.NullInt64
 	var advJSON, stepsJSON string
 	err := row.Scan(&h.HeroTitle, &h.HeroSubtitle, &heroID,
-		&mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
+		&mID, &mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
 		&h.HeroVideoURL, &h.CTA1Text, &h.CTA1URL, &h.CTA2Text, &h.CTA2URL,
 		&h.FactoryIntro, &h.ContactBlurb, &advJSON, &stepsJSON,
 		&h.FooterText, &h.UpdatedAt)
@@ -39,6 +40,7 @@ func scanHome(row interface{ Scan(...any) error }) (*model.HomeContent, error) {
 	h.HeroImageID = ni(heroID)
 	if mFilename.Valid {
 		h.HeroImage = &model.Media{
+			ID:       mID.Int64,
 			Filename: mFilename.String, URL: mediaURL(mFilename.String),
 			OriginalName: mOrig.String, AltText: mAlt.String, MimeType: mMime.String,
 			SizeBytes: mSize.Int64, Width: nint(mW), Height: nint(mH),
@@ -62,7 +64,7 @@ func (r *HomeRepo) Get() (*model.HomeContent, error) {
 	h, err := scanHome(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		now := Now()
-		if _, err := r.db.Exec(`INSERT INTO home_content(id, advantages_json, process_steps_json, updated_at) VALUES(1,'[]','[]',?)`, now); err != nil {
+		if _, err := r.db.Exec(`INSERT OR IGNORE INTO home_content(id, advantages_json, process_steps_json, updated_at) VALUES(1,'[]','[]',?)`, now); err != nil {
 			return nil, err
 		}
 		return r.Get()

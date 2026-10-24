@@ -83,7 +83,7 @@ func (s *CraftService) GetAdminByID(id int64) (*model.Craftsmanship, error) { re
 func validateCraftInput(in *CraftInput) error {
 	fields := map[string]string{}
 	in.Title = strings.TrimSpace(in.Title)
-	if in.Title == "" || len(in.Title) > 200 {
+	if in.Title == "" || charCount(in.Title) > 200 {
 		fields["title"] = "required, max 200 chars"
 	}
 	switch in.Status {
@@ -91,11 +91,17 @@ func validateCraftInput(in *CraftInput) error {
 	default:
 		fields["status"] = "must be draft|published|hidden"
 	}
-	if len(in.Summary) > 1000 {
+	if charCount(in.Summary) > 1000 {
 		fields["summary"] = "max 1000 chars"
 	}
-	if len(in.VideoURL) > 500 {
+	if charCount(in.VideoURL) > 500 {
 		fields["video_url"] = "max 500 chars"
+	}
+	if charCount(in.SEOTitle) > 200 {
+		fields["seo_title"] = "max 200 chars"
+	}
+	if charCount(in.SEODesc) > 500 {
+		fields["seo_desc"] = "max 500 chars"
 	}
 	if len(fields) > 0 {
 		return apperr.Invalid(fields)
@@ -128,9 +134,17 @@ func (s *CraftService) Create(in CraftInput) (*model.Craftsmanship, error) {
 			return nil, apperr.InvalidField("cover_image_id", "media not found")
 		}
 	}
-	slug := slugify(strings.TrimSpace(in.Slug))
-	if strings.TrimSpace(in.Slug) == "" {
+	explicitSlug := strings.TrimSpace(in.Slug)
+	slug := slugify(explicitSlug)
+	if explicitSlug != "" {
+		if slug == "" {
+			return nil, apperr.InvalidField("slug", "must contain a-z, 0-9 or hyphen")
+		}
+	} else {
 		slug = slugify(in.Title)
+		if slug == "" {
+			slug = fallbackSlug("craft")
+		}
 	}
 	if aerr := s.ensureUniqueSlug(slug, 0); aerr != nil {
 		return nil, aerr
@@ -170,9 +184,17 @@ func (s *CraftService) Update(id int64, in CraftInput) (*model.Craftsmanship, er
 	}
 	slug := strings.TrimSpace(in.Slug)
 	if slug == "" {
-		slug = slugify(in.Title)
+		// 无法派生（如中文标题）时保留原 slug，避免每次保存都换 URL
+		if derived := slugify(in.Title); derived != "" {
+			slug = derived
+		} else {
+			slug = c.Slug
+		}
 	} else {
 		slug = slugify(slug)
+		if slug == "" {
+			return nil, apperr.InvalidField("slug", "must contain a-z, 0-9 or hyphen")
+		}
 	}
 	if slug != c.Slug {
 		if aerr := s.ensureUniqueSlug(slug, id); aerr != nil {

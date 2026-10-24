@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"strings"
 	"testing"
 
 	"seamcap/internal/apperr"
@@ -193,5 +194,64 @@ func TestCategoryDeleteStrategies(t *testing.T) {
 	c, _ := env.Cats.GetAdminByID(cat2.ID)
 	if c == nil || c.Status != "inactive" {
 		t.Error("archived category should be inactive and still exist")
+	}
+}
+
+func TestChineseNameSlugFallback(t *testing.T) {
+	env := newSvcEnv(t)
+
+	p, err := env.Prods.Create(ProductInput{Name: "无痕棒球帽", Status: "draft"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(p.Slug, "product-") {
+		t.Errorf("product slug = %q, want product- prefix", p.Slug)
+	}
+
+	c, err := env.Cats.Create(CategoryInput{Name: "棒球帽", Status: "active"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(c.Slug, "category-") {
+		t.Errorf("category slug = %q, want category- prefix", c.Slug)
+	}
+
+	k, err := env.Crafts.Create(CraftInput{Title: "无痕工艺", Status: "draft"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(k.Slug, "craft-") {
+		t.Errorf("craft slug = %q, want craft- prefix", k.Slug)
+	}
+
+	// 显式传入无法转写的 slug → 400
+	if _, err := env.Prods.Create(ProductInput{Name: "X", Slug: "中文", Status: "draft"}); !isValidation(err, "slug") {
+		t.Errorf("non-ascii explicit slug should fail: %v", err)
+	}
+	if _, err := env.Cats.Create(CategoryInput{Name: "Y", Slug: "中文", Status: "active"}); !isValidation(err, "slug") {
+		t.Errorf("non-ascii category slug should fail: %v", err)
+	}
+
+	// 中文名再保存时保留原 slug，不生成新随机值
+	upd, err := env.Prods.Update(p.ID, ProductInput{Name: "无痕棒球帽二代", Status: "draft"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if upd.Slug != p.Slug {
+		t.Errorf("update changed slug: %q -> %q", p.Slug, upd.Slug)
+	}
+	updC, err := env.Cats.Update(c.ID, CategoryInput{Name: "棒球帽二代", Status: "active"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updC.Slug != c.Slug {
+		t.Errorf("category update changed slug: %q -> %q", c.Slug, updC.Slug)
+	}
+	updK, err := env.Crafts.Update(k.ID, CraftInput{Title: "无痕工艺二代", Status: "draft"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updK.Slug != k.Slug {
+		t.Errorf("craft update changed slug: %q -> %q", k.Slug, updK.Slug)
 	}
 }

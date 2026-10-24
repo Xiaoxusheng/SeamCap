@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { App, Button, Empty, Input, Modal, Space, Spin, Upload } from 'antd'
-import { InboxOutlined, PlayCircleFilled, ReloadOutlined } from '@ant-design/icons'
+import { App, Button, Input, Modal, Pagination, Upload } from 'antd'
+import { CheckCircleFilled, CloudUploadOutlined, PictureOutlined, PlayCircleFilled } from '@ant-design/icons'
 import { cacheMedia, fmtBytes, request } from '../api/client'
 import type { Media } from '../api/types'
+import PageError from './PageError'
+import EmptyState from './EmptyState'
 
 interface Props {
   open: boolean
@@ -19,11 +21,13 @@ export default function MediaPicker({ open, multiple = false, onCancel, onOk }: 
   const [list, setList] = useState<Media[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [uploading, setUploading] = useState(0)
   const [selected, setSelected] = useState<Map<number, Media>>(new Map())
 
   const load = useCallback(async (query: string, p: number): Promise<void> => {
     setLoading(true)
+    setError('')
     try {
       const params = new URLSearchParams({ page: String(p), per_page: '24' })
       if (query) params.set('q', query)
@@ -32,11 +36,11 @@ export default function MediaPicker({ open, multiple = false, onCancel, onOk }: 
       setList(data)
       setTotal(pagination?.total ?? data.length)
     } catch (e) {
-      message.error((e as Error).message)
+      setError((e as Error).message)
     } finally {
       setLoading(false)
     }
-  }, [message])
+  }, [])
 
   useEffect(() => {
     if (open) {
@@ -73,6 +77,7 @@ export default function MediaPicker({ open, multiple = false, onCancel, onOk }: 
       const { data } = await request<Media>('/admin/media', { method: 'POST', body: fd })
       cacheMedia([data])
       setList((prev) => [data, ...prev])
+      setTotal((n) => n + 1)
       if (multiple) setSelected((prev) => new Map(prev).set(data.id, data))
       else setSelected(new Map([[data.id, data]]))
       message.success(`已上传 ${data.original_name}`)
@@ -87,94 +92,132 @@ export default function MediaPicker({ open, multiple = false, onCancel, onOk }: 
     <Modal
       title={multiple ? '选择媒体（可多选）' : '选择媒体'}
       open={open}
-      width={860}
+      width={900}
       onCancel={onCancel}
+      destroyOnHidden
       footer={
-        <Space>
-          <Button onClick={onCancel}>取消</Button>
-          <Button type="primary" disabled={selected.size === 0} onClick={() => onOk([...selected.values()])}>
-            确定{selected.size > 0 ? `（已选 ${selected.size}）` : ''}
-          </Button>
-        </Space>
+        <div className="sc-picker-footer">
+          <span className="sc-toolbar__meta">
+            {selected.size > 0 ? `已选 ${selected.size} 个素材` : '尚未选择素材'}
+          </span>
+          <span style={{ display: 'inline-flex', gap: 8 }}>
+            <Button onClick={onCancel}>取消</Button>
+            <Button
+              type="primary"
+              disabled={selected.size === 0}
+              onClick={() => onOk([...selected.values()])}
+            >
+              确定
+            </Button>
+          </span>
+        </div>
       }
     >
-      <Space.Compact style={{ width: '100%', marginBottom: 12 }}>
-        <Input
-          placeholder="搜索文件名 / ALT"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onPressEnter={search}
-          allowClear
-        />
-        <Button icon={<ReloadOutlined />} onClick={search}>
-          搜索
-        </Button>
-      </Space.Compact>
+      <Input.Search
+        placeholder="搜索文件名 / ALT"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onSearch={search}
+        allowClear
+        style={{ marginBottom: 12 }}
+      />
       <Upload.Dragger
         multiple
         showUploadList={false}
+        className="sc-upload-strip sc-upload-strip--compact"
         customRequest={({ file, onSuccess }) => {
           void doUpload(file as File).then(() => onSuccess?.(undefined as never))
         }}
         accept=".jpg,.jpeg,.png,.webp,.avif,.mp4"
-        style={{ marginBottom: 12, padding: '4px 0' }}
+        style={{ marginBottom: 14 }}
       >
-        <p className="ant-upload-drag-icon">
-          <InboxOutlined />
-        </p>
-        <p className="ant-upload-text" style={{ fontSize: 13 }}>
-          点击或拖拽上传{uploading > 0 ? `（正在上传 ${uploading} 个…）` : ''} · 图片≤10MB 视频≤500MB
-        </p>
+        <span className="sc-upload-strip__icon" aria-hidden="true">
+          <CloudUploadOutlined />
+        </span>
+        <span className="sc-upload-strip__text">
+          <span className="sc-upload-strip__title">
+            {uploading > 0 ? `正在上传 ${uploading} 个文件…` : '拖拽或点击上传'}
+          </span>
+          <span className="sc-upload-strip__hint">图片 ≤ 10MB · 视频 ≤ 500MB</span>
+        </span>
       </Upload.Dragger>
-      <div style={{ maxHeight: 380, overflowY: 'auto' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>
-            <Spin />
+
+      <div className="sc-picker-scroll">
+        {error ? (
+          <PageError message={error} onRetry={() => void load(q, page)} />
+        ) : loading && list.length === 0 ? (
+          <div className="sc-picker-grid" aria-hidden="true">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div className="sc-picker-item" key={i}>
+                <span className="sc-skeleton sc-skel-media" />
+                <span className="sc-picker-item__info">
+                  <span className="sc-skeleton sc-skel-line" style={{ width: '80%' }} />
+                </span>
+              </div>
+            ))}
           </div>
         ) : list.length === 0 ? (
-          <Empty description="暂无媒体，先上传一个" />
+          <div className="sc-picker-empty">
+            <EmptyState
+              bare
+              icon={<PictureOutlined />}
+              title="暂无媒体"
+              description="先在上方上传一个文件，再从这里选择。"
+            />
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          <div className="sc-picker-grid">
             {list.map((m) => {
               const isVideo = m.mime_type.startsWith('video')
               const isSelected = selected.has(m.id)
               return (
-                <div
+                <button
+                  type="button"
                   key={m.id}
+                  className={`sc-picker-item${isSelected ? ' is-selected' : ''}`}
                   onClick={() => toggle(m)}
-                  style={{
-                    width: 124,
-                    cursor: 'pointer',
-                    border: isSelected ? '2px solid #0369A1' : '1px solid #E3E7ED',
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                    background: '#fff',
-                  }}
+                  aria-pressed={isSelected}
+                  aria-label={`选择 ${m.original_name}`}
                 >
-                  <div style={{ height: 92, background: '#F1F3F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="sc-picker-item__thumb">
                     {isVideo ? (
-                      <PlayCircleFilled style={{ fontSize: 32, color: '#9299A5' }} />
+                      <span className="sc-picker-item__video">
+                        <PlayCircleFilled />
+                      </span>
                     ) : (
-                      <img src={m.url} alt={m.alt_text} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={m.url} alt={m.alt_text || m.original_name} loading="lazy" />
                     )}
-                  </div>
-                  <div style={{ padding: '6px 8px' }}>
-                    <div style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.original_name}>
+                    {isSelected && (
+                      <span className="sc-picker-item__check">
+                        <CheckCircleFilled />
+                      </span>
+                    )}
+                  </span>
+                  <span className="sc-picker-item__info">
+                    <span className="sc-picker-item__name" title={m.original_name}>
                       {m.original_name}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#9299A5' }}>{fmtBytes(m.size_bytes)}</div>
-                  </div>
-                </div>
+                    </span>
+                    <span className="sc-picker-item__meta">
+                      {isVideo ? '视频' : '图片'} · {fmtBytes(m.size_bytes)}
+                    </span>
+                  </span>
+                </button>
               )
             })}
           </div>
         )}
       </div>
+
       {total > 24 && (
-        <div style={{ textAlign: 'center', marginTop: 12 }}>
-          <Button size="small" onClick={() => setPage((p) => p + 1)} disabled={list.length >= total}>
-            加载更多（{list.length}/{total}）
-          </Button>
+        <div className="sc-picker-pagination">
+          <Pagination
+            size="small"
+            current={page}
+            pageSize={24}
+            total={total}
+            showSizeChanger={false}
+            onChange={(p) => setPage(p)}
+          />
         </div>
       )}
     </Modal>

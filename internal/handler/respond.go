@@ -4,8 +4,9 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"io"
+	"log/slog"
 	"net/http"
+	"reflect"
 
 	"seamcap/internal/apperr"
 	"seamcap/internal/model"
@@ -20,20 +21,34 @@ func JSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// Data 成功响应 {"data": ...}。
-func Data(w http.ResponseWriter, v any) { JSON(w, http.StatusOK, map[string]any{"data": v}) }
+// Data 成功响应 {"data": ...}；nil 切片统一输出为 []。
+func Data(w http.ResponseWriter, v any) {
+	JSON(w, http.StatusOK, map[string]any{"data": nonNilSlice(v)})
+}
 
 // Created 201 响应。
 func Created(w http.ResponseWriter, v any) { JSON(w, http.StatusCreated, map[string]any{"data": v}) }
 
 // List 列表响应 {"data": [...], "pagination": {...}}。
 func List(w http.ResponseWriter, items any, p model.Pagination) {
-	JSON(w, http.StatusOK, map[string]any{"data": items, "pagination": p})
+	JSON(w, http.StatusOK, map[string]any{"data": nonNilSlice(items), "pagination": p})
+}
+
+// nonNilSlice 避免空列表被序列化成 null。
+func nonNilSlice(v any) any {
+	rv := reflect.ValueOf(v)
+	if rv.IsValid() && rv.Kind() == reflect.Slice && rv.IsNil() {
+		return []any{}
+	}
+	return v
 }
 
 // Error 业务错误 → HTTP 状态码 + 统一 JSON；未知错误一律 500（不暴露堆栈）。
 func Error(w http.ResponseWriter, err error) {
 	if ae, ok := apperr.As(err); ok {
+		if ae.Code == apperr.CodeInternal {
+			slog.Error("internal error", "error", ae.Error())
+		}
 		status := apperr.HTTPStatus(ae.Code)
 		body := map[string]any{"code": ae.Code, "message": ae.Message}
 		if ae.Fields != nil {
@@ -42,14 +57,15 @@ func Error(w http.ResponseWriter, err error) {
 		JSON(w, status, map[string]any{"error": body})
 		return
 	}
+	slog.Error("internal error", "error", err.Error())
 	JSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]any{
 		"code": apperr.CodeInternal, "message": "Internal server error",
 	}})
 }
 
-// Decode 解析 JSON 请求体（≤1MB）。
+// Decode 解析 JSON 请求体（≤1MB），超限返回 413。
 func Decode(r *http.Request, dst any) error {
-	body := io.LimitReader(r.Body, maxJSONBody+1)
+	body := http.MaxBytesReader(nil, r.Body, maxJSONBody)
 	dec := json.NewDecoder(body)
 	if err := dec.Decode(dst); err != nil {
 		var mbe *http.MaxBytesError

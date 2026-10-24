@@ -62,6 +62,7 @@
   </div>
 </section>
 
+<div id="cmsStaticModules">
 <section class="section section--tight" id="craft-molding">
   <div class="wrap craft-module">
     <figure class="glass-frame reveal">
@@ -120,6 +121,9 @@
     </div>
   </div>
 </section>
+</div>
+<!-- 后台工艺驱动（cms.js：工艺列表非空时替换上方静态模块） -->
+<div id="cmsCraftModules" hidden></div>
 
 <section class="section section--tight">
   <div class="wrap">
@@ -157,5 +161,6 @@
 </a>
 
 <script src="static/js/main.js" defer></script>
+<script src="static/js/cms.js" defer></script>
 </body>
 </html>

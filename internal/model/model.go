@@ -17,6 +17,7 @@ type Session struct {
 	AdminID   int64  `json:"-"`
 	IP        string `json:"-"`
 	UserAgent string `json:"-"`
+	Remember  bool   `json:"-"`
 	ExpiresAt string `json:"-"`
 	CreatedAt string `json:"-"`
 }

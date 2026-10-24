@@ -2,10 +2,13 @@
 package middleware
 
 import (
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
 	"runtime/debug"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -110,34 +113,103 @@ func MaxBody(n int64) func(http.Handler) http.Handler {
 	}
 }
 
-// ClientIP 提取客户端 IP：反代场景优先 X-Forwarded-For/X-Real-IP。
-func ClientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		// 取第一个（最初客户端）
-		for i := 0; i < len(xff); i++ {
-			if xff[i] == ',' {
-				return trimSpace(xff[:i])
-			}
-		}
-		return trimSpace(xff)
-	}
-	if xr := r.Header.Get("X-Real-IP"); xr != "" {
-		return trimSpace(xr)
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
+// 默认受信代理网段：回环 + RFC1918/ULA。仅这些地址发来的 X-Forwarded-For 才会被信任。
+var defaultTrustedProxies = []string{
+	"127.0.0.0/8", "::1/128",
+	"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7",
 }
 
-func trimSpace(s string) string {
-	start, end := 0, len(s)
-	for start < end && (s[start] == ' ' || s[start] == '\t') {
-		start++
+var (
+	trustedMu   sync.RWMutex
+	trustedNets []*net.IPNet
+)
+
+func init() { _ = SetTrustedProxies(nil) }
+
+// SetTrustedProxies 设置受信反代网段（支持 CIDR 或裸 IP）；空列表恢复默认值。
+func SetTrustedProxies(cidrs []string) error {
+	if len(cidrs) == 0 {
+		cidrs = defaultTrustedProxies
 	}
-	for end > start && (s[end-1] == ' ' || s[end-1] == '\t') {
-		end--
+	nets := make([]*net.IPNet, 0, len(cidrs))
+	for _, raw := range cidrs {
+		c := strings.TrimSpace(raw)
+		if c == "" {
+			continue
+		}
+		if !strings.Contains(c, "/") {
+			ip := net.ParseIP(c)
+			if ip == nil {
+				return fmt.Errorf("invalid trusted proxy %q", raw)
+			}
+			bits := 32
+			if ip.To4() == nil {
+				bits = 128
+			}
+			c = fmt.Sprintf("%s/%d", ip.String(), bits)
+		}
+		_, ipnet, err := net.ParseCIDR(c)
+		if err != nil {
+			return fmt.Errorf("invalid trusted proxy %q: %w", raw, err)
+		}
+		nets = append(nets, ipnet)
 	}
-	return s[start:end]
+	trustedMu.Lock()
+	trustedNets = nets
+	trustedMu.Unlock()
+	return nil
+}
+
+func isTrustedProxyIP(ip net.IP) bool {
+	if ip == nil {
+		return false
+	}
+	trustedMu.RLock()
+	defer trustedMu.RUnlock()
+	for _, n := range trustedNets {
+		if n.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+func remoteHost(remoteAddr string) string {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	return strings.Trim(host, "[]")
+}
+
+// ClientIP 提取客户端 IP：仅当直连方是受信代理时解析转发头，
+// 并从右向左取第一个非受信地址（最右侧由最近一跳代理写入，客户端无法伪造）。
+func ClientIP(r *http.Request) string {
+	remote := remoteHost(r.RemoteAddr)
+	if !isTrustedProxyIP(net.ParseIP(remote)) {
+		return remote
+	}
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.Split(xff, ",")
+		const maxHops = 20 // 防超长头放大
+		if len(parts) > maxHops {
+			parts = parts[len(parts)-maxHops:]
+		}
+		for i := len(parts) - 1; i >= 0; i-- {
+			cand := strings.TrimSpace(parts[i])
+			ip := net.ParseIP(cand)
+			if ip == nil {
+				continue
+			}
+			if !isTrustedProxyIP(ip) {
+				return cand
+			}
+		}
+	}
+	if xr := strings.TrimSpace(r.Header.Get("X-Real-IP")); xr != "" {
+		if net.ParseIP(xr) != nil {
+			return xr
+		}
+	}
+	return remote
 }
