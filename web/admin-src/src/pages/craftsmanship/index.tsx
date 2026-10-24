@@ -151,7 +151,6 @@ export default function CraftList(): JSX.Element {
                   <span className="sc-code">{c.slug || '未设置 slug'}</span>
                   <div className="sc-craft-card__actions">
                     <Button
-                      type="link"
                       size="small"
                       onClick={() => navigate(`/admin/craftsmanship/${c.id}/edit`)}
                     >
@@ -165,7 +164,7 @@ export default function CraftList(): JSX.Element {
                       cancelText="取消"
                       onConfirm={() => remove(c)}
                     >
-                      <Button type="text" size="small" danger>
+                      <Button danger size="small">
                         删除
                       </Button>
                     </Popconfirm>

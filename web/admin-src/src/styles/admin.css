@@ -45,10 +45,10 @@
   --sc-blue-border: #d6e4fa;
   --sc-blue-ink: #3768bd;
 
-  --sc-green: #3f3f46;
-  --sc-green-soft: #eef0f3;
-  --sc-green-border: #d5d8dd;
-  --sc-green-ink: #3f3f46;
+  --sc-green: #27a86a;
+  --sc-green-soft: #e8f6ee;
+  --sc-green-border: #cbeada;
+  --sc-green-ink: #1d7c4c;
 
   --sc-amber: #e6a13b;
   --sc-amber-soft: #fff4df;
@@ -172,10 +172,10 @@ html[data-theme="dark"] {
   --sc-blue-border: rgba(138, 180, 255, 0.24);
   --sc-blue-ink: #a9c7ff;
 
-  --sc-green: #a1a9b0;
-  --sc-green-soft: rgba(255, 255, 255, 0.10);
-  --sc-green-border: rgba(255, 255, 255, 0.20);
-  --sc-green-ink: #c8cdd4;
+  --sc-green: #5fd699;
+  --sc-green-soft: rgba(39, 168, 106, 0.16);
+  --sc-green-border: rgba(95, 214, 153, 0.24);
+  --sc-green-ink: #8fe0b5;
 
   --sc-amber: #f3bd6a;
   --sc-amber-soft: rgba(230, 161, 59, 0.16);
@@ -407,6 +407,11 @@ select {
 .ant-select-dropdown {
   border: 1px solid var(--sc-border);
   box-shadow: var(--sc-shadow-overlay);
+}
+
+/* antd v6 会在下拉展开时把选中值淡化到 opacity 0.25（不可读），恢复为完全不透明 */
+.ant-select-single.ant-select-open .ant-select-content-has-value {
+  opacity: 1 !important;
 }
 
 .ant-pagination .ant-pagination-item {
@@ -4076,7 +4081,7 @@ button.sc-nav-group__title:hover .anticon {
 .sc-craft-card__actions {
   display: flex;
   flex-shrink: 0;
-  gap: 0;
+  gap: 8px;
   align-items: center;
 }
 
@@ -4087,14 +4092,69 @@ button.sc-nav-group__title:hover .anticon {
 .sc-inbox {
   display: grid;
   grid-template-columns: 380px minmax(0, 1fr);
-  height: calc(100vh - 296px);
+  grid-template-rows: auto minmax(0, 1fr);
+  height: calc(100vh - 236px);
   min-height: 560px;
-  max-height: 900px;
   overflow: hidden;
   background: var(--sc-surface);
   border: 1px solid var(--sc-border);
   border-radius: var(--sc-radius-lg);
   box-shadow: var(--sc-shadow-card);
+}
+
+/* 工具栏：搜索 + 状态 chips + 日期，横跨列表 / 详情两列 */
+.sc-inbox__toolbar {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--sc-surface);
+  border-bottom: 1px solid var(--sc-border-soft);
+}
+
+.sc-inbox__search {
+  width: 240px;
+}
+
+.sc-inbox__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+}
+
+.sc-inbox__chip {
+  padding: 3px 11px;
+  color: var(--sc-text-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  background: transparent;
+  border: 1px solid var(--sc-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 140ms var(--sc-ease),
+    background-color 140ms var(--sc-ease),
+    border-color 140ms var(--sc-ease);
+}
+
+.sc-inbox__chip:hover {
+  color: var(--sc-text);
+  background: var(--sc-surface-hover);
+}
+
+.sc-inbox__chip:focus-visible {
+  outline: 2px solid var(--sc-primary-border);
+  outline-offset: 1px;
+}
+
+.sc-inbox__chip.is-active {
+  color: var(--sc-surface);
+  background: var(--sc-primary);
+  border-color: var(--sc-primary);
 }
 
 .sc-inbox__list {
@@ -4108,7 +4168,7 @@ button.sc-nav-group__title:hover .anticon {
 
 .sc-inbox__list-head {
   display: flex;
-  flex: 0 0 48px;
+  flex: 0 0 44px;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -4130,13 +4190,17 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-inbox-item {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-areas:
+    'avatar main'
+    'product product'
+    'snippet snippet';
+  gap: 3px 10px;
   width: 100%;
-  min-height: 86px;
-  padding: 14px 18px;
+  padding: 12px 14px;
   color: var(--sc-text);
+  font-family: inherit;
   text-align: left;
   background: transparent;
   border: 0;
@@ -4156,17 +4220,42 @@ button.sc-nav-group__title:hover .anticon {
   border-left-color: var(--sc-primary);
 }
 
-.sc-inbox-item__top {
+.sc-inbox-item__avatar {
   display: flex;
+  grid-area: avatar;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: var(--sc-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--sc-surface);
+  border: 1px solid var(--sc-border-soft);
+  border-radius: 50%;
+}
+
+.sc-inbox-item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  grid-area: main;
+  min-width: 0;
+}
+
+.sc-inbox-item__row1 {
+  display: flex;
+  gap: 8px;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  min-width: 0;
 }
 
 .sc-inbox-item__name {
   display: flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
   overflow: hidden;
   font-size: 13px;
   font-weight: 600;
@@ -4174,46 +4263,71 @@ button.sc-nav-group__title:hover .anticon {
   white-space: nowrap;
 }
 
-.sc-inbox-item__time {
+.sc-inbox-item__side {
+  display: flex;
   flex-shrink: 0;
+  gap: 8px;
+  align-items: center;
+}
+
+.sc-inbox-item__time {
+  color: var(--sc-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-inbox-item__sub {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  min-width: 0;
   color: var(--sc-text-muted);
   font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
 }
 
 .sc-inbox-item__company {
   overflow: hidden;
-  color: var(--sc-text-secondary);
-  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.sc-inbox-item__id {
+  flex-shrink: 0;
+}
+
 .sc-inbox-item__product {
-  overflow: hidden;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  grid-area: product;
+  padding-left: 44px;
   color: var(--sc-text-secondary);
   font-size: 12px;
+  font-weight: 500;
+}
+
+.sc-inbox-item__product .anticon {
+  flex-shrink: 0;
+  color: var(--sc-text-muted);
+  font-size: 11px;
+}
+
+.sc-inbox-item__product-name {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .sc-inbox-item__snippet {
   display: -webkit-box;
-  margin-top: 1px;
+  grid-area: snippet;
+  padding-left: 44px;
   overflow: hidden;
   color: var(--sc-text-muted);
   font-size: 11.5px;
   line-height: 1.5;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
-}
-
-.sc-inbox-item__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 4px;
 }
 
 .sc-inbox__list-foot {
@@ -4238,8 +4352,8 @@ button.sc-nav-group__title:hover .anticon {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  min-height: 72px;
-  padding: 12px 24px;
+  min-height: 64px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--sc-border-soft);
 }
 
@@ -4258,6 +4372,33 @@ button.sc-nav-group__title:hover .anticon {
   background: none;
   border: 0;
   cursor: pointer;
+}
+
+.sc-inbox__id-row {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  min-width: 0;
+}
+
+.sc-inbox__avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--sc-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--sc-surface-soft);
+  border: 1px solid var(--sc-border-soft);
+  border-radius: 50%;
+}
+
+.sc-inbox__id-text {
+  min-width: 0;
 }
 
 .sc-inbox__name {
@@ -4291,6 +4432,7 @@ button.sc-nav-group__title:hover .anticon {
 .sc-inbox__scroll {
   flex: 1;
   min-height: 0;
+  max-width: 980px;
   padding: 0 22px 16px;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -4495,6 +4637,90 @@ button.sc-nav-group__title:hover .anticon {
   align-items: center;
   justify-content: center;
   height: 100%;
+  padding: 24px;
+}
+
+.sc-placeholder-guide {
+  max-width: 660px;
+  text-align: center;
+}
+
+.sc-placeholder-guide__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  color: var(--sc-text-muted);
+  font-size: 22px;
+  background: var(--sc-surface-soft);
+  border: 1px solid var(--sc-border-soft);
+  border-radius: 16px;
+}
+
+.sc-placeholder-guide__title {
+  margin: 14px 0 0;
+  color: var(--sc-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sc-placeholder-guide__desc {
+  max-width: 470px;
+  margin: 6px auto 0;
+  color: var(--sc-text-muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.sc-placeholder-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.sc-placeholder-steps li {
+  display: flex;
+  gap: 9px;
+  padding: 12px 13px;
+  background: var(--sc-surface-soft);
+  border: 1px solid var(--sc-border-soft);
+  border-radius: 10px;
+}
+
+.sc-placeholder-steps i {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--sc-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  background: var(--sc-surface);
+  border: 1px solid var(--sc-border);
+  border-radius: 50%;
+}
+
+.sc-placeholder-steps b {
+  display: block;
+  color: var(--sc-text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.sc-placeholder-steps span {
+  display: block;
+  margin-top: 2px;
+  color: var(--sc-text-muted);
+  font-size: 11.5px;
+  line-height: 1.55;
 }
 
 /* --------------------------------------------------------------------------
@@ -4972,6 +5198,11 @@ button.sc-nav-group__title:hover .anticon {
   border-color: transparent;
 }
 
+/* 危险按钮：红边框配红字（豁免全局黑边框） */
+.sc-main .ant-btn-dangerous {
+  border-color: var(--sc-danger);
+}
+
 .sc-page-head__main-row {
   display: flex;
   flex-wrap: wrap;
@@ -5272,7 +5503,20 @@ button.sc-nav-group__title:hover .anticon {
     display: block;
     height: auto;
     min-height: 0;
-    max-height: none;
+  }
+
+  .sc-inbox__toolbar {
+    padding: 10px 12px;
+  }
+
+  .sc-inbox__search {
+    flex: 1 1 160px;
+    width: auto;
+  }
+
+  .sc-inbox__toolbar .ant-picker {
+    flex: 1 1 200px;
+    width: auto;
   }
 
   .sc-inbox__list {
@@ -5297,7 +5541,7 @@ button.sc-nav-group__title:hover .anticon {
     display: inline-flex;
   }
 
-  .sc-inquiries-filter.is-detail-open {
+  .sc-inbox__toolbar.is-detail-open {
     display: none;
   }
 
@@ -5307,6 +5551,10 @@ button.sc-nav-group__title:hover .anticon {
 
   .sc-detail-placeholder {
     display: none;
+  }
+
+  .sc-placeholder-steps {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

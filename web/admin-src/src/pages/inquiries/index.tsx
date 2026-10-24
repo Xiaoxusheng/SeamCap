@@ -18,6 +18,7 @@ import {
   MailOutlined,
   RedoOutlined,
   ReloadOutlined,
+  TagOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -37,12 +38,18 @@ const STATUS_LABEL: Record<string, string> = {
   '': '—',
 }
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS: { value: InquiryStatus; label: string }[] = [
   { value: 'new', label: '新询价' },
   { value: 'following', label: '跟进中' },
   { value: 'replied', label: '已回复' },
   { value: 'completed', label: '已完成' },
   { value: 'spam', label: '垃圾' },
+]
+
+// 状态筛选 chips：全部 + 各状态（替代下拉框，一眼可扫）
+const STATUS_CHIPS: { value?: InquiryStatus; label: string }[] = [
+  { label: '全部' },
+  ...STATUS_OPTIONS,
 ]
 
 function parseStatus(v: string | null): InquiryStatus | undefined {
@@ -60,6 +67,14 @@ function shortTime(s: string): string {
   return d.isValid() ? d.format('MM-DD HH:mm') : '—'
 }
 
+// 头像缩写：英文名取首字母，中文名取前两字
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
+}
+
 function eventLabel(e: InquiryEvent): string {
   switch (e.event_type) {
     case 'created':
@@ -75,7 +90,7 @@ function eventLabel(e: InquiryEvent): string {
   }
 }
 
-// 询价工作台：桌面双栏 Inbox，移动端列表 / 详情切换
+// 询价工作台：工具栏 + 列表 / 详情双栏一体化，移动端列表 / 详情切换
 export default function Inquiries(): JSX.Element {
   const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -280,80 +295,83 @@ export default function Inquiries(): JSX.Element {
     <div>
       <PageHeader
         title="询价管理"
-        description="客户线索收集与跟进；选择左侧询价查看产品快照、留言与事件历史。"
         extra={
-          <Button icon={<DownloadOutlined />} onClick={exportCSV}>
-            导出 CSV
-          </Button>
+          <>
+            <Tooltip title="刷新列表">
+              <Button
+                className="sc-icon-btn"
+                aria-label="刷新列表"
+                icon={<ReloadOutlined />}
+                loading={loading}
+                onClick={() => void load()}
+              />
+            </Tooltip>
+            <Button icon={<DownloadOutlined />} onClick={exportCSV}>
+              导出 CSV
+            </Button>
+          </>
         }
       />
-
-      <div
-        className={`sc-filterbar sc-inquiries-filter${detailOpen ? ' is-detail-open' : ''}`}
-      >
-        <Input.Search
-          className="sc-toolbar__search"
-          placeholder="搜索姓名 / 公司 / 邮箱 / 产品"
-          allowClear
-          value={keyword}
-          onChange={(e) => {
-            setKeyword(e.target.value)
-            if (e.target.value === '' && q !== '') {
-              setQ('')
-              setPage(1)
-            }
-          }}
-          onSearch={(v) => {
-            setQ(v.trim())
-            setPage(1)
-          }}
-        />
-        <Select
-          placeholder="全部状态"
-          allowClear
-          style={{ width: 132 }}
-          value={status}
-          options={STATUS_OPTIONS}
-          onChange={(v) => changeStatus(v)}
-        />
-        <DatePicker.RangePicker
-          value={range}
-          style={{ width: 240 }}
-          onChange={(v) => {
-            setRange(v)
-            setPage(1)
-          }}
-        />
-        <Button
-          type="text"
-          icon={<ClearOutlined />}
-          disabled={!hasFilters}
-          onClick={resetFilters}
-        >
-          清除筛选
-        </Button>
-        <div className="sc-toolbar__spacer" />
-        <span className="sc-toolbar__meta">共 {total} 条询价</span>
-        <Tooltip title="刷新列表">
-          <Button
-            type="text"
-            className="sc-icon-btn"
-            aria-label="刷新列表"
-            icon={<ReloadOutlined />}
-            loading={loading}
-            onClick={() => void load()}
-          />
-        </Tooltip>
-      </div>
 
       {error ? (
         <PageError message={error} onRetry={() => void load()} />
       ) : (
         <div className="sc-inbox">
+          <div className={`sc-inbox__toolbar${detailOpen ? ' is-detail-open' : ''}`}>
+            <Input.Search
+              className="sc-inbox__search"
+              placeholder="搜索姓名 / 公司 / 邮箱 / 产品"
+              allowClear
+              value={keyword}
+              onChange={(e) => {
+                setKeyword(e.target.value)
+                if (e.target.value === '' && q !== '') {
+                  setQ('')
+                  setPage(1)
+                }
+              }}
+              onSearch={(v) => {
+                setQ(v.trim())
+                setPage(1)
+              }}
+            />
+            <div className="sc-inbox__chips" role="group" aria-label="按状态筛选">
+              {STATUS_CHIPS.map((chip) => (
+                <button
+                  key={chip.label}
+                  type="button"
+                  className={`sc-inbox__chip${chip.value === status ? ' is-active' : ''}`}
+                  onClick={() => changeStatus(chip.value)}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+            <div className="sc-toolbar__spacer" />
+            <DatePicker.RangePicker
+              value={range}
+              style={{ width: 240 }}
+              onChange={(v) => {
+                setRange(v)
+                setPage(1)
+              }}
+            />
+            <Tooltip title="清除筛选">
+              <Button
+                type="text"
+                className="sc-icon-btn"
+                aria-label="清除筛选"
+                icon={<ClearOutlined />}
+                disabled={!hasFilters}
+                onClick={resetFilters}
+              />
+            </Tooltip>
+          </div>
+
           <div className={`sc-inbox__list${detailOpen ? ' is-hidden-mobile' : ''}`}>
             <div className="sc-inbox__list-head">
               <span className="sc-inbox__list-title">询价列表</span>
-              <span className="sc-toolbar__meta">{total} 条</span>
+              <span className="sc-toolbar__meta">共 {total} 条</span>
             </div>
             <div className="sc-inbox__items">
               {loading && list.length === 0 ? (
@@ -389,27 +407,37 @@ export default function Inquiries(): JSX.Element {
                     onClick={() => void openDetailById(inq.id, inq)}
                     aria-current={detailId === inq.id ? 'true' : undefined}
                   >
-                    <span className="sc-inbox-item__top">
-                      <span className="sc-inbox-item__name">
-                        {inq.status === 'new' && (
-                          <span className="sc-inquiry-row__new" aria-label="新询价" />
-                        )}
-                        {inq.name}
-                      </span>
-                      <span className="sc-inbox-item__time">{shortTime(inq.created_at)}</span>
+                    <span className="sc-inbox-item__avatar" aria-hidden="true">
+                      {initials(inq.name)}
                     </span>
-                    <span className="sc-inbox-item__company">
-                      {inq.company || '未填写公司'}
+                    <span className="sc-inbox-item__main">
+                      <span className="sc-inbox-item__row1">
+                        <span className="sc-inbox-item__name">
+                          {inq.status === 'new' && (
+                            <span className="sc-inquiry-row__new" aria-label="新询价" />
+                          )}
+                          {inq.name}
+                        </span>
+                        <span className="sc-inbox-item__side">
+                          <InquiryStatusTag status={inq.status} />
+                          <span className="sc-inbox-item__time">{shortTime(inq.created_at)}</span>
+                        </span>
+                      </span>
+                      <span className="sc-inbox-item__sub">
+                        <span className="sc-inbox-item__company">
+                          {inq.company || '未填写公司'}
+                        </span>
+                        <span className="sc-inbox-item__id sc-mono">#{inq.id}</span>
+                      </span>
                     </span>
                     <span className="sc-inbox-item__product">
-                      {inq.product_name_snapshot || '未关联产品'}
+                      <TagOutlined aria-hidden="true" />
+                      <span className="sc-inbox-item__product-name">
+                        {inq.product_name_snapshot || '未关联产品'}
+                      </span>
                     </span>
                     <span className="sc-inbox-item__snippet">
                       {inq.message || inq.customization || '客户未填写留言'}
-                    </span>
-                    <span className="sc-inbox-item__foot">
-                      <InquiryStatusTag status={inq.status} />
-                      <span className="sc-cell-secondary sc-mono">#{inq.id}</span>
                     </span>
                   </button>
                 ))
@@ -432,12 +460,38 @@ export default function Inquiries(): JSX.Element {
           <div className={`sc-inbox__detail${detailOpen ? ' is-open-mobile' : ''}`}>
             {!detailOpen ? (
               <div className="sc-detail-placeholder">
-                <EmptyState
-                  bare
-                  icon={<InboxOutlined />}
-                  title="选择一条询价"
-                  description="左侧列表显示客户、产品与状态；选择后在右侧查看完整需求并跟进。"
-                />
+                <div className="sc-placeholder-guide">
+                  <span className="sc-placeholder-guide__icon" aria-hidden="true">
+                    <InboxOutlined />
+                  </span>
+                  <p className="sc-placeholder-guide__title">选择一条询价开始处理</p>
+                  <p className="sc-placeholder-guide__desc">
+                    左侧列表展示客户、产品与状态，点击卡片即可在右侧查看完整需求并跟进。
+                  </p>
+                  <ol className="sc-placeholder-steps">
+                    <li>
+                      <i>1</i>
+                      <div>
+                        <b>打开询价</b>
+                        <span>点击左侧客户卡片，查看联系方式与产品快照</span>
+                      </div>
+                    </li>
+                    <li>
+                      <i>2</i>
+                      <div>
+                        <b>核对需求</b>
+                        <span>确认数量、定制要求与客户留言，及时回复客户</span>
+                      </div>
+                    </li>
+                    <li>
+                      <i>3</i>
+                      <div>
+                        <b>跟进留痕</b>
+                        <span>更新处理状态、记录内部备注，操作自动写入事件历史</span>
+                      </div>
+                    </li>
+                  </ol>
+                </div>
               </div>
             ) : (
               <>
@@ -446,11 +500,18 @@ export default function Inquiries(): JSX.Element {
                     <button type="button" className="sc-inbox__back" onClick={closeDetail}>
                       <ArrowLeftOutlined /> 返回列表
                     </button>
-                    <h2 className="sc-inbox__name">{detail?.name ?? '询价详情'}</h2>
-                    <div className="sc-inbox__company">
-                      {detail
-                        ? `${detail.company || '未填写公司'} · 询价 #${detail.id}`
-                        : `询价 #${detailId ?? ''}`}
+                    <div className="sc-inbox__id-row">
+                      <span className="sc-inbox__avatar" aria-hidden="true">
+                        {initials(detail?.name ?? '?')}
+                      </span>
+                      <div className="sc-inbox__id-text">
+                        <h2 className="sc-inbox__name">{detail?.name ?? '询价详情'}</h2>
+                        <div className="sc-inbox__company">
+                          {detail
+                            ? `${detail.company || '未填写公司'} · 询价 #${detail.id}`
+                            : `询价 #${detailId ?? ''}`}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="sc-inbox__head-actions">
@@ -578,6 +639,23 @@ export default function Inquiries(): JSX.Element {
 
                       <section className="sc-inbox-section">
                         <div className="sc-inbox-section__label">
+                          <span>处理状态</span>
+                          <span className="sc-inbox-section__hint">变更会记录到事件历史</span>
+                        </div>
+                        <div className="sc-status-row">
+                          <Select
+                            value={detail.status}
+                            disabled={saving}
+                            style={{ width: 168 }}
+                            onChange={(v: InquiryStatus) => void updateInquiry({ status: v })}
+                            options={STATUS_OPTIONS}
+                          />
+                          {saving && <span className="sc-helper">保存中…</span>}
+                        </div>
+                      </section>
+
+                      <section className="sc-inbox-section">
+                        <div className="sc-inbox-section__label">
                           <span>内部备注</span>
                           <span className="sc-inbox-section__hint">仅后台可见，客户不会收到</span>
                         </div>
@@ -601,23 +679,6 @@ export default function Inquiries(): JSX.Element {
                               保存备注
                             </Button>
                           </div>
-                        </div>
-                      </section>
-
-                      <section className="sc-inbox-section">
-                        <div className="sc-inbox-section__label">
-                          <span>处理状态</span>
-                          <span className="sc-inbox-section__hint">变更会记录到事件历史</span>
-                        </div>
-                        <div className="sc-status-row">
-                          <Select
-                            value={detail.status}
-                            disabled={saving}
-                            style={{ width: 168 }}
-                            onChange={(v: InquiryStatus) => void updateInquiry({ status: v })}
-                            options={STATUS_OPTIONS}
-                          />
-                          {saving && <span className="sc-helper">保存中…</span>}
                         </div>
                       </section>
 

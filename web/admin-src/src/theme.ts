@@ -105,6 +105,12 @@ export function buildThemeConfig(mode: ResolvedTheme): ThemeConfig {
       colorPrimary: p.primary,
       colorPrimaryHover: p.primaryHover,
       colorPrimaryActive: p.primaryActive,
+      // 主色为近黑/近白时，antd 调色板会派生出深灰"浅色底"（如 #515557），
+      // 导致下拉选中+悬停项等场景深底配深字，必须显式给出正确的浅色/深色 tint
+      colorPrimaryBg: mode === 'dark' ? '#26292E' : '#EEF0F3',
+      colorPrimaryBgHover: mode === 'dark' ? '#30353A' : '#E2E5EA',
+      controlItemBgActive: mode === 'dark' ? '#26292E' : '#EEF0F3',
+      controlItemBgActiveHover: mode === 'dark' ? '#30353A' : '#E2E5EA',
       colorInfo: p.info,
       colorSuccess: p.success,
       colorWarning: p.warning,
