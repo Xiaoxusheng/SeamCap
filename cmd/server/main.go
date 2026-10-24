@@ -136,7 +136,8 @@ func main() {
 	if uploadsHandler != nil {
 		r.Handle("/uploads/*", uploadsHandler)
 	}
-	if staticHandler := staticDirHandler("web/static", "/static/", "public, max-age=3600"); staticHandler != nil {
+	// /static/ 文件无指纹，用 no-cache 强制协商缓存（ETag 304），保证发版即生效
+	if staticHandler := staticDirHandler("web/static", "/static/", "no-cache"); staticHandler != nil {
 		r.Handle("/static/*", staticHandler)
 	}
 
