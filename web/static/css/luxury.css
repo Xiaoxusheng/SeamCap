@@ -833,8 +833,22 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .vrow__thumb { height: 108px; }
   .vrow__body h3 { font-size: 20px; }
   .vrow__body .pill { font-size: 9.5px; padding: 5px 9px; }
-  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar { flex-direction: column; flex-wrap: nowrap; align-items: stretch; min-width: 0; }
   .filter-bar__tools { flex-direction: column; align-items: stretch; }
+  /* 分类胶囊单行横向滑动，不再折行；搜索/排序各占一行 */
+  .fpills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .fpills::-webkit-scrollbar { display: none; }
+  .fpill { flex-shrink: 0; white-space: nowrap; }
+  .filter-bar { min-width: 0; }
+  .filter-bar__tools { min-width: 0; }
+  .searchbox { min-width: 0; }
   .searchbox input { width: 100%; }
   .form-grid { grid-template-columns: 1fr; }
   .relgrid { grid-template-columns: 1fr; }
