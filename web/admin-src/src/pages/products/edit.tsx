@@ -136,6 +136,21 @@ export default function ProductEdit(): JSX.Element {
             }${product?.slug ? ` · /${product.slug}` : ''}`
           : '填写产品信息，保存后可继续管理主图、画廊与视频。'
       }
+      extra={
+        loading || error ? undefined : (
+          <>
+            <Button onClick={() => navigate('/admin/products')}>取消</Button>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              loading={saving}
+              onClick={() => void submit()}
+            >
+              保存产品
+            </Button>
+          </>
+        )
+      }
     />
   )
 
@@ -372,18 +387,6 @@ export default function ProductEdit(): JSX.Element {
               </section>
             )}
           </aside>
-        </div>
-
-        <div className="sc-form-footer">
-          <Button onClick={() => navigate('/admin/products')}>取消</Button>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            loading={saving}
-            onClick={() => void submit()}
-          >
-            保存产品
-          </Button>
         </div>
       </Form>
     </div>

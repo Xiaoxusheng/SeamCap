@@ -10,7 +10,7 @@
      data-cms-hero="title|lead|image|cta1|cta2"  首页 Hero
      #cmsFeatured / #cmsStaticLines        首页推荐产品 / 静态产品线兜底
      #cmsCraftList / #cmsStaticCraftGrid / #cmsStaticCraftVideos  首页工艺预览
-     #cmsValues / #cmsStaticValues、#cmsProcess / #cmsStaticProcess  优势/流程
+     #cmsValues / #cmsStaticValues、#cmsProcess / #cmsStaticProcess  优势/流程（流程卡可带配图或视频）
      [data-cms-factory]、#cmsContactBlurb、#cmsFooterTag  文案替换
      #cmsCraftModules / #cmsStaticModules  工艺页模块
    ============================================================ */
@@ -76,7 +76,7 @@
 
   // 动态渲染的视频卡点击播放（与 main.js 静态绑定逻辑一致）
   function bindVideos(scope) {
-    scope.querySelectorAll('.vcard__stage').forEach(function (stage) {
+    scope.querySelectorAll('.vcard__stage, .pstep__stage').forEach(function (stage) {
       stage.addEventListener('click', function () {
         if (stage.classList.contains('is-playing')) return;
         var src = stage.getAttribute('data-video');
@@ -163,7 +163,7 @@
     var src = img ? safeURL(img.url) : '';
     var alt = esc((img && (img.alt_text || img.original_name)) || p.name);
     var slug = encodeURIComponent(p.slug || p.sku || '');
-    var cat = (p.category && (p.category.name || p.category.name_en)) || '';
+    var cat = (p.category && (p.category.name_en || p.category.name)) || '';
     var n = colorwayCount(p);
     var link = 'product.html?slug=' + slug;
     return '<article class="pcard glass reveal">' +
@@ -200,6 +200,26 @@
     return '<div class="value glass reveal' + d + '">' +
       '<span class="value__num" aria-hidden="true">' + esc(num) + '</span>' +
       '<h3>' + esc(item.title || '') + '</h3><p>' + esc(item.desc || '') + '</p></div>';
+  }
+
+  // 流程步骤卡：可选配图/视频（视频优先播放、配图作封面），媒体通栏贴卡片顶部
+  function processCard(s, i) {
+    var d = i % 4 ? ' reveal--d' + (i % 4) : '';
+    var img = safeURL(s.image);
+    var vid = safeURL(s.video_url);
+    var media = '';
+    if (vid) {
+      media = '<button class="pstep__stage" type="button" data-video="' + esc(vid) + '"' +
+        ' aria-label="Play process video ' + (i + 1) + '">' +
+        (img ? '<img src="' + esc(img) + '" alt="" loading="lazy" width="640" height="400"/>' : '') +
+        '<span class="vcard__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg></span>' +
+        '</button>';
+    } else if (img) {
+      media = '<img class="pstep__img" src="' + esc(img) + '" alt="" loading="lazy" width="640" height="400"/>';
+    }
+    return '<div class="value glass reveal' + d + '">' + media +
+      '<span class="value__num" aria-hidden="true">' + esc(s.step || ('0' + (i + 1))) + '</span>' +
+      '<h3>' + esc(s.title || '') + '</h3><p>' + esc(s.desc || '') + '</p></div>';
   }
 
   function applyHero(hero) {
@@ -281,12 +301,11 @@
       }
       var procBox = document.getElementById('cmsProcess');
       if (procBox && hero.process_steps && hero.process_steps.length) {
-        procBox.innerHTML = hero.process_steps.map(function (s, i) {
-          return valueCard(s, i, s.step || ('0' + (i + 1)));
-        }).join('');
+        procBox.innerHTML = hero.process_steps.map(processCard).join('');
         show(procBox);
         hide(document.getElementById('cmsStaticProcess'));
         reveal(procBox);
+        bindVideos(procBox);
       }
 
       // 文案替换（非空才生效）
@@ -307,26 +326,104 @@
 
   /* ---------- 4. 工艺管理 → 工艺页模块 ---------- */
 
+  // 工艺媒体区：视频模块=视频卡（可被缩略图临时替换为图片，再点一次切回视频）+ 画廊缩略图；
+  // 图片模块=主图（封面，缺省取画廊首张）+ 可点击缩略图；封面不在画廊时并入序列首位（URL 去重）
   function craftMedia(c, i) {
     var chip = esc((i < 9 ? '0' : '') + (i + 1) + ' / ' + (c.title || ''));
     var cover = c.cover_image ? safeURL(c.cover_image.url) : '';
     var coverAlt = esc((c.cover_image && c.cover_image.alt_text) || c.title || '');
     var d = i % 2 ? '' : ' reveal--d1';
     var v = safeURL(c.video_url);
+    var imgs = (c.images || []).filter(function (m) {
+      return m && safeURL(m.url) && !String(m.mime_type || '').startsWith('video');
+    });
+
+    function thumbButtons(seq, activeIdx) {
+      return seq.map(function (m, j) {
+        var src = esc(safeURL(m.url));
+        var alt = esc(m.alt_text || m.original_name || '');
+        return '<button class="craft-thumb' + (j === activeIdx ? ' is-active' : '') + '" type="button"' +
+          ' data-src="' + src + '" data-alt="' + alt + '"' +
+          ' aria-label="Show image ' + (j + 1) + ' of ' + seq.length + (alt ? ': ' + alt : '') + '">' +
+          '<img src="' + src + '" alt="" loading="lazy" width="160" height="160"/></button>';
+      }).join('');
+    }
+
     if (v) {
-      return '<div class="vcard glass reveal' + d + '">' +
+      var gal = imgs.length
+        ? '<div class="craft-thumbs">' + thumbButtons(imgs, -1) + '</div>'
+        : '';
+      return '<div class="craft-media craft-media--video">' +
+        '<div class="vcard glass reveal' + d + '">' +
         '<button class="vcard__stage" type="button" data-video="' + esc(v) + '" aria-label="Play video: ' + esc(c.title) + '">' +
         (cover ? '<img src="' + esc(cover) + '" alt="" loading="lazy" width="640" height="360"/>' : '') +
         '<span class="vcard__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg></span>' +
         '</button>' +
-        '<div class="vcard__body"><b>' + chip + '</b><p>' + esc(c.summary || '') + '</p></div></div>';
+        '<div class="vcard__body"><b>' + chip + '</b><p>' + esc(c.summary || '') + '</p></div></div>' +
+        '<figure class="glass-frame craft-cover" hidden><img alt=""/>' +
+        '<button class="craft-back" type="button" aria-label="Back to video">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg>Video</button>' +
+        '</figure>' +
+        gal + '</div>';
     }
-    if (cover) {
-      return '<figure class="glass-frame reveal' + d + '">' +
-        '<img src="' + esc(cover) + '" alt="' + coverAlt + '" loading="lazy" width="900" height="640"/>' +
-        '<figcaption class="glass-chip"><strong>' + chip + '</strong></figcaption></figure>';
+
+    var seq = imgs.slice();
+    if (cover && !seq.some(function (m) { return safeURL(m.url) === cover; })) {
+      seq.unshift(c.cover_image);
     }
-    return '<div aria-hidden="true"></div>';
+    var mainSrc = cover || (seq[0] ? safeURL(seq[0].url) : '');
+    if (!mainSrc && !seq.length) return '<div aria-hidden="true"></div>';
+
+    var activeIdx = 0;
+    for (var k = 0; k < seq.length; k++) {
+      if (safeURL(seq[k].url) === mainSrc) { activeIdx = k; break; }
+    }
+
+    return '<div class="craft-media">' +
+      '<figure class="glass-frame craft-cover reveal' + d + '">' +
+      '<img src="' + esc(mainSrc) + '" alt="' + coverAlt + '" loading="lazy" width="900" height="640"/>' +
+      '<figcaption class="glass-chip"><strong>' + chip + '</strong></figcaption></figure>' +
+      '<div class="craft-thumbs">' + thumbButtons(seq, activeIdx) + '</div></div>';
+  }
+
+  // 画廊缩略图交互：图片模块点击换主图；视频模块点击把视频临时替换为图片，
+  // 点「Video」按钮或再次点击同一张切回视频
+  function bindCraftGallery(scope) {
+    scope.querySelectorAll('.craft-module').forEach(function (mod) {
+      var thumbs = mod.querySelectorAll('button.craft-thumb');
+      if (!thumbs.length) return;
+      var vcard = mod.querySelector('.vcard');
+      var videoStage = mod.querySelector('.vcard__stage');
+      var coverFrame = mod.querySelector('.craft-cover');
+      var coverImg = coverFrame ? coverFrame.querySelector('img') : null;
+
+      function showVideo() {
+        thumbs.forEach(function (x) { x.classList.remove('is-active'); });
+        coverFrame.hidden = true;
+        vcard.hidden = false;
+      }
+
+      thumbs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          var wasActive = t.classList.contains('is-active');
+          if (wasActive && videoStage) { showVideo(); return; }
+          thumbs.forEach(function (x) { x.classList.remove('is-active'); });
+          t.classList.add('is-active');
+          if (coverImg) {
+            coverImg.src = t.getAttribute('data-src');
+            var alt = t.getAttribute('data-alt');
+            if (alt) coverImg.alt = alt;
+          }
+          if (videoStage) {
+            vcard.hidden = true;
+            coverFrame.hidden = false;
+          }
+        });
+      });
+
+      var back = mod.querySelector('.craft-back');
+      if (back && videoStage) back.addEventListener('click', showVideo);
+    });
   }
 
   function bindCraft() {
@@ -345,6 +442,7 @@
       show(box);
       hide(document.getElementById('cmsStaticModules'));
       bindVideos(box);
+      bindCraftGallery(box);
       reveal(box);
     }).catch(function () { /* 静态兜底 */ });
   }

@@ -233,7 +233,7 @@
         var n = counts[c.slug] || 0;
         if (!n) return; // 暂无产品的分类不在前台展示
         html += '<button class="fpill" type="button" data-cat="' + c.slug + '">' +
-          (c.name || c.name_en) + ' <span>' + n + '</span></button>';
+          (c.name_en || c.name) + ' <span>' + n + '</span></button>';
       });
       pillsBox.innerHTML = html;
       bindPills();

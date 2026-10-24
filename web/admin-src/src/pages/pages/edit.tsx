@@ -76,6 +76,21 @@ export default function PageEdit(): JSX.Element {
           公开站路径 <span className="sc-code">/{slug}/</span> · 内容保存前由服务端执行白名单过滤
         </>
       }
+      extra={
+        loading || error ? undefined : (
+          <>
+            <Button onClick={() => navigate('/admin/pages')}>取消</Button>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              loading={saving}
+              onClick={() => void submit()}
+            >
+              保存页面
+            </Button>
+          </>
+        )
+      }
     />
   )
 
@@ -199,18 +214,6 @@ export default function PageEdit(): JSX.Element {
             </Form.Item>
           </div>
         </PageSection>
-
-        <div className="sc-form-footer">
-          <Button onClick={() => navigate('/admin/pages')}>取消</Button>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            loading={saving}
-            onClick={() => void submit()}
-          >
-            保存页面
-          </Button>
-        </div>
       </Form>
     </div>
   )

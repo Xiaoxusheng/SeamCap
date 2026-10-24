@@ -1,0 +1,69 @@
+# SeamCap 生产部署编排
+# 架构：Nginx 容器(80/443, TLS) -> 反代 app 容器(内网 8080)；8888 为直连调试口
+# 首次部署步骤见 deploy/DOCKER.md（含证书签发三步）
+services:
+  app:
+    build: .
+    image: seamcap:latest
+    container_name: seamcap
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      APP_ENV: production
+      PORT: "8080"
+      DB_PATH: /app/data/seamcap.db
+      UPLOAD_DIR: /app/uploads
+      BACKUP_DIR: /app/data/backups
+      # 如需固定时区可取消注释
+      # TZ: Asia/Shanghai
+    ports:
+      # 直连调试口（应急/内测用）；正式流量走 nginx 的 80/443
+      # 上线稳定后建议改成 "127.0.0.1:8080:8080"（仅本机回环）
+      - "8888:8080"
+    volumes:
+      - ./data:/app/data        # SQLite 数据库 + secret.key + 自动备份
+      - ./uploads:/app/uploads  # 上传的图片/视频
+    # 绑定挂载目录属于宿主机某用户时，取消注释并改成对应 uid/gid（容器默认 10001:10001）
+    # user: "1000:1000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/robots.txt"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: seamcap-nginx
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # 从项目根 .env 读取（compose 变量替换），模板 deploy/nginx/templates/default.conf.template 自动渲染
+      DOMAIN: ${DOMAIN:?请先在 .env 中设置 DOMAIN=你的域名}
+    volumes:
+      - ./deploy/nginx/templates:/etc/nginx/templates:ro
+      - ./certbot/conf:/etc/letsencrypt   # 证书（占位自签→certbot 正式覆盖）
+      - ./certbot/www:/var/www/certbot    # HTTP-01 校验 webroot
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # 一次性签发/续签工具：docker compose run --rm certbot ...（不随 up -d 启动）
+  certbot:
+    image: certbot/certbot:latest
+    profiles: ["certbot"]
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot

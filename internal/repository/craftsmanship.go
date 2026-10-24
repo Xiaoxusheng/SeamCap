@@ -52,13 +52,24 @@ func scanCraftRow(row interface{ Scan(...any) error }) (*model.Craftsmanship, er
 	return &c, nil
 }
 
-// ListPublic 已发布列表。
+// ListPublic 已发布列表（含画廊图片，供前台工艺模块展示细节图）。
 func (r *CraftRepo) ListPublic() ([]model.Craftsmanship, error) {
 	rows, err := r.db.Query(`SELECT ` + craftCols + ` ` + craftFrom + ` WHERE c.status='published' ORDER BY c.sort_order, c.id`)
 	if err != nil {
 		return nil, err
 	}
-	return collectCrafts(rows)
+	list, err := collectCrafts(rows)
+	if err != nil {
+		return nil, err
+	}
+	for i := range list {
+		imgs, err := r.media.ListForCraft(list[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		list[i].Images = imgs
+	}
+	return list, nil
 }
 
 // ListAdmin 全部。

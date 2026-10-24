@@ -97,8 +97,9 @@ func (s *HomeService) Update(in HomeInput) (*model.HomeContent, error) {
 		}
 	}
 	for _, st := range in.ProcessSteps {
-		if charCount(st.Step) > 100 || charCount(st.Desc) > 500 {
-			return nil, apperr.InvalidField("process_steps", "item fields too long (step≤100, desc≤500)")
+		if charCount(st.Step) > 100 || charCount(st.Desc) > 500 ||
+			charCount(st.Image) > 500 || charCount(st.VideoURL) > 500 {
+			return nil, apperr.InvalidField("process_steps", "item fields too long (step≤100, desc≤500, image≤500, video_url≤500)")
 		}
 	}
 	if charCount(in.HeroTitle) > 200 || charCount(in.HeroSubtitle) > 300 || charCount(in.HeroVideoURL) > 500 {

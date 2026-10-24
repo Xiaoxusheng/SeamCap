@@ -101,6 +101,21 @@ export default function CraftEdit(): JSX.Element {
             }`
           : '填写工艺内容、封面与展示素材，保存后同步到公开站。'
       }
+      extra={
+        loading || error ? undefined : (
+          <>
+            <Button onClick={() => navigate('/admin/craftsmanship')}>取消</Button>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              loading={saving}
+              onClick={() => void submit()}
+            >
+              保存工艺
+            </Button>
+          </>
+        )
+      }
     />
   )
 
@@ -286,18 +301,6 @@ export default function CraftEdit(): JSX.Element {
               </section>
             )}
           </aside>
-        </div>
-
-        <div className="sc-form-footer">
-          <Button onClick={() => navigate('/admin/craftsmanship')}>取消</Button>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            loading={saving}
-            onClick={() => void submit()}
-          >
-            保存工艺
-          </Button>
         </div>
       </Form>
     </div>

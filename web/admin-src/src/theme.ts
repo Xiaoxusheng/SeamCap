@@ -196,7 +196,8 @@ export function buildThemeConfig(mode: ResolvedTheme): ThemeConfig {
         defaultShadow: 'none',
         primaryShadow: 'none',
         dangerShadow: 'none',
-        defaultBorderColor: mode === 'dark' ? '#3A423E' : '#111418',
+        // 次级按钮：白底 + 低对比度细边框，避免全局重黑边框
+        defaultBorderColor: mode === 'dark' ? '#3A423E' : '#C9CDD3',
         defaultColor: p.text,
         primaryColor: mode === 'dark' ? '#0B0E0D' : '#FFFFFF',
         contentFontSize: 13,

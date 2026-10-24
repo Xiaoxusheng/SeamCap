@@ -137,8 +137,10 @@ type Advantage struct {
 
 // ProcessStep 首页流程步骤。
 type ProcessStep struct {
-	Step string `json:"step"`
-	Desc string `json:"desc"`
+	Step     string `json:"step"`
+	Desc     string `json:"desc"`
+	Image    string `json:"image"`
+	VideoURL string `json:"video_url"`
 }
 
 // HomeContent 首页内容（单行 id=1）。

@@ -269,6 +269,9 @@ export default function AdminLayout(): JSX.Element {
 
   const crumbs = resolveCrumbs(location.pathname)
 
+  // 仪表盘首页：顶栏面包屑已表达层级，页面不再重复渲染全量快捷导航
+  const isDashboard = location.pathname === '/admin' || location.pathname === '/admin/'
+
   const toggleGroup = (key: string): void => {
     setClosedGroups((prev) => ({ ...prev, [key]: !prev[key] }))
   }
@@ -470,8 +473,8 @@ export default function AdminLayout(): JSX.Element {
 
         <main className="sc-main" id="sc-main">
           <div className="sc-workspace">
-            <div className="sc-page" key={location.pathname}>
-              <QuickNav />
+            <div className={`sc-page${isDashboard ? ' sc-page--dash' : ''}`} key={location.pathname}>
+              {!isDashboard && <QuickNav />}
               <Outlet />
             </div>
           </div>

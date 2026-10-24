@@ -5,10 +5,12 @@ import {
   AppstoreOutlined,
   ArrowRightOutlined,
   CheckCircleOutlined,
+  CloudUploadOutlined,
   EditOutlined,
   InboxOutlined,
   MailOutlined,
   PictureOutlined,
+  PlusOutlined,
   ReloadOutlined,
   RightOutlined,
   ToolOutlined,
@@ -48,7 +50,7 @@ function FeedThumb({ product }: { product: Product }): JSX.Element {
   )
 }
 
-type Tone = 'mint' | 'amber' | 'blue' | 'coral'
+type Tone = 'green' | 'amber' | 'blue' | 'coral'
 
 function Metric({
   icon,
@@ -165,38 +167,35 @@ export default function Dashboard(): JSX.Element {
       title="工作台"
       description={
         <>
-          {dayjs().format('M月D日 dddd')} · 产品、工艺与客户询价的运营概览
-          {loadedAt && <span className="sc-muted"> · 数据于 {loadedAt} 更新</span>}
+          产品、工艺与客户询价的运营概览
+          <span className="sc-muted">
+            {' · '}
+            {dayjs().format('M月D日 dddd')}
+            {loadedAt ? ` · 数据于 ${loadedAt} 更新` : ''}
+          </span>
         </>
       }
       extra={
         <>
-          <div className="sc-shortcuts">
-            <button
-              type="button"
-              className="sc-shortcut"
-              onClick={() => navigate('/admin/products')}
-            >
-              <AppstoreOutlined />
-              产品管理
-            </button>
-            <button
-              type="button"
-              className="sc-shortcut"
-              onClick={() => navigate('/admin/media')}
-            >
-              <PictureOutlined />
-              媒体库
-            </button>
-            <button
-              type="button"
-              className="sc-shortcut"
-              onClick={() => navigate('/admin/inquiries')}
-            >
-              <MailOutlined />
-              询价管理
-            </button>
-          </div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/admin/products/new')}
+          >
+            新建产品
+          </Button>
+          <Button
+            icon={<CloudUploadOutlined />}
+            onClick={() => navigate('/admin/media')}
+          >
+            上传素材
+          </Button>
+          <Button
+            icon={<MailOutlined />}
+            onClick={() => navigate('/admin/inquiries?status=new')}
+          >
+            处理新询价
+          </Button>
           <Tooltip title="刷新数据">
             <Button
               type="text"
@@ -291,7 +290,7 @@ export default function Dashboard(): JSX.Element {
       <div className="sc-metrics sc-stagger">
         <Metric
           icon={<CheckCircleOutlined />}
-          tone="mint"
+          tone="green"
           label="已发布产品"
           value={data.products.published}
           meta="公开站当前可见"
@@ -333,7 +332,7 @@ export default function Dashboard(): JSX.Element {
           tone="coral"
           label="新询价"
           value={data.inquiries.new}
-          meta="待跟进的客户线索"
+          meta={data.inquiries.new > 0 ? '待跟进的客户线索' : '暂无待处理询价'}
           badge={data.inquiries.new > 0 ? '待跟进' : undefined}
           ariaLabel="查看新询价"
           onClick={() => navigate('/admin/inquiries?status=new')}

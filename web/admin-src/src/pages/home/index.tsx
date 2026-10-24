@@ -136,9 +136,13 @@ export default function HomePage(): JSX.Element {
             image: a.image ?? '',
           }),
         ),
-        process_steps: (values.process_steps ?? []).map((s: { step?: string; desc?: string }) => ({
+        process_steps: (
+          values.process_steps ?? []
+        ).map((s: { step?: string; desc?: string; image?: string; video_url?: string }) => ({
           step: s.step ?? '',
           desc: s.desc ?? '',
+          image: s.image ?? '',
+          video_url: s.video_url ?? '',
         })),
       }
       await put('/admin/home', payload)
@@ -369,7 +373,7 @@ export default function HomePage(): JSX.Element {
             <PageSection
               id="sc-home-process"
               title="工艺流程"
-              description="从询价到交付的步骤说明，最多 12 项"
+              description="从询价到交付的步骤说明，最多 12 项；每步可选配图或视频，配置后前台优先播放视频"
             >
               <Form.List name="process_steps">
                 {(fields, { add, remove }) => (
@@ -409,8 +413,22 @@ export default function HomePage(): JSX.Element {
                           >
                             <Input placeholder="e.g. 01 Inquiry" maxLength={100} />
                           </Form.Item>
-                          <Form.Item name={[field.name, 'desc']} label="说明">
+                          <Form.Item
+                            name={[field.name, 'desc']}
+                            label="说明"
+                            rules={[{ max: 500 }]}
+                          >
                             <Input placeholder="说明" maxLength={500} />
+                          </Form.Item>
+                          <Form.Item name={[field.name, 'image']} label="配图">
+                            <MediaURLField placeholder="选图或留空" />
+                          </Form.Item>
+                          <Form.Item
+                            name={[field.name, 'video_url']}
+                            label="视频 URL"
+                            extra="MP4 地址；配置后前台优先播放视频，配图作为封面"
+                          >
+                            <Input maxLength={500} placeholder="https://... or /uploads/2026/10/xxx.mp4" />
                           </Form.Item>
                         </div>
                       </div>
@@ -446,17 +464,6 @@ export default function HomePage(): JSX.Element {
                 />
               </Form.Item>
             </PageSection>
-
-            <div className="sc-form-footer">
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                loading={saving}
-                onClick={() => void submit()}
-              >
-                保存全部内容
-              </Button>
-            </div>
           </div>
 
           <aside className="sc-home-preview" aria-label="首屏预览">

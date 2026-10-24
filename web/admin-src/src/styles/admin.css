@@ -320,7 +320,7 @@ select {
 }
 
 .ant-btn-primary {
-  box-shadow: 0 1px 2px rgba(15, 117, 88, 0.16);
+  box-shadow: 0 1px 2px rgba(16, 24, 20, 0.12);
 }
 
 .ant-btn-primary:not(:disabled):hover {
@@ -778,7 +778,7 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-topbar__search-slot {
-  width: 300px;
+  width: 288px;
   min-width: 220px;
 }
 
@@ -857,8 +857,8 @@ button.sc-nav-group__title:hover .anticon {
 
 .sc-topbar__divider {
   width: 1px;
-  height: 22px;
-  margin: 0 8px;
+  height: 20px;
+  margin: 0 6px;
   background: var(--sc-border);
 }
 
@@ -889,31 +889,40 @@ button.sc-nav-group__title:hover .anticon {
   transform: translateY(0.5px) scale(0.97);
 }
 
+.sc-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--sc-primary-ring);
+}
+
 .sc-user {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 5px;
-  margin-left: 2px;
+  gap: 7px;
+  padding: 3px 6px 3px 4px;
   background: transparent;
   border: 0;
-  border-radius: 9px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background-color var(--sc-motion-fast) var(--sc-ease);
 }
 
 .sc-user:hover {
-  background: var(--sc-surface-soft);
+  background: var(--sc-surface-hover);
+}
+
+.sc-user:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--sc-primary-ring);
 }
 
 .sc-user__avatar {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   color: var(--sc-primary-active);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   background: var(--sc-primary-soft);
   border-radius: 50%;
@@ -928,7 +937,7 @@ button.sc-nav-group__title:hover .anticon {
 
 .sc-user__name {
   color: var(--sc-text);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
 }
 
@@ -965,16 +974,19 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-search__input.ant-input-affix-wrapper {
-  height: 38px;
-  padding-inline: 12px;
-  background: var(--sc-bg-soft);
+  height: 34px;
+  padding-inline: 10px 8px;
+  color: var(--sc-text);
+  font-size: 13px;
+  background: var(--sc-surface);
   border-color: var(--sc-border);
-  border-radius: 9px;
+  border-radius: 10px;
   box-shadow: none;
+  transition: border-color var(--sc-motion-fast) var(--sc-ease),
+    box-shadow var(--sc-motion-fast) var(--sc-ease);
 }
 
 .sc-search__input.ant-input-affix-wrapper:hover {
-  background: var(--sc-surface);
   border-color: var(--sc-border-strong);
 }
 
@@ -985,6 +997,15 @@ button.sc-nav-group__title:hover .anticon {
   box-shadow: 0 0 0 3px var(--sc-primary-ring);
 }
 
+.sc-search__input .ant-input::placeholder {
+  color: var(--sc-text-muted);
+}
+
+/* 输入时隐藏快捷键提示，避免与清除按钮拥挤 */
+.sc-search__input:focus-within .sc-search__kbd {
+  opacity: 0;
+}
+
 .sc-search__icon {
   margin-right: 3px;
   color: var(--sc-text-muted);
@@ -992,15 +1013,15 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-search__kbd {
-  padding: 1px 5px;
+  padding: 1px 6px;
   color: var(--sc-text-muted);
   font-family: var(--sc-font-code);
-  font-size: 9.5px;
-  line-height: 1.5;
-  background: var(--sc-surface);
+  font-size: 10px;
+  line-height: 1.6;
+  background: var(--sc-bg-subtle);
   border: 1px solid var(--sc-border);
-  border-bottom-width: 2px;
-  border-radius: 4px;
+  border-radius: 5px;
+  transition: opacity var(--sc-motion-fast) var(--sc-ease);
 }
 
 .sc-search__panel {
@@ -1198,7 +1219,7 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-page {
-  animation: sc-page-enter var(--sc-motion-page) var(--sc-ease-enter) both;
+  animation: sc-page-enter var(--sc-motion-enter) var(--sc-ease-enter) both;
 }
 
 .sc-footer {
@@ -1618,7 +1639,7 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 /* --------------------------------------------------------------------------
-   Buttons · view toggle · shortcuts
+   Buttons · view toggle
    -------------------------------------------------------------------------- */
 
 .sc-view-toggle {
@@ -1660,43 +1681,6 @@ button.sc-nav-group__title:hover .anticon {
   font-weight: 550;
   background: var(--sc-surface);
   box-shadow: var(--sc-shadow-card);
-}
-
-.sc-shortcuts {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  margin-right: 2px;
-}
-
-.sc-shortcut {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 9px;
-  color: var(--sc-text-secondary);
-  font-size: 12.5px;
-  background: transparent;
-  border: 0;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: color var(--sc-motion-fast) var(--sc-ease),
-    background-color var(--sc-motion-fast) var(--sc-ease);
-}
-
-.sc-shortcut .anticon {
-  color: var(--sc-text-muted);
-  font-size: 14px;
-}
-
-.sc-shortcut:hover {
-  color: var(--sc-text);
-  background: var(--sc-surface-muted);
-}
-
-.sc-shortcut:hover .anticon {
-  color: var(--sc-primary);
 }
 
 /* --------------------------------------------------------------------------
@@ -2148,7 +2132,7 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-metric--link:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.99);
 }
 
 .sc-metric__head {
@@ -2171,13 +2155,13 @@ button.sc-nav-group__title:hover .anticon {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  font-size: 18px;
-  border-radius: 11px;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  border-radius: 10px;
 }
 
-.sc-metric__icon--mint {
+.sc-metric__icon--green {
   color: var(--sc-green-ink);
   background: var(--sc-green-soft);
 }
@@ -2262,7 +2246,7 @@ button.sc-nav-group__title:hover .anticon {
   border-radius: 999px;
 }
 
-.sc-metric__badge--mint {
+.sc-metric__badge--green {
   color: var(--sc-green-ink);
   background: var(--sc-green-soft);
 }
@@ -2296,8 +2280,8 @@ button.sc-nav-group__title:hover .anticon {
   transition: width 420ms var(--sc-ease-enter);
 }
 
-.sc-metric__progress-fill--mint {
-  background: var(--sc-primary);
+.sc-metric__progress-fill--green {
+  background: var(--sc-green);
 }
 
 .sc-metric__progress-fill--amber {
@@ -2323,19 +2307,26 @@ button.sc-nav-group__title:hover .anticon {
 .sc-dash-mid > .sc-panel {
   display: flex;
   flex-direction: column;
-  min-height: 332px;
+  min-height: 300px;
 }
 
 .sc-dash-mid > .sc-panel > .sc-panel__body {
   display: flex;
   flex: 1;
+  padding: 18px 20px 20px;
 }
 
 .sc-dash-bottom {
   display: grid;
   grid-template-columns: minmax(0, 1.44fr) minmax(0, 1fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+}
+
+/* 底部两栏面板等高拉伸，内部数据行保持固定行高，不随面板高度拉伸 */
+.sc-dash-bottom > .sc-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 .sc-dashboard-empty {
@@ -2346,7 +2337,7 @@ button.sc-nav-group__title:hover .anticon {
 .sc-compo {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -2484,7 +2475,7 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-recent__head {
-  height: 36px;
+  height: 42px;
   color: var(--sc-table-head-text);
   font-size: 12px;
   font-weight: 500;
@@ -2494,7 +2485,7 @@ button.sc-nav-group__title:hover .anticon {
 
 .sc-recent__row {
   width: 100%;
-  height: 48px;
+  height: 56px;
   color: var(--sc-text);
   text-align: left;
   background: transparent;
@@ -2612,7 +2603,7 @@ button.sc-nav-group__title:hover .anticon {
 .sc-feed-row__thumb img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .sc-feed-row__body {
@@ -2659,8 +2650,8 @@ button.sc-nav-group__title:hover .anticon {
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: center;
-  padding: 8px 0;
+  justify-content: flex-start;
+  padding: 6px 0;
 }
 
 .sc-task-row {
@@ -2997,15 +2988,6 @@ button.sc-nav-group__title:hover .anticon {
   grid-column: span 2;
 }
 
-.sc-form-footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 16px 0 4px;
-}
-
 .sc-prose-editor {
   line-height: 1.75 !important;
 }
@@ -3099,11 +3081,17 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-url-field {
+  display: flex;
+  gap: 8px;
   width: 100%;
 }
 
 .sc-url-field .ant-input {
   flex: 1;
+}
+
+.sc-url-field > .ant-btn {
+  flex-shrink: 0;
 }
 
 /* Gallery editor */
@@ -5176,6 +5164,19 @@ button.sc-nav-group__title:hover .anticon {
     min-height: 0;
     padding: 0;
   }
+
+  /* 仪表盘：快捷导航已隐藏，标题区回到文档流正常排列，无需预留顶部操作行 */
+  .sc-page--dash {
+    padding-top: 0;
+  }
+
+  .sc-page--dash .sc-page-head {
+    position: static;
+    align-items: flex-end;
+    margin: 0 0 18px;
+    min-height: 0;
+    padding: 0;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -5186,11 +5187,15 @@ button.sc-nav-group__title:hover .anticon {
   .sc-page .sc-page-head {
     position: static;
   }
+
+  .sc-page--dash .sc-page-head {
+    margin-bottom: 16px;
+  }
 }
 
-/* 所有按钮：细黑边框（文字/链接按钮保持无边框） */
+/* 次级按钮统一为低对比度细边框；不做全局黑色重边框（主按钮实底不受影响） */
 .sc-main .ant-btn {
-  border-color: var(--sc-text, #111);
+  border-color: var(--sc-border-strong);
 }
 
 .sc-main .ant-btn-variant-text,
@@ -5212,7 +5217,7 @@ button.sc-nav-group__title:hover .anticon {
   min-width: 0;
 }
 
-/* 用户要求：所有页面移除大标题/描述区（太占地方），仅保留快捷导航与操作按钮 */
+/* 用户要求：其余页面移除大标题/描述区（太占地方），仅保留快捷导航与操作按钮 */
 .sc-page-head {
   min-height: 0;
   margin: 0 0 10px;
@@ -5222,6 +5227,26 @@ button.sc-nav-group__title:hover .anticon {
 
 .sc-page-head__main {
   display: none;
+}
+
+/* 仪表盘是唯一恢复标题区的页面：主标题 + 副标题 + 最近刷新时间 */
+.sc-page-head--dashboard .sc-page-head__main {
+  display: block;
+}
+
+.sc-page-head--dashboard .sc-page-head__title {
+  font-size: 23px;
+  line-height: 30px;
+}
+
+.sc-page-head--dashboard .sc-page-head__desc {
+  margin-top: 5px;
+}
+
+/* 仪表盘头部操作组：主操作 36px，图标刷新按钮保持 34px 点击区 */
+.sc-page-head--dashboard .sc-page-head__actions .ant-btn:not(.sc-icon-btn) {
+  height: 36px;
+  border-radius: 7px;
 }
 
 .sc-login__mobile-brand strong {
@@ -5674,10 +5699,6 @@ button.sc-nav-group__title:hover .anticon {
     padding: 3px;
   }
 
-  .sc-shortcuts {
-    display: none;
-  }
-
   .sc-metrics {
     gap: 10px;
   }
@@ -5947,7 +5968,7 @@ button.sc-nav-group__title:hover .anticon {
 @keyframes sc-page-enter {
   from {
     opacity: 0;
-    transform: translateY(5px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -5958,7 +5979,7 @@ button.sc-nav-group__title:hover .anticon {
 @keyframes sc-rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -5984,7 +6005,7 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-stagger > * {
-  animation: sc-rise 260ms var(--sc-ease-enter) both;
+  animation: sc-rise 220ms var(--sc-ease-enter) both;
 }
 
 .sc-stagger > *:nth-child(2) {

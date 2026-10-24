@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Button, Input, Space, Tooltip } from 'antd'
+import { Button, Input, Tooltip } from 'antd'
 import { CloseOutlined, PictureOutlined } from '@ant-design/icons'
 import type { Media } from '../api/types'
 import MediaPicker from './MediaPicker'
 
 // 表单字段：图片 URL 字符串（advantages.image / logo_url 等）
+// 注意：不用 Space.Compact——compact 的 -1px 边框重叠在缩放渲染下会吃掉按钮边框，
+// 改为带间隙的独立描边元素（.sc-url-field）
 export default function MediaURLField(props: {
   value?: string
   onChange?: (v: string) => void
@@ -13,7 +15,7 @@ export default function MediaURLField(props: {
   const [pickerOpen, setPickerOpen] = useState(false)
 
   return (
-    <Space.Compact className="sc-url-field">
+    <div className="sc-url-field">
       <Button icon={<PictureOutlined />} onClick={() => setPickerOpen(true)}>
         选图
       </Button>
@@ -39,6 +41,6 @@ export default function MediaURLField(props: {
           if (items.length > 0) props.onChange?.(items[0].url)
         }}
       />
-    </Space.Compact>
+    </div>
   )
 }

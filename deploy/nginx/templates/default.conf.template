@@ -1,0 +1,56 @@
+# 容器版 Nginx 反代模板（由 nginx 镜像启动时 envsubst 渲染 ${DOMAIN}，取自 .env）
+# www → 根域名 301；全站反代 app:8080；大文件上传放宽体积与超时
+# 注意：$host、$remote_addr 等 nginx 内置变量不在容器环境里，envsubst 不会动它们
+
+# ---------- 80：Let's Encrypt 校验 + 其余 301 到 HTTPS ----------
+server {
+    listen 80;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://${DOMAIN}$request_uri;
+    }
+}
+
+# ---------- 443：www → 根域名 301（证书需同时含两个 SAN） ----------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name www.${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    return 301 https://${DOMAIN}$request_uri;
+}
+
+# ---------- 443：主站 ----------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    # 大视频上传（应用上限 500MB）
+    client_max_body_size 520m;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    location / {
+        proxy_pass http://app:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # 对齐应用侧大上传超时（ReadTimeout 15min / WriteTimeout 16min）
+        proxy_read_timeout 960s;
+        proxy_send_timeout 960s;
+    }
+}

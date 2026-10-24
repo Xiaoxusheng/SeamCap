@@ -167,6 +167,8 @@ export interface Advantage {
 export interface ProcessStep {
   step: string
   desc: string
+  image: string
+  video_url: string
 }
 
 export interface HomeContent {
