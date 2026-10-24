@@ -1,0 +1,36 @@
+# 凭据与本地环境
+.env
+
+# 数据与上传文件（持久化，严禁覆盖/提交）
+data/
+uploads/
+bin/
+
+# SQLite
+*.db
+*.db-wal
+*.db-shm
+
+# Go
+*.exe
+*.test
+*.out
+
+# IDE / 系统
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# 管理后台前端
+web/admin-src/node_modules/
+
+# 本地工具与诊断产物
+.codebuddy/
+.workbuddy/
+_diag/
+.smoke_*
+*.log
+
+# 编辑器
+.qoder/

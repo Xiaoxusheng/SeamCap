@@ -1,0 +1,9 @@
+example.com, www.example.com {
+  root * /opt/seamcap/web/static
+  encode gzip zstd
+  @static path /static/* /uploads/*
+  header @static Cache-Control "public, max-age=31536000, immutable"
+  handle /static/* { file_server }
+  handle /uploads/* { file_server }
+  handle { reverse_proxy 127.0.0.1:8080 }
+}

@@ -1,0 +1,18 @@
+[Unit]
+Description=SeamCap B2B Website
+After=network-online.target
+
+[Service]
+Type=simple
+User=seamcap
+WorkingDirectory=/opt/seamcap
+EnvironmentFile=/opt/seamcap/.env
+ExecStart=/opt/seamcap/bin/seamcap
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/seamcap/data /opt/seamcap/uploads
+
+[Install]
+WantedBy=multi-user.target
