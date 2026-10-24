@@ -18,7 +18,7 @@ func NewProductRepo(db *DB, media *MediaRepo) *ProductRepo { return &ProductRepo
 // productJoinCols 带 category 与 main_image 左连接的完整列。
 const productJoinCols = `
 p.id, p.name, COALESCE(p.sku,''), p.slug, p.category_id,
-c.id, c.name, c.slug,
+c.id, c.name, COALESCE(c.name_en,''), c.slug,
 COALESCE(p.short_desc,''), COALESCE(p.detail_desc,''), COALESCE(p.material,''), COALESCE(p.cap_shape,''),
 COALESCE(p.colors,''), COALESCE(p.sizes,''), COALESCE(p.customization,''),
 p.main_image_id, m.id, m.filename, m.original_name, COALESCE(m.alt_text,''), m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
@@ -35,14 +35,14 @@ func scanProductJoin(row interface{ Scan(...any) error }) (*model.Product, error
 	var catID, mainImgID sql.NullInt64
 	var cID sql.NullInt64
 	var mID sql.NullInt64
-	var cName, cSlug sql.NullString
+	var cName, cNameEn, cSlug sql.NullString
 	var mFilename, mOrig, mAlt, mMime, mSHA, mCreated sql.NullString
 	var mSize sql.NullInt64
 	var mW, mH sql.NullInt64
 	var publishedAt sql.NullString
 
 	err := row.Scan(&p.ID, &p.Name, &p.SKU, &p.Slug, &catID,
-		&cID, &cName, &cSlug,
+		&cID, &cName, &cNameEn, &cSlug,
 		&p.ShortDesc, &p.DetailDesc, &p.Material, &p.CapShape,
 		&p.Colors, &p.Sizes, &p.Customization,
 		&mainImgID, &mID, &mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
@@ -54,7 +54,7 @@ func scanProductJoin(row interface{ Scan(...any) error }) (*model.Product, error
 	p.CategoryID = ni(catID)
 	p.MainImageID = ni(mainImgID)
 	if cID.Valid {
-		p.Category = &model.Category{ID: cID.Int64, Name: cName.String, Slug: cSlug.String}
+		p.Category = &model.Category{ID: cID.Int64, Name: cName.String, NameEn: cNameEn.String, Slug: cSlug.String}
 	}
 	if mFilename.Valid {
 		p.MainImage = &model.Media{

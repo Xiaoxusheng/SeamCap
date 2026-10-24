@@ -60,7 +60,9 @@ html { scroll-behavior: smooth; }
 /* height:auto 覆盖 <img> 的 height 属性表现性提示，
    使 CSS aspect-ratio 生效（否则属性高度会拉伸图片）；
    需要占满容器的图片均在后续规则中显式声明 height:100% */
-img { height: auto; }
+img { height: auto; max-width: 100%; }
+/* <figure> 浏览器默认 margin: 16px 40px 会导致所有 glass-frame 内缩 40px */
+figure { margin: 0; }
 body {
   margin: 0;
   background: var(--bg);
@@ -223,6 +225,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .nav__links a {
   font-size: 12.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
   color: var(--muted); padding: 8px 2px; position: relative; transition: color var(--t-fast);
+  white-space: nowrap;
 }
 .nav__links a::after {
   content: ""; position: absolute; left: 0; right: 100%; bottom: 2px; height: 1px;
@@ -246,19 +249,31 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .nav__toggle[aria-expanded="true"] span:nth-child(1) { top: 22px; transform: rotate(45deg); }
 .nav__toggle[aria-expanded="true"] span:nth-child(2) { top: 22px; transform: rotate(-45deg); }
 
-/* Mobile drawer */
+/* 中等宽度：收紧导航间距防折行 */
+@media (max-width: 1280px) {
+  .nav__links { gap: 18px; }
+  .nav__links a { font-size: 11px; letter-spacing: .09em; }
+  .btn--nav { padding: 10px 14px; font-size: 11px; letter-spacing: .1em; }
+}
+/* 平板/窄桌面：导航切换为抽屉 */
+@media (max-width: 1080px) {
+  .nav__links { display: none; }
+  .nav__toggle { display: block; }
+}
+
+/* ---------- Mobile drawer ---------- */
 .drawer { position: fixed; inset: 0; z-index: 90; background: rgba(12,10,9,.55); }
 .drawer__panel {
   position: absolute; top: 92px; right: 24px; left: 24px;
-  border-radius: var(--r-lg); padding: 28px;
-  display: flex; flex-direction: column; gap: 6px;
+  border-radius: var(--r-lg); padding: 14px 22px;
+  display: flex; flex-direction: column; gap: 2px;
   background: rgba(19,16,14,.9);
 }
 .drawer__panel a {
-  font-family: var(--font-display); font-size: 26px; color: var(--ivory);
-  padding: 10px 6px; border-bottom: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 18px; color: var(--ivory);
+  padding: 8px 6px; border-bottom: 1px solid var(--line);
 }
-.drawer__panel a.btn { font-family: var(--font-body); font-size: 12.5px; margin-top: 14px; border-bottom: 0; text-align: center; }
+.drawer__panel a.btn { font-family: var(--font-body); font-size: 12px; margin-top: 10px; border-bottom: 0; text-align: center; }
 
 /* ---------- Hero ---------- */
 .hero { padding: 168px 0 84px; }
@@ -673,7 +688,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* ---------- Craft modules / prose ---------- */
 .craft-module { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; }
-.craft-module .glass-frame { aspect-ratio: 4 / 3; }
+.craft-module > * { min-width: 0; }   /* 防后台富文本内容撑破 1fr 列导致横向溢出 */
+.craft-module__copy img { max-width: 100%; height: auto; border-radius: var(--r-md); }
+.craft-module .glass-frame { width: 100%; aspect-ratio: 4 / 3; }
 .craft-module--flip > :first-child { order: 2; }
 .craft-module__copy h2 { font-size: clamp(32px, 3.4vw, 46px); color: var(--ivory); margin-bottom: 16px; }
 .craft-module__copy p { color: var(--muted); margin-top: 12px; max-width: 520px; }
@@ -732,16 +749,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
    Responsive
    ============================================================ */
 @media (max-width: 1024px) {
-  .cards3 { grid-template-columns: 1fr; max-width: 640px; }
-  .pcard__media { grid-template-columns: repeat(4, 1fr); }
-  .grid4 { grid-template-columns: 1fr 1fr; }
-  .story__grid { gap: 40px; }
-  .visors { grid-template-columns: 1fr; }
-  .vhero__media { min-height: 520px; }
-  .vlist { grid-template-rows: none; }
-}
-@media (max-width: 1024px) {
-  .cards3 { grid-template-columns: 1fr; max-width: 640px; }
+  .cards3 { grid-template-columns: 1fr 1fr; }   /* 平板两列沾满宽度 */
   .pcard__media { grid-template-columns: repeat(4, 1fr); }
   .grid4 { grid-template-columns: 1fr 1fr; }
   .story__grid { gap: 40px; }
@@ -749,12 +757,25 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .vhero__media { min-height: 520px; }
   .vlist { grid-template-rows: none; }
   .pd-grid { grid-template-columns: 1fr; gap: 30px; }
+  .pd-gal { max-width: 640px; margin-inline: auto; }   /* 单列主图限宽并居中 */
   .relgrid { grid-template-columns: 1fr 1fr; }
   .contact-grid { grid-template-columns: 1fr; }
   .craft-module { grid-template-columns: 1fr; gap: 24px; }
   .craft-module--flip > :first-child { order: 0; }
 }
+@media (max-width: 900px) {
+  .hero { padding: 138px 0 64px; }
+  .hero__grid { grid-template-columns: 1fr; gap: 40px; }
+  .hero__media { order: -1; max-width: 560px; }
+  .craft__grid, .videos { grid-template-columns: 1fr; }
+  .story__grid { grid-template-columns: 1fr; }
+  .circle { grid-template-columns: 1fr; }
+  .circle__media { max-width: 520px; }
+}
 @media (max-width: 640px) {
+  .cards3, .pgrid { grid-template-columns: 1fr; }   /* 手机单列沾满 */
+  .pcard__media { grid-template-columns: 1fr 1fr; }
+  .pd-gal { max-width: none; }
   .vrow { grid-template-columns: 116px 1fr; padding: 14px 16px 14px 14px; gap: 14px; }
   .vrow__thumb { height: 108px; }
   .vrow__body h3 { font-size: 20px; }
@@ -781,17 +802,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .fpill { min-height: 44px; }
   /* 4) 浮动按钮不遮挡页脚 */
   .float-wa { width: 52px; height: 52px; }
-}
-@media (max-width: 900px) {
-  .nav__links { display: none; }
-  .nav__toggle { display: block; }
-  .hero { padding: 138px 0 64px; }
-  .hero__grid { grid-template-columns: 1fr; gap: 40px; }
-  .hero__media { order: -1; max-width: 560px; }
-  .craft__grid, .videos { grid-template-columns: 1fr; }
-  .story__grid { grid-template-columns: 1fr; }
-  .circle { grid-template-columns: 1fr; }
-  .circle__media { max-width: 520px; }
 }
 @media (max-width: 560px) {
   .wrap { width: calc(100% - 40px); }

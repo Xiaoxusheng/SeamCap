@@ -150,7 +150,7 @@
       sku: waSku,
       slug: p.slug,
       cat: cat.slug || '',
-      catLabel: cat.name || cat.name_en || '',
+      catLabel: cat.name_en || cat.name || '',   // 英文站优先英文分类名
       name: p.name,
       tagline: p.short_desc || '',
       desc: p.detail_desc || '',
