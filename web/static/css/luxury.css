@@ -845,7 +845,13 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
     -webkit-overflow-scrolling: touch;
   }
   .fpills::-webkit-scrollbar { display: none; }
-  .fpill { flex-shrink: 0; white-space: nowrap; }
+  .fpill {
+    flex-shrink: 0; white-space: nowrap;
+    min-height: 32px; padding: 5px 9px;
+    font-size: 10.5px; letter-spacing: .04em;
+  }
+  .fpill span { margin-left: 3px; }
+  .fpills { gap: 5px; }
   .filter-bar { min-width: 0; }
   .filter-bar__tools { min-width: 0; }
   .searchbox { min-width: 0; }
@@ -866,7 +872,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   /* 3) 缩略图与点按目标 */
   .pdthumb { width: 72px; height: 72px; }
   .consent input { width: 20px; height: 20px; }
-  .fpill { min-height: 44px; }
   /* 4) 浮动按钮不遮挡页脚 */
   .float-wa { width: 52px; height: 52px; }
 }
