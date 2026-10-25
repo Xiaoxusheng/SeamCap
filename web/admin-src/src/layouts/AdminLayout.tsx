@@ -491,7 +491,7 @@ export default function AdminLayout(): JSX.Element {
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         placement="left"
-        width="min(324px, 92vw)"
+        width="min(272px, 78vw)"
         closable={false}
         styles={{ body: { padding: 0 } }}
         title={null}
