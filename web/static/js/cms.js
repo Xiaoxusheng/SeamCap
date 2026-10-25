@@ -236,9 +236,13 @@
     } else if (img) {
       media = '<img class="pstep__img" src="' + esc(thumbURL(img, 640)) + '" alt="" loading="lazy" width="640" height="400"/>';
     }
+    // 后台流程步骤没有 title 字段（model.ProcessStep 只有 step/desc/image/video_url），
+    // 缺失时回退到既有词典里的四步标题，避免渲染出空 h3 留下空档
+    var stepTitle = s.title || (i < 4 ? t('home.step' + (i + 1) + 'Title') : '');
     return '<div class="value glass reveal' + d + '">' + media +
       '<span class="value__num" aria-hidden="true">' + esc(s.step || ('0' + (i + 1))) + '</span>' +
-      '<h3>' + esc(s.title || '') + '</h3><p>' + esc(s.desc || '') + '</p></div>';
+      (stepTitle ? '<h3>' + esc(stepTitle) + '</h3>' : '') +
+      '<p>' + esc(s.desc || '') + '</p></div>';
   }
 
   function applyHero(hero) {
@@ -345,6 +349,58 @@
     });
   }
 
+  /* ---------- 3.6 首页发货展示板块（后台「打包发货」素材驱动，/api/v1/packing） ---------- */
+
+  var PACK_CATS = [
+    { key: 'packing', label: 'packing.catPacking', fallback: 'Packing' },
+    { key: 'loading', label: 'packing.catLoading', fallback: 'Loading' },
+    { key: 'warehouse', label: 'packing.catWarehouse', fallback: 'Warehouse' }
+  ];
+
+  function packCatLabel(key) {
+    var c = PACK_CATS.filter(function (x) { return x.key === key; })[0];
+    return esc(c ? t(c.label, c.fallback) : t('packing.catPacking', 'Packing'));
+  }
+
+  function packTeaserCard(it) {
+    var m = it.media || {};
+    var u = safeURL(m.url);
+    if (!u) return '';
+    var alt = esc(m.alt_text || it.title || 'Packing and dispatch');
+    var media;
+    if (m.mime_type && m.mime_type.indexOf('video') === 0) {
+      media = '<video class="pack-item__media" src="' + esc(u) + '#t=0.6" preload="metadata" muted playsinline' +
+        (m.width && m.height ? ' width="' + m.width + '" height="' + m.height + '"' : '') + '></video>';
+    } else {
+      media = '<img class="pack-item__media" src="' + esc(thumbURL(u, 640)) + '" alt="' + alt + '" loading="lazy" decoding="async"' +
+        (m.width && m.height ? ' width="' + m.width + '" height="' + m.height + '"' : '') + '/>';
+    }
+    return '<a class="pack-item" href="packing.html">' +
+      '<span class="pack-item__stage">' + media + '</span>' +
+      '<span class="pack-item__meta"><span class="pack-item__cat">' + packCatLabel(it.category) + '</span>' +
+      (it.title ? '<b class="pack-item__title">' + esc(it.title) + '</b>' : '') +
+      (it.caption ? '<span class="pack-item__cap">' + esc(it.caption) + '</span>' : '') +
+      '</span></a>';
+  }
+
+  function bindPackingTeaser() {
+    var box = document.getElementById('cmsPackingTeaser');
+    var section = document.getElementById('packing-teaser');
+    if (!box || !section) return;
+    getJSON('/packing').then(function (items) {
+      if (!items || !items.length) return; // 无素材时整个板块保持隐藏
+      // 优先图片；不足 3 张时用视频补位
+      var imgs = items.filter(function (it) { return !(it.media && /^video\//.test(it.media.mime_type || '')); });
+      var picked = (imgs.length >= 3 ? imgs : items).slice(0, 3);
+      var html = picked.map(packTeaserCard).join('');
+      if (!html) return;
+      box.innerHTML = html;
+      show(section);
+      show(box);
+      reveal(section);
+    }).catch(function () { /* 静态：板块保持隐藏 */ });
+  }
+
   function bindHome() {
     var hasHero = document.querySelector('[data-cms-hero]');
     var featuredBox = document.getElementById('cmsFeatured');
@@ -377,10 +433,10 @@
         reveal(featuredBox);
       }
 
-      // 工艺预览：后台工艺驱动 Craft 板块
+      // 工艺预览：后台工艺驱动 Craft 板块（首页只取前 3 个，保持单行三卡；全部模块见工艺页）
       if (craftBox && home.craft_preview && home.craft_preview.length) {
         craftBox.innerHTML = '<div class="cards3">' +
-          home.craft_preview.map(craftCard).join('') + '</div>';
+          home.craft_preview.slice(0, 3).map(craftCard).join('') + '</div>';
         show(craftBox);
         hide(document.getElementById('cmsStaticCraftGrid'));
         hide(document.getElementById('cmsStaticCraftVideos'));
@@ -575,6 +631,7 @@
   bindHome();
   bindVisorImages();
   bindCraft();
+  bindPackingTeaser();
 
   /* ---------- 语言切换：重新拉取 CMS 内容（覆盖 i18n 词典占位，CMS 数据优先） ---------- */
   if (window.I18N) {
@@ -586,6 +643,7 @@
         bindPages();
         bindHome();
         bindCraft();
+        bindPackingTeaser();
       }, 120);
     });
   }

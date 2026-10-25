@@ -1368,3 +1368,163 @@ html[data-theme="light"] .circle__list li::before { box-shadow: 0 0 10px rgba(16
 /* 打包图库条目 */
 html[data-theme="light"] .pack-item { background: rgba(25,21,18,.02); }
 html[data-theme="light"] .pack-item--video .pack-item__stage { background: #E9E2D5; }
+
+/* ============================================================================
+   视觉精修层（Polish · 只改观感，不动结构/功能/图片）
+   目标：更「高级」——更克制的动效、更讲究的字距与细节、更有质感的照片与卡片
+   ========================================================================== */
+
+/* ---------- 1. 排版细节 ---------- */
+h1, h2, h3, .brand__name, .pcard__body h3 {
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  font-variant-numeric: lining-nums;
+}
+.hero__title { letter-spacing: -.022em; }
+.section__head h2,
+.story__copy h2,
+.circle__title,
+.contact__title,
+.craft-module__copy h2,
+.page-hero__title,
+.form-title,
+.pd-name,
+.pd-related__title { letter-spacing: -.015em; text-wrap: balance; }
+.lead, .hero__lead, .page-hero .lead { text-wrap: pretty; }
+.pcard__sku, .value__num, .contact__row, .spec-table td, .footer__legal { font-variant-numeric: lining-nums; }
+
+/* 眉标：细金线 + 字距收紧，作为章节的编辑式起手 */
+.eyebrow {
+  display: inline-flex; align-items: baseline; gap: 12px;
+  letter-spacing: .30em;
+}
+.eyebrow::before {
+  content: ""; flex: none; align-self: center;
+  width: 26px; height: 1px;
+  background: linear-gradient(90deg, var(--gold), rgba(201, 162, 75, .12));
+}
+
+/* ---------- 2. 照片质感：一点点厚度，悬停才「活」 ---------- */
+.glass-frame img,
+.pcard__media img,
+.vhero__media img,
+.vrow__thumb img,
+.circle__media img,
+.pack-item__stage img {
+  filter: saturate(1.035) contrast(1.02);
+  transition: transform var(--t-slow) var(--ease), filter var(--t-med) var(--ease);
+}
+.glass-frame:hover img { transform: scale(1.02); filter: saturate(1.07) contrast(1.03); }
+.pcard:hover .pcard__media img { filter: saturate(1.07) contrast(1.03); }
+.pack-item__stage:hover img.pack-item__media { filter: saturate(1.07) contrast(1.03); }
+.glass-frame { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), var(--shadow-lg); }
+html[data-theme="light"] .glass-frame { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .7), var(--shadow-lg); }
+
+/* ---------- 3. 按钮：金色缎面 + 掠过的高光 ---------- */
+.btn--gold {
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #E8CE92 0%, #C9A24B 52%, #AF8531 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -1px 0 rgba(0, 0, 0, .18),
+              0 10px 26px rgba(201, 162, 75, .26);
+}
+.btn--gold::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 34%, rgba(255, 255, 255, .42) 48%, transparent 62%);
+  transform: translateX(-130%);
+  transition: transform .75s var(--ease);
+}
+.btn--gold:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -1px 0 rgba(0, 0, 0, .16),
+                               0 16px 34px rgba(201, 162, 75, .34); }
+.btn--gold:hover::after { transform: translateX(130%); }
+.btn--glass { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22); }
+html[data-theme="light"] .btn--glass { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95); }
+
+/* ---------- 4. 卡片：克制的抬升 + 金色发丝线 ---------- */
+.pcard:hover { transform: translateY(-4px); }
+.value { position: relative; overflow: hidden; }
+.value:hover { transform: translateY(-3px); }
+.value::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; z-index: 1;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: .18; transition: opacity var(--t-med) var(--ease);
+}
+.value:hover::before { opacity: .6; }
+.pcard__cta, .text-link { border-bottom-color: rgba(201, 162, 75, .45); }
+.pcard__cta:hover .pcard__cta-arrow, .text-link:hover { border-bottom-color: currentColor; }
+
+/* ---------- 5. 跑马灯：放慢、收细，只做背景节奏 ---------- */
+.marquee { padding: 14px 0; }
+.marquee__track { animation-duration: 46s; }
+.marquee__track span { font-size: 10.5px; letter-spacing: .34em; }
+.marquee__track i { opacity: .7; }
+
+/* ---------- 6. 页脚与细节 ---------- */
+.footer { padding-top: calc(var(--sp-4) + 4px); }
+.footer__nav a { position: relative; }
+.footer__nav a::after {
+  content: ""; position: absolute; left: 0; right: 100%; bottom: -4px; height: 1px;
+  background: var(--gold); transition: right var(--t-med) var(--ease);
+}
+.footer__nav a:hover::after { right: 0; }
+.footer__legal { letter-spacing: .04em; }
+
+/* 细滚动条（Firefox + WebKit），金色细线，不抢视觉 */
+@supports (scrollbar-width: thin) {
+  html { scrollbar-width: thin; scrollbar-color: rgba(201, 162, 75, .32) transparent; }
+}
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 162, 75, .30);
+  border: 3px solid transparent; border-radius: var(--r-pill); background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(201, 162, 75, .55); background-clip: content-box; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(138, 97, 22, .28); background-clip: content-box; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(138, 97, 22, .5); background-clip: content-box; }
+
+/* 移动端隐藏眉标细线，避免与长中文挤行 */
+@media (max-width: 560px) {
+  .eyebrow { gap: 9px; }
+  .eyebrow::before { width: 18px; }
+}
+
+/* ---------- 7. 画面质感：照片加一层柔和暗角/顶光，像被装裱过 ---------- */
+.glass-frame::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), transparent 18%),
+    linear-gradient(0deg, rgba(0,0,0,.16), transparent 26%);
+  opacity: .9;
+}
+html[data-theme="light"] .glass-frame::before {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.5), transparent 20%),
+    linear-gradient(0deg, rgba(60,48,32,.10), transparent 24%);
+}
+/* 首屏主图：一圈极细金线，作为「画框」 */
+.hero__media .glass-frame {
+  box-shadow: inset 0 0 0 1px rgba(201,162,75,.22), var(--shadow-lg);
+}
+html[data-theme="light"] .hero__media .glass-frame {
+  box-shadow: inset 0 0 0 1px rgba(138,97,22,.20), var(--shadow-lg);
+}
+
+/* 产品卡底板：底部轻微压暗，把产品「放稳」在台面上 */
+.pcard__media { box-shadow: inset 0 -34px 44px -34px rgba(20,16,10,.20); }
+html[data-theme="light"] .pcard__media { box-shadow: inset 0 -34px 44px -34px rgba(60,48,32,.12); }
+
+/* ---------- 8. 文字呼吸感 ---------- */
+.lead { line-height: 1.72; }
+.hero__lead { line-height: 1.74; }
+.section__head { margin-bottom: calc(var(--sp-5) + 8px); }
+.footer__tag { line-height: 1.6; }
+
+/* ============ 首页发货展示板块（Packing & Dispatch teaser，复用 pack-item 卡片） ============ */
+a.pack-item { display: block; text-decoration: none; color: inherit; }
+a.pack-item .pack-item__stage { cursor: pointer; }
+a.pack-item:hover .pack-item__title { color: var(--gold-bright); }
+.pack-grid--teaser { margin-top: 26px; }
+.pack-teaser__more { margin: 26px 0 0; }
+
+/* 空标题不占位（CMS 数据缺失时不留下明显空档） */
+.value h3:empty { display: none; }
