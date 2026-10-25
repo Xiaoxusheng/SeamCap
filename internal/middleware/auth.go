@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -60,10 +61,11 @@ func writeAuthError(w http.ResponseWriter, err error) {
 	if e, ok := apperr.As(err); ok {
 		ae = e
 	}
-	status := apperr.HTTPStatus(ae.Code)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	_, _ = w.Write([]byte(`{"error":{"code":"` + ae.Code + `","message":"` + ae.Message + `"}}`))
+	w.WriteHeader(apperr.HTTPStatus(ae.Code))
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"error": map[string]string{"code": ae.Code, "message": ae.Message},
+	})
 }
 
 // AdminFromContext 取当前管理员（AuthRequired 之后可用）。

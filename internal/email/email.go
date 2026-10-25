@@ -125,10 +125,10 @@ func (s *Sender) sendRaw(to []string, subject, textBody, htmlBody string) error 
 			return fmt.Errorf("smtp client: %w", err)
 		}
 		defer c.Close()
-		if ok, _ := c.Extension("STARTTLS"); ok {
-			if err := c.StartTLS(&tls.Config{ServerName: s.cfg.Host}); err != nil {
-				return fmt.Errorf("smtp starttls: %w", err)
-			}
+		if ok, _ := c.Extension("STARTTLS"); !ok {
+			return fmt.Errorf("smtp server does not advertise STARTTLS")
+		} else if err := c.StartTLS(&tls.Config{ServerName: s.cfg.Host}); err != nil {
+			return fmt.Errorf("smtp starttls: %w", err)
 		}
 		if ok, _ := c.Extension("AUTH"); ok && s.cfg.User != "" {
 			if err := c.Auth(auth); err != nil {

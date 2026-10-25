@@ -11,7 +11,7 @@ RUN npm run build
 # 产物输出到 /build/web/admin（vite outDir: ../admin）
 
 ########## Stage 2: 构建 Go 后端（modernc 纯 Go SQLite，无需 CGO）##########
-FROM golang:1.27-alpine AS go-build
+FROM golang:1.27.3-alpine AS go-build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download

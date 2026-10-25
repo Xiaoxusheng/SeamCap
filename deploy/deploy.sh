@@ -17,12 +17,20 @@ URL="${SEAMCAP_URL:-https://xyx.homes:8890}"
 SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new)
 
 cd "$(dirname "$0")/.."
+# Windows 用户名含中文时 %USERPROFILE% 会被按 ANSI 误转，known_hosts/密钥读取不稳定；
+# 项目内 .deploy_ssh/（ASCII 路径）存在时优先使用。
+if [ -f .deploy_ssh/id_ed25519 ]; then
+  SSH_OPTS+=(-i "$PWD/.deploy_ssh/id_ed25519" -o IdentitiesOnly=yes
+             -o UserKnownHostsFile="$PWD/.deploy_ssh/known_hosts")
+fi
 SSH_FILTER='post-quantum|store now|openssh.com|^\*\*'
 
 # 远程命令封装：保留真实退出码（过滤 SSH 带宽提示的噪音输出）
-remote() { ssh "${SSH_OPTS[@]}" "$SERVER" "$@" 2>&1 | grep -Ev "$SSH_FILTER"; }
+# 注意：用 sed 而非 grep -Ev —— OpenSSH 10.3+ 的 post-quantum 警告可能占满全部输出，
+# grep 过滤后无匹配行会返回 1，在 set -euo pipefail 下误杀成功流程
+remote() { ssh "${SSH_OPTS[@]}" "$SERVER" "$@" 2>&1 | sed -E "/$SSH_FILTER/d"; }
 # 上传封装
-put() { scp "${SSH_OPTS[@]}" "$1" "$SERVER:$2" 2>&1 | grep -Ev "$SSH_FILTER"; }
+put() { scp "${SSH_OPTS[@]}" "$1" "$SERVER:$2" 2>&1 | sed -E "/$SSH_FILTER/d"; }
 
 echo "==> [1/5] 连通性检查：$SERVER:$DIR（$URL）"
 remote "echo SSH_OK" >/dev/null
@@ -35,11 +43,14 @@ echo "    bin/seamcap $(du -h bin/seamcap | cut -f1)"
 echo "==> [3/5] 上传二进制 / 迁移 / 前端静态与后台 SPA"
 remote "mkdir -p $DIR/bin $DIR/migrations $DIR/web" >/dev/null
 put bin/seamcap "$DIR/bin/seamcap"
-put migrations/0001_init.sql "$DIR/migrations/0001_init.sql"
-[ -f migrations/0002_admin_auth.sql ] && put migrations/0002_admin_auth.sql "$DIR/migrations/0002_admin_auth.sql" || true
+# 迁移全量同步（tar 流式，新增迁移文件自动带上，不再逐个枚举）
+tar -C migrations -czf - . | ssh "${SSH_OPTS[@]}" "$SERVER" \
+  "mkdir -p $DIR/migrations && tar -C $DIR/migrations -xzf -" 2>&1 | sed -E "/$SSH_FILTER/d" || {
+  echo "❌ migrations 同步失败"; exit 1; }
+echo "    迁移已同步：$(ls migrations/*.sql | wc -l) 个"
 # web/ 整体同步（含 admin SPA 构建产物）；tar 流式传输
 tar -C web --exclude='admin-src' -czf - . | ssh "${SSH_OPTS[@]}" "$SERVER" \
-  "rm -rf $DIR/web && mkdir -p $DIR/web && tar -C $DIR/web -xzf -" 2>&1 | grep -Ev "$SSH_FILTER" || {
+  "rm -rf $DIR/web && mkdir -p $DIR/web && tar -C $DIR/web -xzf -" 2>&1 | sed -E "/$SSH_FILTER/d" || {
   echo "❌ web 同步失败"; exit 1; }
 echo "    上传完成"
 

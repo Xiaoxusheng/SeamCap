@@ -512,6 +512,29 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .float-wa .icon { width: 26px; height: 26px; }
 .float-wa:hover { transform: translateY(-3px); color: var(--gold); border-color: rgba(232,206,158,.5); }
 
+/* 微信内置浏览器 WhatsApp 兜底提示条 */
+.wa-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 12px);
+  z-index: 200;
+  max-width: min(86vw, 420px);
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(20, 16, 10, .92);
+  border: 1px solid rgba(232, 206, 158, .35);
+  color: #f2ead9;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s var(--ease, ease), transform .3s var(--ease, ease);
+}
+.wa-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
 /* ---------- Reveal on scroll ---------- */
 .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
 .reveal--d1 { transition-delay: .12s; }
@@ -652,6 +675,50 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .spec-table tr:last-child td { border-bottom: 0; }
 .spec-table td:first-child { color: var(--faint); width: 44%; letter-spacing: .06em; }
 .spec-table td:last-child { color: var(--text); text-align: right; }
+
+/* ---------- Product Notes（产品笔记） ---------- */
+.pd-note { border-radius: var(--r-lg); padding: 24px 26px; margin-top: 22px; }
+.pd-note__title {
+  font-size: 24px; color: var(--ivory); margin-bottom: 6px;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.pd-note__title span { font-size: 13px; color: var(--faint); letter-spacing: .12em; font-weight: 400; }
+.pd-note__sec { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.pd-note__sec:first-of-type { padding-top: 8px; }
+.pd-note__sec:last-child { border-bottom: 0; padding-bottom: 4px; }
+.pd-note__head {
+  font-size: 12px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 10px; display: flex; align-items: baseline; gap: 10px;
+}
+.pd-note__head span { font-size: 12.5px; color: var(--faint); letter-spacing: .08em; font-weight: 400; text-transform: none; }
+.pd-note__list { margin: 0; padding: 0; list-style: none; }
+.pd-note__list li {
+  position: relative; padding: 5px 0 5px 22px;
+  color: var(--text); font-size: 14px; line-height: 1.7;
+}
+.pd-note__list li::before {
+  content: ""; position: absolute; left: 2px; top: 14px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--gold); opacity: .8;
+}
+.pd-note__sec p { color: var(--text); font-size: 14px; line-height: 1.8; margin: 0 0 6px; }
+.pd-note__sec p:last-child { margin-bottom: 0; }
+.pd-note__colors { margin: 0; display: grid; gap: 0; }
+.pd-note__color {
+  display: grid; grid-template-columns: 110px 1fr; gap: 14px;
+  padding: 8px 0; border-bottom: 1px dashed var(--line); align-items: baseline;
+}
+.pd-note__color:last-child { border-bottom: 0; }
+.pd-note__color dt { color: var(--ivory); font-size: 13.5px; font-weight: 500; }
+.pd-note__color dd { margin: 0; color: var(--text); font-size: 13.5px; line-height: 1.7; }
+.pd-note__sec--summary { background: rgba(201,162,75,.07); border: 1px solid rgba(201,162,75,.25); border-radius: var(--r-md); padding: 16px 18px; }
+.pd-note__quote { color: var(--ivory); font-size: 15px; line-height: 1.8; margin: 0; }
+
+@media (max-width: 720px) {
+  .pd-note { padding: 18px 16px; }
+  .pd-note__color { grid-template-columns: 92px 1fr; gap: 10px; }
+}
+
 .pd-related { margin-top: var(--sp-5); }
 .pd-related__title { font-size: clamp(32px, 3.6vw, 48px); color: var(--ivory); margin-bottom: 24px; }
 .relgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
@@ -900,4 +967,66 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .aurora__blob { animation: none; }
   .marquee__track { animation: none; flex-wrap: wrap; width: 100%; justify-content: center; }
   .reveal { opacity: 1; transform: none; }
+}
+
+/* ---------- i18n 语言切换器 ---------- */
+.lang-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--glass-line);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+  color: var(--ivory);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.lang-switch:hover {
+  color: var(--gold-bright);
+  border-color: var(--glass-line-strong);
+}
+.lang-switch:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.lang-switch:active { transform: scale(.96); }
+
+/* 移动端抽屉内：通栏胶囊，与其他抽屉按钮节奏一致 */
+.drawer__panel .lang-switch {
+  width: 100%;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* ---------- 产品信息合并卡片：参数行 + 产品笔记小节（均在管理后台可编辑） ---------- */
+.pd-info-card .pd-note__body { margin-top: 4px; }
+.pd-info-card .pd-note__body:empty { display: none; }
+.pd-info-card .pd-note__sec:first-of-type {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-top: 8px;
+}
+
+/* ---------- 产品信息卡与下方说明文字的间距（原两卡时代由 .pd-note 提供，合并后补回） ---------- */
+.pd-info-card { margin-bottom: 18px; }
+.pd-info-card + .small-note { display: block; margin-top: 0; color: var(--muted); font-size: 12.5px; line-height: 1.7; letter-spacing: .02em; }
+
+/* ---------- 详情页图库吸附：右侧「产品信息」较长，滚动阅读时左侧主图保持可见，消除左栏下方留白 ---------- */
+.pd-gal { position: sticky; top: 96px; align-self: start; }
+@media (max-width: 856px) {
+  .pd-gal { position: static; }
 }

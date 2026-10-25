@@ -53,6 +53,7 @@ type Admin struct {
 func (h *Admin) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Use(mw.AdminSecurityHeaders)
+	r.Use(mw.NoStore)
 	// 请求体上限按视频上传配置放大；图片/JSON 由各 service 二次校验
 	r.Use(mw.MaxBody(int64(h.Cfg.MaxVideoMB+2) << 20))
 
@@ -920,10 +921,11 @@ func (h *Admin) ResendNotify(w http.ResponseWriter, r *http.Request) {
 // Backup POST /admin/backup：VACUUM INTO 写入 data/backups/（不停机）。
 func (h *Admin) Backup(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now().UTC().Format("20060102-150405")
-	if err := os.MkdirAll(h.Cfg.BackupDir, 0o755); err != nil {
+	if err := os.MkdirAll(h.Cfg.BackupDir, 0o700); err != nil {
 		handler.Error(w, err)
 		return
 	}
+	_ = os.Chmod(h.Cfg.BackupDir, 0o700)
 	path := filepath.Join(h.Cfg.BackupDir, fmt.Sprintf("db-%s.db", ts))
 	// 路径由服务端生成（含单引号转义兜底）
 	safe := strings.ReplaceAll(path, "'", "''")
@@ -931,6 +933,7 @@ func (h *Admin) Backup(w http.ResponseWriter, r *http.Request) {
 		handler.Error(w, err)
 		return
 	}
+	_ = os.Chmod(path, 0o600) // 备份含 PII，仅属主可读
 	h.auditLog(r, "backup.create", "backup", "", filepath.Base(path))
 	handler.Created(w, map[string]string{"file": path})
 }

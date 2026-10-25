@@ -17,9 +17,8 @@ services:
       # 如需固定时区可取消注释
       # TZ: Asia/Shanghai
     ports:
-      # 直连调试口（应急/内测用）；正式流量走 nginx 的 80/443
-      # 上线稳定后建议改成 "127.0.0.1:8080:8080"（仅本机回环）
-      - "8888:8080"
+      # 直连调试口（应急/内测用）：仅绑定本机回环，禁止绕过 Nginx TLS 暴露公网
+      - "127.0.0.1:8888:8080"
     volumes:
       - ./data:/app/data        # SQLite 数据库 + secret.key + 自动备份
       - ./uploads:/app/uploads  # 上传的图片/视频

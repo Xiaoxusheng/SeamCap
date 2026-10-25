@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Alert, App, Button, Form, Input, InputNumber, Radio, Select, Switch } from 'antd'
-import { SaveOutlined } from '@ant-design/icons'
+import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError, fmtTime, get, post, put } from '../../api/client'
 import type { Category, MediaLink, Product, ProductStatus } from '../../api/types'
@@ -10,6 +10,54 @@ import PageHeader from '../../components/PageHeader'
 import PageSection from '../../components/PageSection'
 import PageLoading from '../../components/PageLoading'
 import PageError from '../../components/PageError'
+
+// 产品笔记（note 字段存储的结构化 JSON）：亮点 / 适合人群 / 颜色参考 / 一句话总结
+interface ProductNoteColor {
+  color: string
+  desc: string
+}
+
+interface ProductNote {
+  highlights: string[]
+  audience: string
+  color_notes: ProductNoteColor[]
+  summary: string
+}
+
+function parseNote(raw: string | null | undefined): ProductNote {
+  if (!raw) return { highlights: [], audience: '', color_notes: [], summary: '' }
+  try {
+    const v = JSON.parse(raw) as Partial<ProductNote>
+    return {
+      highlights: Array.isArray(v.highlights)
+        ? v.highlights.filter((s): s is string => typeof s === 'string')
+        : [],
+      audience: typeof v.audience === 'string' ? v.audience : '',
+      color_notes: Array.isArray(v.color_notes)
+        ? v.color_notes
+            .filter((c): c is ProductNoteColor => !!c && typeof c === 'object')
+            .map((c) => ({ color: String(c.color ?? ''), desc: String(c.desc ?? '') }))
+        : [],
+      summary: typeof v.summary === 'string' ? v.summary : '',
+    }
+  } catch {
+    return { highlights: [], audience: '', color_notes: [], summary: '' }
+  }
+}
+
+// 把表单辅助字段打包成 note JSON；全部为空时返回空串（不占存储）
+function buildNote(values: Record<string, unknown>): string {
+  const highlights = ((values.note_highlights as string[] | undefined) ?? [])
+    .map((s) => (s ?? '').trim())
+    .filter(Boolean)
+  const audience = ((values.note_audience as string | undefined) ?? '').trim()
+  const colorNotes = ((values.note_color_notes as ProductNoteColor[] | undefined) ?? [])
+    .map((c) => ({ color: (c?.color ?? '').trim(), desc: (c?.desc ?? '').trim() }))
+    .filter((c) => c.color || c.desc)
+  const summary = ((values.note_summary as string | undefined) ?? '').trim()
+  if (!highlights.length && !audience && !colorNotes.length && !summary) return ''
+  return JSON.stringify({ highlights, audience, color_notes: colorNotes, summary })
+}
 
 // 产品新建/编辑：内容编辑工作台（主区 + 发布侧栏）
 export default function ProductEdit(): JSX.Element {
@@ -41,6 +89,7 @@ export default function ProductEdit(): JSX.Element {
     try {
       const { data: p } = await get<Product>(`/admin/products/${id}`)
       setProduct(p)
+      const parsedNote = parseNote(p.note)
       form.setFieldsValue({
         name: p.name,
         sku: p.sku,
@@ -48,6 +97,12 @@ export default function ProductEdit(): JSX.Element {
         category_id: p.category_id,
         short_desc: p.short_desc,
         detail_desc: p.detail_desc,
+        note_highlights: parsedNote.highlights.length ? parsedNote.highlights : [''],
+        note_audience: parsedNote.audience,
+        note_color_notes: parsedNote.color_notes.length
+          ? parsedNote.color_notes
+          : [{ color: '', desc: '' }],
+        note_summary: parsedNote.summary,
         material: p.material,
         cap_shape: p.cap_shape,
         colors: p.colors,
@@ -84,7 +139,14 @@ export default function ProductEdit(): JSX.Element {
       const values = await form.validateFields()
       setSaving(true)
       setSlugConflict('')
-      const payload = { ...values, status: values.status as ProductStatus }
+      const {
+        note_highlights: _h,
+        note_audience: _a,
+        note_color_notes: _c,
+        note_summary: _s,
+        ...rest
+      } = values as Record<string, unknown> & { status: ProductStatus }
+      const payload = { ...rest, note: buildNote(values as Record<string, unknown>) }
       if (isEdit && productId != null) {
         await put(`/admin/products/${productId}`, payload)
         await put(`/admin/products/${productId}/media`, { items: gallery })
@@ -246,6 +308,104 @@ export default function ProductEdit(): JSX.Element {
                   <Input.TextArea
                     rows={9}
                     placeholder="Full product description for the detail page..."
+                  />
+                </Form.Item>
+              </div>
+            </PageSection>
+
+            <PageSection
+              title="产品笔记"
+              description="结构化卖点文案，展示在详情页规格表上方；全部留空则不展示"
+            >
+              <div className="sc-form-grid">
+                <Form.Item label="产品亮点" className="sc-span-2" extra="每条一行，可增删排序">
+                  <Form.List name="note_highlights">
+                    {(fields, { add, remove }) => (
+                      <div className="sc-note-list">
+                        {fields.map((field) => (
+                          <div key={field.key} className="sc-note-row">
+                            <Form.Item name={[field.name]} noStyle>
+                              <Input placeholder="e.g. 无痕压胶工艺，帽身可折叠，随身放包里不占地方" maxLength={200} />
+                            </Form.Item>
+                            <Button
+                              type="text"
+                              className="sc-icon-btn"
+                              icon={<DeleteOutlined />}
+                              aria-label="删除该亮点"
+                              onClick={() => remove(field.name)}
+                            />
+                          </div>
+                        ))}
+                        <Button
+                          type="dashed"
+                          block
+                          icon={<PlusOutlined />}
+                          onClick={() => add('')}
+                        >
+                          添加亮点
+                        </Button>
+                      </div>
+                    )}
+                  </Form.List>
+                </Form.Item>
+
+                <Form.Item
+                  name="note_audience"
+                  label="适合人群"
+                  className="sc-span-2"
+                  extra="可多行描述"
+                >
+                  <Input.TextArea
+                    rows={3}
+                    placeholder={'日常通勤、户外健身、旅游出行，不想晒黑又怕帽子压塌发型的姐妹。'}
+                    maxLength={500}
+                  />
+                </Form.Item>
+
+                <Form.Item label="颜色参考" className="sc-span-2" extra="每个颜色一句卖点，按展示顺序排列">
+                  <Form.List name="note_color_notes">
+                    {(fields, { add, remove }) => (
+                      <div className="sc-note-list">
+                        {fields.map((field) => (
+                          <div key={field.key} className="sc-note-row sc-note-row--pair">
+                            <Form.Item name={[field.name, 'color']} noStyle>
+                              <Input placeholder="颜色，e.g. 米白色" maxLength={50} />
+                            </Form.Item>
+                            <Form.Item name={[field.name, 'desc']} noStyle>
+                              <Input placeholder="一句卖点，e.g. 温柔干净，拍照出片" maxLength={100} />
+                            </Form.Item>
+                            <Button
+                              type="text"
+                              className="sc-icon-btn"
+                              icon={<DeleteOutlined />}
+                              aria-label="删除该颜色"
+                              onClick={() => remove(field.name)}
+                            />
+                          </div>
+                        ))}
+                        <Button
+                          type="dashed"
+                          block
+                          icon={<PlusOutlined />}
+                          onClick={() => add({ color: '', desc: '' })}
+                        >
+                          添加颜色
+                        </Button>
+                      </div>
+                    )}
+                  </Form.List>
+                </Form.Item>
+
+                <Form.Item
+                  name="note_summary"
+                  label="一句话总结"
+                  className="sc-span-2"
+                  extra="收尾卖点，突出购买理由"
+                >
+                  <Input.TextArea
+                    rows={2}
+                    placeholder="一顶可折叠大檐空顶贝壳帽，遮阳护脸，不压发型，夏天出门必备！"
+                    maxLength={200}
                   />
                 </Form.Item>
               </div>

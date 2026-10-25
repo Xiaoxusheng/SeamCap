@@ -113,6 +113,14 @@ func MaxBody(n int64) func(http.Handler) http.Handler {
 	}
 }
 
+// NoStore 禁止缓存响应（管理端响应含会话/PII 数据，避免留在浏览器或中间缓存）。
+func NoStore(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		next.ServeHTTP(w, r)
+	})
+}
+
 // 默认受信代理网段：回环 + RFC1918/ULA。仅这些地址发来的 X-Forwarded-For 才会被信任。
 var defaultTrustedProxies = []string{
 	"127.0.0.0/8", "::1/128",

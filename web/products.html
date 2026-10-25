@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-page="products">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="static/css/luxury.css"/>
+<link rel="stylesheet" href="static/css/luxury.css?v=20261025"/>
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main" data-i18n="common.skipToContent">Skip to content</a>
 <div class="aurora" aria-hidden="true">
   <div class="aurora__blob aurora__blob--gold"></div>
   <div class="aurora__blob aurora__blob--warm"></div>
@@ -27,58 +27,56 @@
       <span class="brand__name">SHIRUN</span><span class="brand__dot" aria-hidden="true"></span>
       <span class="brand__sub">HEADWEAR</span>
     </a>
-    <nav class="nav__links" aria-label="Primary">
-      <a href="index.html">Home</a>
-      <a href="products.html" aria-current="page">Products</a>
-      <a href="products.html?cat=visors">Sun Visors</a>
-      <a href="craftsmanship.html">Craft</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
+    <nav class="nav__links" aria-label="Primary" data-i18n-attr="aria-label:common.primaryNav">
+      <a href="index.html" data-i18n="common.navHome">Home</a>
+      <a href="products.html" aria-current="page" data-i18n="common.navProducts">Products</a>
+      <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+      <a href="about.html" data-i18n="common.navAbout">About</a>
+      <a href="contact.html" data-i18n="common.navContact">Contact</a>
     </nav>
     <div class="nav__actions">
-      <a class="btn btn--gold btn--nav" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener">WhatsApp</a>
-      <button class="nav__toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu"><span></span><span></span></button>
+      <a class="btn btn--gold btn--nav" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-i18n="common.whatsapp">WhatsApp</a>
+      <button class="nav__toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu" data-i18n-attr="aria-label:common.openMenu"><span></span><span></span></button>
     </div>
   </div>
 </header>
 <div class="drawer" id="mobileMenu" hidden>
-  <nav class="drawer__panel glass" aria-label="Mobile">
-    <a href="index.html">Home</a>
-    <a href="products.html">Products</a>
-    <a href="products.html?cat=visors">Sun Visors</a>
-    <a href="craftsmanship.html">Craft</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-    <a class="btn btn--gold" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener">WhatsApp Us</a>
+  <nav class="drawer__panel glass" aria-label="Mobile" data-i18n-attr="aria-label:common.mobileNav">
+    <a href="index.html" data-i18n="common.navHome">Home</a>
+    <a href="products.html" data-i18n="common.navProducts">Products</a>
+    <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+    <a href="about.html" data-i18n="common.navAbout">About</a>
+    <a href="contact.html" data-i18n="common.navContact">Contact</a>
+    <a class="btn btn--gold" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-i18n="common.whatsappUs">WhatsApp Us</a>
   </nav>
 </div>
 
 <main id="main">
 <section class="page-hero">
   <div class="wrap">
-    <p class="crumbs"><a href="index.html">Home</a><span aria-hidden="true"> / </span><b>Products</b></p>
-    <h1 class="page-hero__title">The <em>catalogue.</em></h1>
-    <p class="lead">Eight seamless lines across two families — baseball caps and sun visors. Every product supports custom logo, colourway and packaging.</p>
+    <p class="crumbs"><a href="index.html" data-i18n="products.crumbHome">Home</a><span aria-hidden="true"> / </span><b data-i18n="products.crumbHere">Products</b></p>
+    <h1 class="page-hero__title" data-i18n-html="products.title">The <em>catalogue.</em></h1>
+    <p class="lead" data-i18n="products.lead">Eight seamless lines across two families — baseball caps and sun visors. Every product supports custom logo, colourway and packaging.</p>
   </div>
 </section>
 
 <section class="section section--tight" style="padding-top:12px">
   <div class="wrap">
-    <div class="filter-bar glass" role="search" aria-label="Product filters">
-      <div class="fpills" role="group" aria-label="Category">
-        <button class="fpill" type="button" data-cat="all">All <span>8</span></button>
-        <button class="fpill" type="button" data-cat="caps">Baseball Caps <span>3</span></button>
-        <button class="fpill" type="button" data-cat="visors">Sun Visors <span>5</span></button>
+    <div class="filter-bar glass" role="search" aria-label="Product filters" data-i18n-attr="aria-label:products.filterAria">
+      <div class="fpills" role="group" aria-label="Category" data-i18n-attr="aria-label:products.catAria">
+        <button class="fpill" type="button" data-cat="all"><span data-i18n="products.catAll">All</span> <span>8</span></button>
+        <button class="fpill" type="button" data-cat="caps"><span data-i18n="products.catCaps">Baseball Caps</span> <span>3</span></button>
+        <button class="fpill" type="button" data-cat="visors"><span data-i18n="products.catVisors">Sun Visors</span> <span>5</span></button>
       </div>
       <div class="filter-bar__tools">
         <div class="searchbox">
           <svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
-          <input id="searchInput" type="search" placeholder="Search name or SKU…" aria-label="Search products by name or SKU"/>
+          <input id="searchInput" type="search" placeholder="Search name or SKU…" aria-label="Search products by name or SKU" data-i18n-attr="placeholder:products.searchPlaceholder;aria-label:products.searchAria"/>
         </div>
-        <select id="sortSelect" class="sortbox" aria-label="Sort products">
-          <option value="recommended">Recommended</option>
-          <option value="colors">Most colourways</option>
-          <option value="sku">SKU A–Z</option>
+        <select id="sortSelect" class="sortbox" aria-label="Sort products" data-i18n-attr="aria-label:products.sortAria">
+          <option value="recommended" data-i18n="products.sortRecommended">Recommended</option>
+          <option value="colors" data-i18n="products.sortColors">Most colourways</option>
+          <option value="sku" data-i18n="products.sortSku">SKU A–Z</option>
         </select>
       </div>
     </div>
@@ -91,11 +89,11 @@
   <div class="wrap">
     <div class="contact glass reveal">
       <div>
-        <p class="eyebrow">Custom Development</p>
-        <h2 class="contact__title">Your colour. Your logo.</h2>
-        <p class="lead" style="margin-top:8px">Send artwork, a reference or just an idea — custom samples are developed through our production network.</p>
+        <p class="eyebrow" data-i18n="products.customEyebrow">Custom Development</p>
+        <h2 class="contact__title" data-i18n="products.customTitle">Your colour. Your logo.</h2>
+        <p class="lead" style="margin-top:8px" data-i18n="products.customLead">Send artwork, a reference or just an idea — custom samples are developed through our production network.</p>
       </div>
-      <a class="btn btn--gold btn--lg" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20custom%20development." target="_blank" rel="noopener">Start a Custom Project</a>
+      <a class="btn btn--gold btn--lg" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20custom%20development." target="_blank" rel="noopener" data-i18n="products.customCta">Start a Custom Project</a>
     </div>
   </div>
 </section>
@@ -105,25 +103,28 @@
   <div class="wrap footer__grid">
     <div>
       <p class="brand footer__brand"><span class="brand__name">SHIRUN</span><span class="brand__dot" aria-hidden="true"></span><span class="brand__sub">HEADWEAR</span></p>
-      <p class="footer__tag">Seamless one-piece caps, curated from Yiwu, China.</p>
+      <p class="footer__tag" data-i18n="common.footerTag">Seamless one-piece caps, curated from Yiwu, China.</p>
     </div>
-    <nav class="footer__nav" aria-label="Footer">
-      <a href="index.html">Home</a>
-      <a href="products.html">Products</a>
-      <a href="craftsmanship.html">Craft</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="privacy.html">Privacy Policy</a>
+    <nav class="footer__nav" aria-label="Footer" data-i18n-attr="aria-label:common.footerNav">
+      <a href="index.html" data-i18n="common.navHome">Home</a>
+      <a href="products.html" data-i18n="common.navProducts">Products</a>
+      <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+      <a href="about.html" data-i18n="common.navAbout">About</a>
+      <a href="contact.html" data-i18n="common.navContact">Contact</a>
+      <a href="privacy.html" data-i18n="common.privacyPolicy">Privacy Policy</a>
     </nav>
-    <p class="footer__legal">&copy; 2026 Yiwu Shirun Headwear &middot; Wholesale &amp; OEM enquiries via WhatsApp</p>
+    <p class="footer__legal" data-i18n="common.footerLegal">&copy; 2026 Yiwu Shirun Headwear &middot; Wholesale &amp; OEM enquiries via WhatsApp</p>
   </div>
 </footer>
 
-<a class="float-wa glass" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" aria-label="Chat with SHIRUN on WhatsApp">
+<a class="float-wa glass" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" aria-label="Chat with SHIRUN on WhatsApp" data-i18n-attr="aria-label:common.waChatAria">
   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24s8.24 3.7 8.24 8.24-3.7 8.24-8.24 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.15.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28"/></svg>
 </a>
 
-<script src="static/js/main.js" defer></script>
+<script src="static/js/i18n.js" defer></script>
+<script src="static/js/i18n/lang-en.js" defer></script>
+<script src="static/js/i18n/lang-zh.js" defer></script>
+<script src="static/js/main.js?v=20261025" defer></script>
 <script src="static/js/products.js" defer></script>
 <script src="static/js/cms.js" defer></script>
 </body>

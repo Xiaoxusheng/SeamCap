@@ -140,7 +140,7 @@ export default function Login(): JSX.Element {
           </div>
 
           <div className="sc-login__photo">
-            <img src="/static/img/cap-image-01.png" alt="SeamCap 无缝帽产品实拍" />
+            <img src="/static/img/cap-image-01.jpg" alt="SeamCap 无缝帽产品实拍" />
             <span className="sc-login__photo-tag">Seamless Caps · Factory Direct</span>
           </div>
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-page="about">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="static/css/luxury.css"/>
+<link rel="stylesheet" href="static/css/luxury.css?v=20261025"/>
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main" data-i18n="common.skipToContent">Skip to content</a>
 <div class="aurora" aria-hidden="true">
   <div class="aurora__blob aurora__blob--gold"></div>
   <div class="aurora__blob aurora__blob--warm"></div>
@@ -27,38 +27,36 @@
       <span class="brand__name">SHIRUN</span><span class="brand__dot" aria-hidden="true"></span>
       <span class="brand__sub">HEADWEAR</span>
     </a>
-    <nav class="nav__links" aria-label="Primary">
-      <a href="index.html">Home</a>
-      <a href="products.html">Products</a>
-      <a href="products.html?cat=visors">Sun Visors</a>
-      <a href="craftsmanship.html">Craft</a>
-      <a href="about.html" aria-current="page">About</a>
-      <a href="contact.html">Contact</a>
+    <nav class="nav__links" aria-label="Primary" data-i18n-attr="aria-label:common.primaryNav">
+      <a href="index.html" data-i18n="common.navHome">Home</a>
+      <a href="products.html" data-i18n="common.navProducts">Products</a>
+      <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+      <a href="about.html" aria-current="page" data-i18n="common.navAbout">About</a>
+      <a href="contact.html" data-i18n="common.navContact">Contact</a>
     </nav>
     <div class="nav__actions">
-      <a class="btn btn--gold btn--nav" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener">WhatsApp</a>
-      <button class="nav__toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu"><span></span><span></span></button>
+      <a class="btn btn--gold btn--nav" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-i18n="common.whatsapp">WhatsApp</a>
+      <button class="nav__toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu" data-i18n-attr="aria-label:common.openMenu"><span></span><span></span></button>
     </div>
   </div>
 </header>
 <div class="drawer" id="mobileMenu" hidden>
-  <nav class="drawer__panel glass" aria-label="Mobile">
-    <a href="index.html">Home</a>
-    <a href="products.html">Products</a>
-    <a href="products.html?cat=visors">Sun Visors</a>
-    <a href="craftsmanship.html">Craft</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-    <a class="btn btn--gold" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener">WhatsApp Us</a>
+  <nav class="drawer__panel glass" aria-label="Mobile" data-i18n-attr="aria-label:common.mobileNav">
+    <a href="index.html" data-i18n="common.navHome">Home</a>
+    <a href="products.html" data-i18n="common.navProducts">Products</a>
+    <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+    <a href="about.html" data-i18n="common.navAbout">About</a>
+    <a href="contact.html" data-i18n="common.navContact">Contact</a>
+    <a class="btn btn--gold" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-i18n="common.whatsappUs">WhatsApp Us</a>
   </nav>
 </div>
 
 <main id="main">
 <section class="page-hero">
   <div class="wrap">
-    <p class="crumbs"><a href="index.html">Home</a><span aria-hidden="true"> / </span><b>About</b></p>
-    <h1 class="page-hero__title" data-cms-page-title="about-us">The <em>house.</em></h1>
-    <p class="lead">One contact point from product idea to bulk order — coordinated from Yiwu, the heart of China&rsquo;s headwear trade.</p>
+    <p class="crumbs"><a href="index.html" data-i18n="about.crumbHome">Home</a><span aria-hidden="true"> / </span><b data-i18n="about.crumbHere">About</b></p>
+    <h1 class="page-hero__title" data-cms-page-title="about-us" data-i18n-html="about.title">The <em>house.</em></h1>
+    <p class="lead" data-i18n="about.lead">One contact point from product idea to bulk order — coordinated from Yiwu, the heart of China&rsquo;s headwear trade.</p>
   </div>
 </section>
 
@@ -72,15 +70,15 @@
 <section class="section section--tight">
   <div class="wrap story__grid">
     <div class="story__copy reveal">
-      <p class="eyebrow">Who We Are</p>
-      <h2>Based in Yiwu,<br/><em>built for buyers.</em></h2>
-      <p>YIWU SHIRUN HEADWEAR operates from Yiwu, Zhejiang — a city that produces a significant share of the world&rsquo;s headwear. We bring together selected seamless-cap production partners under a single, considered service.</p>
-      <p>You talk to one contact. We coordinate product selection, sampling, customization, quality requirements, packing and shipment with the partner best suited to your program — so your order never becomes your logistics problem.</p>
-      <a class="text-link" href="contact.html">Start a conversation<span aria-hidden="true"> &rarr;</span></a>
+      <p class="eyebrow" data-i18n="about.whoEyebrow">Who We Are</p>
+      <h2 data-i18n-html="about.whoTitle">Based in Yiwu,<br/><em>built for buyers.</em></h2>
+      <p data-i18n="about.whoP1">YIWU SHIRUN HEADWEAR operates from Yiwu, Zhejiang — a city that produces a significant share of the world&rsquo;s headwear. We bring together selected seamless-cap production partners under a single, considered service.</p>
+      <p data-i18n="about.whoP2">You talk to one contact. We coordinate product selection, sampling, customization, quality requirements, packing and shipment with the partner best suited to your program — so your order never becomes your logistics problem.</p>
+      <a class="text-link" href="contact.html"><span data-i18n="about.whoCta">Start a conversation</span><span aria-hidden="true"> &rarr;</span></a>
     </div>
     <figure class="glass-frame story__media reveal reveal--d1">
       <img src="static/img/cap-image-22.jpg" alt="Real production floors of our supply network — material storage, sewing stations and work in progress" loading="lazy" width="1200" height="900"/>
-      <figcaption class="glass-chip"><strong>Real Production</strong><span>Working floors of our supply network</span></figcaption>
+      <figcaption class="glass-chip"><strong data-i18n="about.whoChipTitle">Real Production</strong><span data-i18n="about.whoChipSub">Working floors of our supply network</span></figcaption>
     </figure>
   </div>
 </section>
@@ -88,14 +86,14 @@
 <section class="section section--tight">
   <div class="wrap">
     <header class="section__head reveal">
-      <p class="eyebrow">What We Do</p>
-      <h2>Capability,<br/><em>without the noise.</em></h2>
+      <p class="eyebrow" data-i18n="about.doEyebrow">What We Do</p>
+      <h2 data-i18n-html="about.doTitle">Capability,<br/><em>without the noise.</em></h2>
     </header>
     <div class="grid4">
-      <div class="value glass reveal"><span class="value__num" aria-hidden="true">I</span><h3>Development &amp; Sampling</h3><p>New styles and samples developed through our production network — from your artwork, reference or sketch.</p></div>
-      <div class="value glass reveal reveal--d1"><span class="value__num" aria-hidden="true">II</span><h3>Custom Production</h3><p>Logo application, colourway matching and private-label packaging arranged before bulk production.</p></div>
-      <div class="value glass reveal reveal--d2"><span class="value__num" aria-hidden="true">III</span><h3>Quality Follow-Up</h3><p>Specifications, in-process requirements and final inspection standards are confirmed with the production partner.</p></div>
-      <div class="value glass reveal reveal--d3"><span class="value__num" aria-hidden="true">IV</span><h3>Export Coordination</h3><p>Packing standards, documents and shipment details coordinated for your destination market.</p></div>
+      <div class="value glass reveal"><span class="value__num" aria-hidden="true">I</span><h3 data-i18n="about.cap1Title">Development &amp; Sampling</h3><p data-i18n="about.cap1Desc">New styles and samples developed through our production network — from your artwork, reference or sketch.</p></div>
+      <div class="value glass reveal reveal--d1"><span class="value__num" aria-hidden="true">II</span><h3 data-i18n="about.cap2Title">Custom Production</h3><p data-i18n="about.cap2Desc">Logo application, colourway matching and private-label packaging arranged before bulk production.</p></div>
+      <div class="value glass reveal reveal--d2"><span class="value__num" aria-hidden="true">III</span><h3 data-i18n="about.cap3Title">Quality Follow-Up</h3><p data-i18n="about.cap3Desc">Specifications, in-process requirements and final inspection standards are confirmed with the production partner.</p></div>
+      <div class="value glass reveal reveal--d3"><span class="value__num" aria-hidden="true">IV</span><h3 data-i18n="about.cap4Title">Export Coordination</h3><p data-i18n="about.cap4Desc">Packing standards, documents and shipment details coordinated for your destination market.</p></div>
     </div>
   </div>
 </section>
@@ -103,17 +101,17 @@
 <section class="section section--tight">
   <div class="wrap">
     <header class="section__head reveal">
-      <p class="eyebrow">On the Floor</p>
-      <h2>Where it <em>happens.</em></h2>
+      <p class="eyebrow" data-i18n="about.floorEyebrow">On the Floor</p>
+      <h2 data-i18n-html="about.floorTitle">Where it <em>happens.</em></h2>
     </header>
     <div class="craft__grid">
       <figure class="glass-frame reveal">
         <img src="static/img/cap-image-23.jpg" alt="Cap workshop detail — production workstations and components" loading="lazy" width="900" height="640"/>
-        <figcaption class="glass-chip"><strong>Workshop</strong><span>Workstations &amp; components</span></figcaption>
+        <figcaption class="glass-chip"><strong data-i18n="about.floorChip1">Workshop</strong><span data-i18n="about.floorChip1Sub">Workstations &amp; components</span></figcaption>
       </figure>
       <figure class="glass-frame reveal reveal--d1">
         <img src="static/img/cap-image-24.jpg" alt="Finished caps packed in cartons for export orders" loading="lazy" width="900" height="640"/>
-        <figcaption class="glass-chip"><strong>Packing</strong><span>Order preparation &amp; export</span></figcaption>
+        <figcaption class="glass-chip"><strong data-i18n="about.floorChip2">Packing</strong><span data-i18n="about.floorChip2Sub">Order preparation &amp; export</span></figcaption>
       </figure>
     </div>
   </div>
@@ -123,10 +121,10 @@
   <div class="wrap">
     <div class="contact glass reveal">
       <div>
-        <p class="eyebrow">Work With Us</p>
-        <h2 class="contact__title">One window.<br/>Every capability.</h2>
+        <p class="eyebrow" data-i18n="about.workEyebrow">Work With Us</p>
+        <h2 class="contact__title" data-i18n-html="about.workTitle">One window.<br/>Every capability.</h2>
       </div>
-      <a class="btn btn--gold btn--lg" href="contact.html">Contact the House</a>
+      <a class="btn btn--gold btn--lg" href="contact.html" data-i18n="about.workCta">Contact the House</a>
     </div>
   </div>
 </section>
@@ -137,25 +135,28 @@
   <div class="wrap footer__grid">
     <div>
       <p class="brand footer__brand"><span class="brand__name">SHIRUN</span><span class="brand__dot" aria-hidden="true"></span><span class="brand__sub">HEADWEAR</span></p>
-      <p class="footer__tag">Seamless one-piece caps, curated from Yiwu, China.</p>
+      <p class="footer__tag" data-i18n="common.footerTag">Seamless one-piece caps, curated from Yiwu, China.</p>
     </div>
-    <nav class="footer__nav" aria-label="Footer">
-      <a href="index.html">Home</a>
-      <a href="products.html">Products</a>
-      <a href="craftsmanship.html">Craft</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="privacy.html">Privacy Policy</a>
+    <nav class="footer__nav" aria-label="Footer" data-i18n-attr="aria-label:common.footerNav">
+      <a href="index.html" data-i18n="common.navHome">Home</a>
+      <a href="products.html" data-i18n="common.navProducts">Products</a>
+      <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+      <a href="about.html" data-i18n="common.navAbout">About</a>
+      <a href="contact.html" data-i18n="common.navContact">Contact</a>
+      <a href="privacy.html" data-i18n="common.privacyPolicy">Privacy Policy</a>
     </nav>
-    <p class="footer__legal">&copy; 2026 Yiwu Shirun Headwear &middot; Wholesale &amp; OEM enquiries via WhatsApp</p>
+    <p class="footer__legal" data-i18n="common.footerLegal">&copy; 2026 Yiwu Shirun Headwear &middot; Wholesale &amp; OEM enquiries via WhatsApp</p>
   </div>
 </footer>
 
-<a class="float-wa glass" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" aria-label="Chat with SHIRUN on WhatsApp">
+<a class="float-wa glass" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" aria-label="Chat with SHIRUN on WhatsApp" data-i18n-attr="aria-label:common.waChatAria">
   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24s8.24 3.7 8.24 8.24-3.7 8.24-8.24 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.15.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28"/></svg>
 </a>
 
-<script src="static/js/main.js" defer></script>
+<script src="static/js/i18n.js" defer></script>
+<script src="static/js/i18n/lang-en.js" defer></script>
+<script src="static/js/i18n/lang-zh.js" defer></script>
+<script src="static/js/main.js?v=20261025" defer></script>
 <script src="static/js/cms.js" defer></script>
 </body>
 </html>

@@ -50,6 +50,7 @@ var phoneRe = regexp.MustCompile(`^[0-9+()\-.\s]{5,30}$`)
 // 字段校验 → honeypot（伪装成功静默丢弃）→ 频率限制 → 产品快照 → 事务落库 → 异步邮件通知 → 201。
 func (s *InquiryService) Submit(in InquiryInput, ip, ua string) (*model.Inquiry, error) {
 	// ① 字段校验
+	ua = truncateChars(ua, 500)
 	in.Name = strings.TrimSpace(in.Name)
 	in.Email = strings.TrimSpace(in.Email)
 	in.Message = strings.TrimSpace(in.Message)
@@ -62,6 +63,9 @@ func (s *InquiryService) Submit(in InquiryInput, ip, ua string) (*model.Inquiry,
 	}
 	if charCount(in.Message) < 10 || charCount(in.Message) > 5000 {
 		fields["message"] = "must be 10-5000 chars"
+	}
+	if in.ProductID != nil && *in.ProductID <= 0 {
+		fields["product_id"] = "must be a positive integer"
 	}
 	for k, v := range map[string]*string{
 		"company":        &in.Company,

@@ -18,6 +18,22 @@
   'use strict';
 
   var API = '/api/v1';
+  var thumbURL = window.SHIRUN_thumbURL; // 低带宽优化：/uploads/ 图按展示宽度请求缩放版本
+
+  function t(key, vars) { return window.I18N ? window.I18N.t(key, vars) : key; }
+  function escAttr(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+  // 数据层配色标签本地化（与 products.js 同规则）
+  function localizeColors(label) {
+    if (!label) return label;
+    var s = String(label).trim();
+    var m = /^(\d+)\s+Colorways?$/i.exec(s);
+    if (m) return t('js.colorwaysN', { n: m[1] });
+    if (s === 'Two-Tone Options') return t('js.twoTone');
+    if (s === 'Custom Colourways') return t('js.customColourways');
+    return s;
+  }
 
   /* ---------- 工具 ---------- */
 
@@ -166,16 +182,17 @@
     var cat = (p.category && (p.category.name_en || p.category.name)) || '';
     var n = colorwayCount(p);
     var link = 'product.html?slug=' + slug;
+    var colorsLabel = n > 1 ? t('js.colorwaysN', { n: n }) : t('js.customColourways');
     return '<article class="pcard glass reveal">' +
-      '<a class="pcard__media pcard__media--single" href="' + link + '" aria-label="View ' + alt + '">' +
-      (src ? '<img src="' + esc(src) + '" alt="' + alt + '" loading="lazy" width="640" height="480"/>' : '') +
+      '<a class="pcard__media pcard__media--single" href="' + link + '" aria-label="' + escAttr(t('js.viewAria', { name: p.name })) + '">' +
+      (src ? '<img src="' + esc(thumbURL(src, 640)) + '" alt="' + alt + '" loading="lazy" width="640" height="480"/>' : '') +
       '</a><div class="pcard__body">' +
       '<p class="pcard__sku">' + esc(p.sku || '') + (cat ? ' &middot; ' + esc(cat) : '') + '</p>' +
       '<h3><a href="' + link + '">' + esc(p.name) + '</a></h3>' +
       '<p>' + esc(p.short_desc || '') + '</p>' +
-      '<div class="pcard__meta"><span class="pill">' + (n > 1 ? n + ' Colorways' : 'Custom Colourways') + '</span>' +
-      '<span class="pill">OEM / ODM</span><span class="pill">Custom Logo</span></div>' +
-      '<a class="pcard__cta" href="' + link + '">View product <span aria-hidden="true">&rarr;</span></a>' +
+      '<div class="pcard__meta"><span class="pill">' + colorsLabel + '</span>' +
+      '<span class="pill">OEM / ODM</span><span class="pill">' + t('home.pillLogo') + '</span></div>' +
+      '<a class="pcard__cta" href="' + link + '">' + t('js.viewProduct') + ' <span aria-hidden="true">&rarr;</span></a>' +
       '</div></article>';
   }
 
@@ -184,12 +201,12 @@
     var href = 'craftsmanship.html#craft-' + encodeURIComponent(c.slug || '');
     return '<article class="pcard glass reveal">' +
       '<a class="pcard__media pcard__media--single" href="' + href + '" aria-label="' + esc(c.title) + '">' +
-      (cover ? '<img src="' + esc(cover) + '" alt="' + esc((c.cover_image && c.cover_image.alt_text) || c.title) + '" loading="lazy" width="640" height="480"/>' : '') +
+      (cover ? '<img src="' + esc(thumbURL(cover, 640)) + '" alt="' + esc((c.cover_image && c.cover_image.alt_text) || c.title) + '" loading="lazy" width="640" height="480"/>' : '') +
       '</a><div class="pcard__body">' +
-      '<p class="pcard__sku">The Craft</p>' +
+      '<p class="pcard__sku">' + t('js.theCraft') + '</p>' +
       '<h3><a href="' + href + '">' + esc(c.title) + '</a></h3>' +
       '<p>' + esc(c.summary || '') + '</p>' +
-      '<a class="pcard__cta" href="' + href + '">Read more <span aria-hidden="true">&rarr;</span></a>' +
+      '<a class="pcard__cta" href="' + href + '">' + t('js.readMore') + ' <span aria-hidden="true">&rarr;</span></a>' +
       '</div></article>';
   }
 
@@ -211,11 +228,11 @@
     if (vid) {
       media = '<button class="pstep__stage" type="button" data-video="' + esc(vid) + '"' +
         ' aria-label="Play process video ' + (i + 1) + '">' +
-        (img ? '<img src="' + esc(img) + '" alt="" loading="lazy" width="640" height="400"/>' : '') +
+        (img ? '<img src="' + esc(thumbURL(img, 640)) + '" alt="" loading="lazy" width="640" height="400"/>' : '') +
         '<span class="vcard__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg></span>' +
         '</button>';
     } else if (img) {
-      media = '<img class="pstep__img" src="' + esc(img) + '" alt="" loading="lazy" width="640" height="400"/>';
+      media = '<img class="pstep__img" src="' + esc(thumbURL(img, 640)) + '" alt="" loading="lazy" width="640" height="400"/>';
     }
     return '<div class="value glass reveal' + d + '">' + media +
       '<span class="value__num" aria-hidden="true">' + esc(s.step || ('0' + (i + 1))) + '</span>' +
@@ -242,7 +259,7 @@
       v.style.borderRadius = 'inherit';
       img.replaceWith(v);
     } else if (img && hero.hero_image && hero.hero_image.url) {
-      img.src = safeURL(hero.hero_image.url);
+      img.src = thumbURL(safeURL(hero.hero_image.url), 960);
       if (hero.hero_image.alt_text) img.alt = hero.hero_image.alt_text;
     }
 
@@ -343,9 +360,9 @@
         var src = esc(safeURL(m.url));
         var alt = esc(m.alt_text || m.original_name || '');
         return '<button class="craft-thumb' + (j === activeIdx ? ' is-active' : '') + '" type="button"' +
-          ' data-src="' + src + '" data-alt="' + alt + '"' +
+          ' data-src="' + esc(thumbURL(safeURL(m.url), 960)) + '" data-alt="' + alt + '"' +
           ' aria-label="Show image ' + (j + 1) + ' of ' + seq.length + (alt ? ': ' + alt : '') + '">' +
-          '<img src="' + src + '" alt="" loading="lazy" width="160" height="160"/></button>';
+          '<img src="' + esc(thumbURL(safeURL(m.url), 160)) + '" alt="" loading="lazy" width="160" height="160"/></button>';
       }).join('');
     }
 
@@ -356,13 +373,13 @@
       return '<div class="craft-media craft-media--video">' +
         '<div class="vcard glass reveal' + d + '">' +
         '<button class="vcard__stage" type="button" data-video="' + esc(v) + '" aria-label="Play video: ' + esc(c.title) + '">' +
-        (cover ? '<img src="' + esc(cover) + '" alt="" loading="lazy" width="640" height="360"/>' : '') +
+        (cover ? '<img src="' + esc(thumbURL(cover, 640)) + '" alt="" loading="lazy" width="640" height="360"/>' : '') +
         '<span class="vcard__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg></span>' +
         '</button>' +
         '<div class="vcard__body"><b>' + chip + '</b><p>' + esc(c.summary || '') + '</p></div></div>' +
         '<figure class="glass-frame craft-cover" hidden><img alt=""/>' +
-        '<button class="craft-back" type="button" aria-label="Back to video">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg>Video</button>' +
+        '<button class="craft-back" type="button" aria-label="' + escAttr(t('js.backToVideo')) + '">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg>' + t('js.videoBack') + '</button>' +
         '</figure>' +
         gal + '</div>';
     }
@@ -381,7 +398,7 @@
 
     return '<div class="craft-media">' +
       '<figure class="glass-frame craft-cover reveal' + d + '">' +
-      '<img src="' + esc(mainSrc) + '" alt="' + coverAlt + '" loading="lazy" width="900" height="640"/>' +
+      '<img src="' + esc(thumbURL(mainSrc, 960)) + '" alt="' + coverAlt + '" loading="lazy" width="900" height="640"/>' +
       '<figcaption class="glass-chip"><strong>' + chip + '</strong></figcaption></figure>' +
       '<div class="craft-thumbs">' + thumbButtons(seq, activeIdx) + '</div></div>';
   }
@@ -452,4 +469,18 @@
   bindPages();
   bindHome();
   bindCraft();
+
+  /* ---------- 语言切换：重新拉取 CMS 内容（覆盖 i18n 词典占位，CMS 数据优先） ---------- */
+  if (window.I18N) {
+    var refreshTimer = null;
+    window.I18N.onChange(function () {
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(function () {
+        bindSite();
+        bindPages();
+        bindHome();
+        bindCraft();
+      }, 120);
+    });
+  }
 })();

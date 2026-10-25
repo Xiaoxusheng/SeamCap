@@ -319,6 +319,9 @@ func drawLine(img *image.RGBA, x0, y0, x1, y1 int, c color.RGBA) {
 
 // ---- 简单滑动窗口限流 ----
 
+// maxLimiterKeys 单个限流表的最大 key 数；超限时按过期/最久未活动淘汰，避免整表重置。
+const maxLimiterKeys = 20000
+
 type windowLimiter struct {
 	mu     sync.Mutex
 	m      map[string][]time.Time
@@ -345,8 +348,27 @@ func (l *windowLimiter) Allow(key string) bool {
 		return false
 	}
 	l.m[key] = append(kept, now)
-	if len(l.m) > 10000 {
-		l.m = map[string][]time.Time{key: {now}}
+	if len(l.m) > maxLimiterKeys {
+		l.pruneLocked(now)
 	}
 	return true
+}
+
+// pruneLocked 先删除窗口内无活动的 key，仍超限时只淘汰最久未活动的 key，
+// 避免整表清空导致所有限流同时失效。
+func (l *windowLimiter) pruneLocked(now time.Time) {
+	var oldestKey string
+	var oldest time.Time
+	for k, ts := range l.m {
+		if len(ts) == 0 || now.Sub(ts[len(ts)-1]) >= l.window {
+			delete(l.m, k)
+			continue
+		}
+		if oldestKey == "" || ts[len(ts)-1].Before(oldest) {
+			oldestKey, oldest = k, ts[len(ts)-1]
+		}
+	}
+	if len(l.m) > maxLimiterKeys && oldestKey != "" {
+		delete(l.m, oldestKey)
+	}
 }

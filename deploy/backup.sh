@@ -2,6 +2,7 @@
 # SeamCap 备份：SQLite 在线备份（VACUUM INTO，不停机）+ uploads 打包
 # cron 建议：每日 03:00；保留最近 30 份；每季度执行一次恢复演练
 set -euo pipefail
+umask 077  # 备份含 PII，仅属主可读写
 
 TS=$(date +%Y%m%d-%H%M%S)
 BASE=/opt/seamcap

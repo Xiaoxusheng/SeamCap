@@ -45,10 +45,10 @@
   --sc-blue-border: #d6e4fa;
   --sc-blue-ink: #3768bd;
 
-  --sc-green: #27a86a;
-  --sc-green-soft: #e8f6ee;
-  --sc-green-border: #cbeada;
-  --sc-green-ink: #1d7c4c;
+  --sc-green: #22c55e;
+  --sc-green-soft: #dcfce7;
+  --sc-green-border: #86efac;
+  --sc-green-ink: #15803d;
 
   --sc-amber: #e6a13b;
   --sc-amber-soft: #fff4df;
@@ -172,10 +172,10 @@ html[data-theme="dark"] {
   --sc-blue-border: rgba(138, 180, 255, 0.24);
   --sc-blue-ink: #a9c7ff;
 
-  --sc-green: #5fd699;
-  --sc-green-soft: rgba(39, 168, 106, 0.16);
-  --sc-green-border: rgba(95, 214, 153, 0.24);
-  --sc-green-ink: #8fe0b5;
+  --sc-green: #4ade80;
+  --sc-green-soft: rgba(34, 197, 94, 0.18);
+  --sc-green-border: rgba(74, 222, 128, 0.32);
+  --sc-green-ink: #86efac;
 
   --sc-amber: #f3bd6a;
   --sc-amber-soft: rgba(230, 161, 59, 0.16);
@@ -2318,7 +2318,8 @@ button.sc-nav-group__title:hover .anticon {
 
 .sc-dash-bottom {
   display: grid;
-  grid-template-columns: minmax(0, 1.44fr) minmax(0, 1fr);
+  /* 与 .sc-dash-mid 保持完全相同的分栏比例，保证上下两行左右卡片的竖缝对齐 */
+  grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
 }
@@ -2982,6 +2983,34 @@ button.sc-nav-group__title:hover .anticon {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 18px;
+}
+
+/* 产品笔记编辑：亮点/颜色参考的可增删行 */
+.sc-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sc-note-row {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  align-items: center;
+}
+
+.sc-note-row .ant-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-note-row--pair > .ant-form-item:first-child {
+  flex: 0 0 160px;
+}
+
+.sc-note-row--pair > .ant-form-item:nth-child(2) {
+  flex: 1;
+  min-width: 0;
 }
 
 .sc-span-2 {
@@ -3885,9 +3914,14 @@ button.sc-nav-group__title:hover .anticon {
 
 .sc-media-preview__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* 四个动作固定单行（窄栏时按钮自适应收缩） */
   gap: 7px;
   margin-top: auto;
+}
+
+.sc-media-preview__actions .ant-btn {
+  min-width: 0;
+  padding-inline: 11px;
 }
 
 .sc-media-preview .sc-meta-list {
@@ -5138,6 +5172,51 @@ button.sc-nav-group__title:hover .anticon {
   flex-shrink: 0;
 }
 
+/* 移动端：胶囊按钮组，横向滚动、隐藏滚动条 */
+.sc-quicknav__chips-track {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sc-quicknav__chips-track::-webkit-scrollbar {
+  display: none;
+}
+
+.sc-quicknav__chip {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 14px;
+  color: var(--sc-text-secondary);
+  font-size: 13px;
+  line-height: 30px;
+  background: var(--sc-surface);
+  border: 1px solid var(--sc-border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    color var(--sc-motion-fast) var(--sc-ease),
+    background-color var(--sc-motion-fast) var(--sc-ease),
+    border-color var(--sc-motion-fast) var(--sc-ease);
+}
+
+.sc-quicknav__chip:hover {
+  color: var(--sc-text);
+  border-color: var(--sc-text-secondary);
+}
+
+.sc-quicknav__chip.is-active {
+  color: var(--sc-on-primary);
+  background: var(--sc-primary);
+  border-color: var(--sc-primary);
+}
+
 /* --------------------------------------------------------------------------
    操作按钮置右上（与快捷导航同行）+ 全局按钮细黑边框
    -------------------------------------------------------------------------- */
@@ -5622,7 +5701,7 @@ button.sc-nav-group__title:hover .anticon {
   }
 
   .sc-page-head--dashboard .sc-page-head__actions {
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
 
   .sc-page-head__title {

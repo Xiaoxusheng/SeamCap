@@ -21,6 +21,8 @@ type Config struct {
 	DBPath    string
 	UploadDir string
 	BackupDir string
+	// ImageCacheDir 图片缩放缓存目录（?w= 按需生成，见 internal/imgsrv）
+	ImageCacheDir string
 	// SecretFile 存放服务端随机密钥（CSRF 派生等），随 DB 数据目录持久化
 	SecretFile string
 
@@ -86,9 +88,10 @@ func Load() (*Config, error) {
 		BaseURL:  get("BASE_URL", "http://localhost:8080"),
 		LogLevel: get("LOG_LEVEL", "info"),
 
-		DBPath:    get("DB_PATH", "./data/seamcap.db"),
-		UploadDir: get("UPLOAD_DIR", "./uploads"),
-		BackupDir: get("BACKUP_DIR", "./data/backups"),
+		DBPath:        get("DB_PATH", "./data/seamcap.db"),
+		UploadDir:     get("UPLOAD_DIR", "./uploads"),
+		BackupDir:     get("BACKUP_DIR", "./data/backups"),
+		ImageCacheDir: get("IMAGE_CACHE_DIR", "./data/imgcache"),
 
 		SessionTTLHours:  getInt("SESSION_TTL_HOURS", 168),
 		RememberTTLHours: getInt("REMEMBER_TTL_HOURS", 720),

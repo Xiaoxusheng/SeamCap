@@ -23,8 +23,12 @@ func Now() string { return time.Now().UTC().Format(time.RFC3339) }
 
 // Open 打开 SQLite 连接并执行未应用的迁移。
 func Open(dbPath, migrationsDir string) (*DB, error) {
-	if err := os.MkdirAll(filepath.Dir(dbPath), 0o755); err != nil {
+	dataDir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dataDir, 0o700); err != nil {
 		return nil, fmt.Errorf("create data dir: %w", err)
+	}
+	if dataDir != "." {
+		_ = os.Chmod(dataDir, 0o700) // 已存在目录也收紧（库内含 PII 与密码哈希）
 	}
 	dsn := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)", dbPath)
 	sqldb, err := sql.Open("sqlite", dsn)
@@ -43,7 +47,15 @@ func Open(dbPath, migrationsDir string) (*DB, error) {
 	if err := db.migrate(migrationsDir); err != nil {
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
+	tightenDBPerms(dbPath)
 	return db, nil
+}
+
+// tightenDBPerms 收紧数据库主文件与 WAL/SHM 的权限（仅属主可读写）。
+func tightenDBPerms(dbPath string) {
+	for _, p := range []string{dbPath, dbPath + "-wal", dbPath + "-shm"} {
+		_ = os.Chmod(p, 0o600)
+	}
 }
 
 // migrate 按文件名顺序执行未应用的迁移；已应用的记录于 schema_migrations，不覆盖已有数据。

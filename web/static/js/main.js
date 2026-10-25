@@ -7,6 +7,17 @@
   'use strict';
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function t(key, vars) { return window.I18N ? window.I18N.t(key, vars) : key; }
+
+  /* ---------- 0. 图片缩放 URL（低带宽优化） ----------
+     /uploads/ 下的媒体按展示宽度请求服务端缩放版本（internal/imgsrv ?w= 按需
+     生成 + 磁盘缓存）；静态图与外链不受影响。灯箱/原图场景直接用原始 URL。 */
+  function thumbURL(url, w) {
+    var s = String(url == null ? '' : url);
+    if (s.indexOf('/uploads/') !== 0 || s.indexOf('?') !== -1) return s;
+    return s + '?w=' + w;
+  }
+  window.SHIRUN_thumbURL = thumbURL;
 
   /* ---------- 1. 导航滚动状态 ---------- */
   var nav = document.getElementById('nav');
@@ -30,7 +41,7 @@
       drawer.hidden = true;
       document.body.classList.remove('drawer-open');
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', 'Open menu');
+      toggle.setAttribute('aria-label', t('common.openMenu'));
     }
     toggle.addEventListener('click', function () {
       var open = toggle.getAttribute('aria-expanded') === 'true';
@@ -38,7 +49,7 @@
         drawer.hidden = false;
         document.body.classList.add('drawer-open');
         toggle.setAttribute('aria-expanded', 'true');
-        toggle.setAttribute('aria-label', 'Close menu');
+        toggle.setAttribute('aria-label', t('common.closeMenu'));
       }
     });
     // 点击链接或遮罩关闭
@@ -170,20 +181,20 @@
       };
 
       var bad = false;
-      if (!data.name) { fieldError('name', 'Please enter your name.'); bad = true; }
-      else if (data.name.length > 100) { fieldError('name', 'Name is too long (max 100).'); bad = true; }
-      if (!data.email) { fieldError('email', 'Please enter your email.'); bad = true; }
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { fieldError('email', 'Please enter a valid email address.'); bad = true; }
-      else if (data.email.length > 200) { fieldError('email', 'Email is too long (max 200).'); bad = true; }
-      if (!data.message) { fieldError('message', 'Please tell us about your requirement.'); bad = true; }
-      else if (data.message.length < 10) { fieldError('message', 'Message should be at least 10 characters.'); bad = true; }
-      else if (data.message.length > 5000) { fieldError('message', 'Message is too long (max 5000).'); bad = true; }
-      if (!form.consent.checked) { fieldError('consent', 'Please confirm the privacy notice.'); bad = true; }
+      if (!data.name) { fieldError('name', t('form.nameRequired')); bad = true; }
+      else if (data.name.length > 100) { fieldError('name', t('form.nameLong')); bad = true; }
+      if (!data.email) { fieldError('email', t('form.emailRequired')); bad = true; }
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { fieldError('email', t('form.emailInvalid')); bad = true; }
+      else if (data.email.length > 200) { fieldError('email', t('form.emailLong')); bad = true; }
+      if (!data.message) { fieldError('message', t('form.messageRequired')); bad = true; }
+      else if (data.message.length < 10) { fieldError('message', t('form.messageShort')); bad = true; }
+      else if (data.message.length > 5000) { fieldError('message', t('form.messageLong')); bad = true; }
+      if (!form.consent.checked) { fieldError('consent', t('form.consentRequired')); bad = true; }
       if (bad) return;
 
       submitBtn.disabled = true;
       var original = submitBtn.textContent;
-      submitBtn.textContent = 'Sending…';
+      submitBtn.textContent = t('form.sending');
       statusEl.hidden = true;
 
       fetch('/api/v1/inquiries', {
@@ -198,7 +209,7 @@
           throw off;
         }
         return r.json().catch(function () { return {}; }).then(function (body) {
-          var msg = (body && body.error && body.error.message) || 'Submission failed. Please try again.';
+          var msg = (body && body.error && body.error.message) || t('form.submitFailed');
           if (body && body.error && body.error.fields) {
             Object.keys(body.error.fields).forEach(function (k) { fieldError(k, body.error.fields[k]); });
           }
@@ -212,7 +223,7 @@
       }).catch(function (err) {
         if (err.offline || err instanceof TypeError || /fetch/i.test(err.message)) {
           statusEl.hidden = false;
-          statusEl.textContent = 'Our online enquiry service is not deployed yet. Please reach us directly on WhatsApp +86 133 8861 4562 — your message is kept below so you can copy it.';
+          statusEl.textContent = t('form.offline');
         } else {
           statusEl.hidden = false;
           statusEl.textContent = err.message;
@@ -282,6 +293,11 @@
       optEls.forEach(function (el, j) { el.setAttribute('aria-selected', j === idx ? 'true' : 'false'); });
     }
     select.__luxsync = syncUI;
+    // 语言切换后：option 文本由 data-i18n 更新，这里同步弹层与显示
+    select.__luxRefresh = function () {
+      opts.forEach(function (o, i) { if (optEls[i]) optEls[i].textContent = o.textContent; });
+      syncUI();
+    };
     syncUI();
 
     var open = false, active = -1;
@@ -324,4 +340,74 @@
     });
   }
   document.querySelectorAll('select').forEach(initLuxSelect);
+
+  /* ---------- 8. 语言切换联动：刷新自定义下拉的显示文本 ---------- */
+  if (window.I18N) {
+    window.I18N.onChange(function () {
+      document.querySelectorAll('select').forEach(function (s) {
+        if (typeof s.__luxRefresh === 'function') s.__luxRefresh();
+      });
+    });
+  }
+
+  /* ---------- 9. WhatsApp 链接：微信内置浏览器兜底 ----------
+     微信 WebView 不允许 target="_blank" 新开页面，外链点击无反应。
+     这里全局拦截 wa.me / whatsapp.com 链接：改为当前页跳转尝试拉起
+     WhatsApp，并先复制号码 + 弹提示，未装 WhatsApp 时用户仍可手动联系。 */
+  var IS_WECHAT = /MicroMessenger/i.test(navigator.userAgent);
+  function waExtractNumber(href) {
+    var m = String(href || '').match(/wa\.me\/(\d+)/);
+    return m ? '+' + m[1] : '';
+  }
+  function waToast(msg) {
+    var el = document.createElement('div');
+    el.className = 'wa-toast';
+    el.setAttribute('role', 'status');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    // 强制一帧后再显示，保证过渡动画生效
+    requestAnimationFrame(function () { el.classList.add('is-visible'); });
+    setTimeout(function () {
+      el.classList.remove('is-visible');
+      setTimeout(function () { el.remove(); }, 400);
+    }, 3200);
+  }
+  function waCopy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(function () {});
+        return true;
+      }
+    } catch (err) { /* 忽略，走降级 */ }
+    // 降级：execCommand 复制（旧版微信 WebView）
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      return true;
+    } catch (err) { return false; }
+  }
+  if (IS_WECHAT) {
+    document.addEventListener('click', function (e) {
+      var link = e.target && e.target.closest
+        ? e.target.closest('a[href*="wa.me"], a[href*="whatsapp.com"]')
+        : null;
+      if (!link) return;
+      var href = link.getAttribute('href') || '';
+      if (href.indexOf('http') !== 0) return;
+      e.preventDefault();
+      var num = waExtractNumber(href);
+      var copied = num ? waCopy(num) : false;
+      var msg = (copied && num)
+        ? '正在打开 WhatsApp…号码 ' + num + ' 已复制，若未跳转请手动粘贴'
+        : '正在打开 WhatsApp…若未跳转，请用系统浏览器打开本页';
+      waToast(msg);
+      // 稍作延迟让提示先呈现，再当前页跳转拉起 WhatsApp
+      setTimeout(function () { window.location.href = href; }, 800);
+    }, true);
+  }
 })();

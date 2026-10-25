@@ -21,7 +21,7 @@ func LoadOrCreateSecret(path string) ([]byte, error) {
 		return nil, err
 	}
 	enc := hex.EncodeToString(raw)
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return nil, err
 	}
 	if err := os.WriteFile(path, []byte(enc), 0o600); err != nil {

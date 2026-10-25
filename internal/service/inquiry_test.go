@@ -56,6 +56,29 @@ func isValidation(err error, field string) bool {
 	return ok && ae.Code == apperr.CodeValidation && ae.Fields[field] != ""
 }
 
+func TestSubmitRejectsNonPositiveProductID(t *testing.T) {
+	env := newSvcEnv(t)
+	for _, id := range []int64{0, -1} {
+		in := validInquiryInput()
+		pid := id
+		in.ProductID = &pid
+		if _, err := env.Inqs.Submit(in, "9.9.9.1", "ua"); !isValidation(err, "product_id") {
+			t.Errorf("product_id=%d should be validation error, got %v", id, err)
+		}
+	}
+}
+
+func TestSubmitTruncatesUserAgent(t *testing.T) {
+	env := newSvcEnv(t)
+	q, err := env.Inqs.Submit(validInquiryInput(), "9.9.9.2", strings.Repeat("a", 600))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(q.UserAgent) != 500 {
+		t.Errorf("user_agent length = %d, want 500", len(q.UserAgent))
+	}
+}
+
 func TestSubmitHoneypotSilentlyDrops(t *testing.T) {
 	env := newSvcEnv(t)
 	in := validInquiryInput()

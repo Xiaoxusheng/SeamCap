@@ -2,6 +2,9 @@
 # www → 根域名 301；全站反代 app:8080；大文件上传放宽体积与超时
 # 注意：$host、$remote_addr 等 nginx 内置变量不在容器环境里，envsubst 不会动它们
 
+# 隐藏版本号；HSTS 仅按根域签发的证书范围生效，不盲目 includeSubDomains
+server_tokens off;
+
 # ---------- 80：Let's Encrypt 校验 + 其余 301 到 HTTPS ----------
 server {
     listen 80;
@@ -24,6 +27,8 @@ server {
 
     ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    add_header Strict-Transport-Security "max-age=31536000" always;
 
     return 301 https://${DOMAIN}$request_uri;
 }
@@ -36,6 +41,8 @@ server {
 
     ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    add_header Strict-Transport-Security "max-age=31536000" always;
 
     # 大视频上传（应用上限 500MB）
     client_max_body_size 520m;
@@ -45,7 +52,8 @@ server {
 
     location / {
         proxy_pass http://app:8080;
-        proxy_set_header Host $host;
+        # $http_host 透传原始 Host（含端口）：SameOrigin/CSRF 校验要求与 Origin 的 host:port 一致
+        proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;

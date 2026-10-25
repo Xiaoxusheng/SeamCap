@@ -19,7 +19,7 @@ func NewProductRepo(db *DB, media *MediaRepo) *ProductRepo { return &ProductRepo
 const productJoinCols = `
 p.id, p.name, COALESCE(p.sku,''), p.slug, p.category_id,
 c.id, c.name, COALESCE(c.name_en,''), c.slug,
-COALESCE(p.short_desc,''), COALESCE(p.detail_desc,''), COALESCE(p.material,''), COALESCE(p.cap_shape,''),
+COALESCE(p.short_desc,''), COALESCE(p.detail_desc,''), COALESCE(p.note,''), COALESCE(p.material,''), COALESCE(p.cap_shape,''),
 COALESCE(p.colors,''), COALESCE(p.sizes,''), COALESCE(p.customization,''),
 p.main_image_id, m.id, m.filename, m.original_name, COALESCE(m.alt_text,''), m.mime_type, m.size_bytes, m.width, m.height, m.sha256, m.created_at,
 COALESCE(p.video_url,''), p.is_featured, p.sort_order, p.status, COALESCE(p.seo_title,''), COALESCE(p.seo_desc,''),
@@ -43,7 +43,7 @@ func scanProductJoin(row interface{ Scan(...any) error }) (*model.Product, error
 
 	err := row.Scan(&p.ID, &p.Name, &p.SKU, &p.Slug, &catID,
 		&cID, &cName, &cNameEn, &cSlug,
-		&p.ShortDesc, &p.DetailDesc, &p.Material, &p.CapShape,
+		&p.ShortDesc, &p.DetailDesc, &p.Note, &p.Material, &p.CapShape,
 		&p.Colors, &p.Sizes, &p.Customization,
 		&mainImgID, &mID, &mFilename, &mOrig, &mAlt, &mMime, &mSize, &mW, &mH, &mSHA, &mCreated,
 		&p.VideoURL, &p.IsFeatured, &p.SortOrder, &p.Status, &p.SEOTitle, &p.SEODesc,
@@ -208,10 +208,10 @@ func (r *ProductRepo) attachImages(p *model.Product) error {
 // Create 新增产品。
 func (r *ProductRepo) Create(p *model.Product) (int64, error) {
 	now := Now()
-	res, err := r.db.Exec(`INSERT INTO products(name, sku, slug, category_id, short_desc, detail_desc, material, cap_shape, colors, sizes, customization,
+	res, err := r.db.Exec(`INSERT INTO products(name, sku, slug, category_id, short_desc, detail_desc, note, material, cap_shape, colors, sizes, customization,
 		main_image_id, video_url, is_featured, sort_order, status, seo_title, seo_desc, created_at, updated_at, published_at)
-		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-		p.Name, p.SKU, p.Slug, p.CategoryID, p.ShortDesc, p.DetailDesc, p.Material, p.CapShape, p.Colors, p.Sizes, p.Customization,
+		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		p.Name, p.SKU, p.Slug, p.CategoryID, p.ShortDesc, p.DetailDesc, p.Note, p.Material, p.CapShape, p.Colors, p.Sizes, p.Customization,
 		p.MainImageID, p.VideoURL, p.IsFeatured, p.SortOrder, p.Status, p.SEOTitle, p.SEODesc, now, now, p.PublishedAt)
 	if err != nil {
 		return 0, err
@@ -226,9 +226,9 @@ func (r *ProductRepo) Create(p *model.Product) (int64, error) {
 // Update 更新产品（不含媒体关联）。
 func (r *ProductRepo) Update(p *model.Product) error {
 	now := Now()
-	_, err := r.db.Exec(`UPDATE products SET name=?, sku=?, slug=?, category_id=?, short_desc=?, detail_desc=?, material=?, cap_shape=?, colors=?, sizes=?, customization=?,
+	_, err := r.db.Exec(`UPDATE products SET name=?, sku=?, slug=?, category_id=?, short_desc=?, detail_desc=?, note=?, material=?, cap_shape=?, colors=?, sizes=?, customization=?,
 		main_image_id=?, video_url=?, is_featured=?, sort_order=?, status=?, seo_title=?, seo_desc=?, updated_at=?, published_at=? WHERE id=?`,
-		p.Name, p.SKU, p.Slug, p.CategoryID, p.ShortDesc, p.DetailDesc, p.Material, p.CapShape, p.Colors, p.Sizes, p.Customization,
+		p.Name, p.SKU, p.Slug, p.CategoryID, p.ShortDesc, p.DetailDesc, p.Note, p.Material, p.CapShape, p.Colors, p.Sizes, p.Customization,
 		p.MainImageID, p.VideoURL, p.IsFeatured, p.SortOrder, p.Status, p.SEOTitle, p.SEODesc, now, p.PublishedAt, p.ID)
 	if err == nil {
 		p.UpdatedAt = now

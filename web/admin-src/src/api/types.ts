@@ -78,6 +78,7 @@ export interface Product {
   category?: CategoryBrief | null
   short_desc: string
   detail_desc: string
+  note: string
   material: string
   cap_shape: string
   colors: string
@@ -105,6 +106,7 @@ export interface ProductInput {
   category_id?: number | null
   short_desc?: string
   detail_desc?: string
+  note?: string
   material?: string
   cap_shape?: string
   colors?: string

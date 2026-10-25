@@ -33,6 +33,7 @@ type ProductInput struct {
 	CategoryID    *int64 `json:"category_id"`
 	ShortDesc     string `json:"short_desc"`
 	DetailDesc    string `json:"detail_desc"`
+	Note          string `json:"note"` // 产品笔记 JSON 字符串
 	Material      string `json:"material"`
 	CapShape      string `json:"cap_shape"`
 	Colors        string `json:"colors"`
@@ -160,6 +161,9 @@ func validateProductInput(in *ProductInput) error {
 	if charCount(in.SEODesc) > 500 {
 		fields["seo_desc"] = "max 500 chars"
 	}
+	if charCount(in.Note) > 20000 {
+		fields["note"] = "max 20000 chars"
+	}
 	if in.CategoryID != nil && *in.CategoryID <= 0 {
 		fields["category_id"] = "invalid"
 	}
@@ -258,9 +262,9 @@ func (s *ProductService) Create(in ProductInput) (*model.Product, error) {
 	if aerr != nil {
 		return nil, aerr
 	}
-	p := &model.Product{
+		p := &model.Product{
 		Name: in.Name, SKU: strings.TrimSpace(in.SKU), Slug: finalSlug,
-		CategoryID: in.CategoryID, ShortDesc: in.ShortDesc, DetailDesc: in.DetailDesc,
+		CategoryID: in.CategoryID, ShortDesc: in.ShortDesc, DetailDesc: in.DetailDesc, Note: in.Note,
 		Material: in.Material, CapShape: in.CapShape, Colors: in.Colors, Sizes: in.Sizes,
 		Customization: in.Customization, MainImageID: in.MainImageID, VideoURL: in.VideoURL,
 		IsFeatured: in.IsFeatured, SortOrder: in.SortOrder, Status: in.Status,
@@ -333,6 +337,7 @@ func (s *ProductService) Update(id int64, in ProductInput) (*model.Product, erro
 	existing.CategoryID = in.CategoryID
 	existing.ShortDesc = in.ShortDesc
 	existing.DetailDesc = in.DetailDesc
+	existing.Note = in.Note
 	existing.Material = in.Material
 	existing.CapShape = in.CapShape
 	existing.Colors = in.Colors
@@ -401,7 +406,7 @@ func (s *ProductService) Duplicate(id int64) (*model.Product, error) {
 	}
 	p := &model.Product{
 		Name: src.Name + " (Copy)", SKU: src.SKU, Slug: finalSlug,
-		CategoryID: src.CategoryID, ShortDesc: src.ShortDesc, DetailDesc: src.DetailDesc,
+		CategoryID: src.CategoryID, ShortDesc: src.ShortDesc, DetailDesc: src.DetailDesc, Note: src.Note,
 		Material: src.Material, CapShape: src.CapShape, Colors: src.Colors, Sizes: src.Sizes,
 		Customization: src.Customization, MainImageID: src.MainImageID, VideoURL: src.VideoURL,
 		IsFeatured: false, SortOrder: src.SortOrder, Status: "draft",

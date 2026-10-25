@@ -9,9 +9,23 @@
   var API = '/api/v1';
   var WA = 'https://wa.me/8613388614562?text=';
   function wa(text) { return WA + encodeURIComponent(text); }
+  function t(key, vars) { return window.I18N ? window.I18N.t(key, vars) : key; }
+  function escAttr(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+  // 数据层的配色标签（'7 Colorways' / 'Two-Tone Options' 等）按当前语言本地化
+  function localizeColors(label) {
+    if (!label) return label;
+    var s = String(label).trim();
+    var m = /^(\d+)\s+Colorways?$/i.exec(s);
+    if (m) return t('js.colorwaysN', { n: m[1] });
+    if (s === 'Two-Tone Options') return t('js.twoTone');
+    if (s === 'Custom Colourways') return t('js.customColourways');
+    return s;
+  }
 
   var IMG = 'static/img/';
   function img(n) { return IMG + n; }
+  var thumbURL = window.SHIRUN_thumbURL; // 低带宽优化：/uploads/ 图按展示宽度请求缩放版本
 
   /* ---------- 静态兜底数据（后台不可用时使用；colors 为色数） ---------- */
   window.SHIRUN_PRODUCTS = [
@@ -55,11 +69,11 @@
       colors: 5, colorsLabel: '5 Colorways', weight: '—', fit: 'One size, elastic', brim: 'Flat / structured',
       material: '—', construction: 'One-piece seamless', customization: 'Logo · Colour · Packaging',
       images: [
-        { src: img('cap-image-15.png'), alt: 'Hip-hop seamless cap — grey' },
-        { src: img('cap-image-16.png'), alt: 'Hip-hop seamless cap — army green' },
-        { src: img('cap-image-17.png'), alt: 'Hip-hop seamless cap — black' },
-        { src: img('cap-image-18.png'), alt: 'Hip-hop seamless cap — white' },
-        { src: img('cap-image-19.png'), alt: 'Hip-hop seamless cap — light khaki' }
+        { src: img('cap-image-15.jpg'), alt: 'Hip-hop seamless cap — grey' },
+        { src: img('cap-image-16.jpg'), alt: 'Hip-hop seamless cap — army green' },
+        { src: img('cap-image-17.jpg'), alt: 'Hip-hop seamless cap — black' },
+        { src: img('cap-image-18.jpg'), alt: 'Hip-hop seamless cap — white' },
+        { src: img('cap-image-19.jpg'), alt: 'Hip-hop seamless cap — light khaki' }
       ],
       waText: "Hello SHIRUN, I'm interested in LG260012 Hip-Hop seamless caps."
     },
@@ -148,6 +162,7 @@
     var waSku = p.sku || p.slug;
     return {
       sku: waSku,
+      rawSku: p.sku || '',   // 后台原始 SKU；为空时参数表不显示“产品编号”行（避免 URL slug 混入）
       slug: p.slug,
       cat: cat.slug || '',
       catLabel: cat.name_en || cat.name || '',   // 英文站优先英文分类名
@@ -161,6 +176,7 @@
       material: p.material || '—',
       construction: p.cap_shape || 'One-piece seamless',
       customization: p.customization || 'Logo · Colour · Packaging',
+      noteRaw: p.note || '',
       isFeatured: !!p.is_featured,
       images: imgs,
       waText: 'Hello SHIRUN, I\'m interested in ' + (waSku ? waSku + ' ' : '') + p.name + '.'
@@ -172,6 +188,68 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
     });
+  }
+
+  /* ---------- 产品笔记（后台结构化 JSON）渲染 ---------- */
+
+  function noteEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function parseProductNote(raw) {
+    if (!raw) return null;
+    var n;
+    try { n = JSON.parse(raw); } catch (e) { return null; }
+    if (!n || typeof n !== 'object') return null;
+    var highlights = Array.isArray(n.highlights)
+      ? n.highlights.filter(function (s) { return typeof s === 'string' && s.trim(); })
+      : [];
+    var audience = typeof n.audience === 'string' ? n.audience.trim() : '';
+    var colorNotes = Array.isArray(n.color_notes)
+      ? n.color_notes
+          .filter(function (c) { return c && typeof c === 'object'; })
+          .map(function (c) { return { color: String(c.color || '').trim(), desc: String(c.desc || '').trim() }; })
+          .filter(function (c) { return c.color || c.desc; })
+      : [];
+    var summary = typeof n.summary === 'string' ? n.summary.trim() : '';
+    if (!highlights.length && !audience && !colorNotes.length && !summary) return null;
+    return { highlights: highlights, audience: audience, colorNotes: colorNotes, summary: summary };
+  }
+
+  function renderProductNote(p) {
+    // 笔记小节渲染进合并卡片的 pdNoteBody（参数表下方）；无笔记时留空由 CSS 隐藏
+    var body = document.getElementById('pdNoteBody');
+    if (!body) return;
+    var note = parseProductNote(p.noteRaw);
+    if (!note) { body.innerHTML = ''; return; }
+    var html = '';
+    if (note.highlights.length) {
+      html += '<div class="pd-note__sec"><h3 class="pd-note__head">' + t('js.noteHighlights') + '</h3>' +
+        '<ul class="pd-note__list">' +
+        note.highlights.map(function (s) { return '<li>' + noteEsc(s) + '</li>'; }).join('') +
+        '</ul></div>';
+    }
+    if (note.audience) {
+      html += '<div class="pd-note__sec"><h3 class="pd-note__head">' + t('js.noteAudience') + '</h3>' +
+        note.audience.split(/\n+/).filter(function (s) { return s.trim(); })
+          .map(function (s) { return '<p>' + noteEsc(s) + '</p>'; }).join('') +
+        '</div>';
+    }
+    if (note.colorNotes.length) {
+      html += '<div class="pd-note__sec"><h3 class="pd-note__head">' + t('js.noteColors') + '</h3>' +
+        '<dl class="pd-note__colors">' +
+        note.colorNotes.map(function (c) {
+          return '<div class="pd-note__color"><dt>' + noteEsc(c.color) + '</dt><dd>' + noteEsc(c.desc) + '</dd></div>';
+        }).join('') +
+        '</dl></div>';
+    }
+    if (note.summary) {
+      html += '<div class="pd-note__sec pd-note__sec--summary"><h3 class="pd-note__head">' + t('js.noteSummary') + '</h3>' +
+        '<p class="pd-note__quote">' + noteEsc(note.summary) + '</p></div>';
+    }
+    body.innerHTML = html;
   }
 
   // 尝试从后台加载；成功 resolve({products, categories, live:true})，失败 resolve({live:false})
@@ -204,6 +282,7 @@
     };
     if (['recommended', 'colors', 'sku'].indexOf(state.sort) === -1) state.sort = 'recommended';
     var lastList = [];
+    var loadedData = null;
 
     var pillsBox = document.querySelector('.fpills');
     var searchEl = document.getElementById('searchInput');
@@ -228,7 +307,7 @@
       if (!pillsBox) return;
       var counts = {};
       products.forEach(function (p) { counts[p.cat] = (counts[p.cat] || 0) + 1; });
-      var html = '<button class="fpill" type="button" data-cat="all">All <span>' + products.length + '</span></button>';
+      var html = '<button class="fpill" type="button" data-cat="all">' + t('products.catAll') + ' <span>' + products.length + '</span></button>';
       categories.forEach(function (c) {
         var n = counts[c.slug] || 0;
         if (!n) return; // 暂无产品的分类不在前台展示
@@ -268,9 +347,9 @@
       lastList = list;
       syncUrl();
 
-      countEl.textContent = list.length + (list.length === 1 ? ' product' : ' products');
+      countEl.textContent = list.length === 1 ? t('js.productCount') : t('js.productsCount', { n: list.length });
       if (!list.length) {
-        grid.innerHTML = '<div class="empty glass"><h3>No products found</h3><p>Try a different keyword or clear the filters.</p><button class="btn btn--glass" id="clearFilters" type="button">Clear Filters</button></div>';
+        grid.innerHTML = '<div class="empty glass"><h3>' + t('js.noProducts') + '</h3><p>' + t('js.noProductsHint') + '</p><button class="btn btn--glass" id="clearFilters" type="button">' + t('js.clearFilters') + '</button></div>';
         var c = document.getElementById('clearFilters');
         if (c) c.addEventListener('click', function () {
           state.q = ''; searchEl.value = ''; state.cat = 'all';
@@ -284,14 +363,14 @@
         var img0 = p.images[0] || { src: '', alt: p.name };
         var link = 'product.html?slug=' + encodeURIComponent(p.slug || p.sku);
         return '<article class="pcard glass reveal ' + d + '">' +
-          '<a class="pcard__media pcard__media--single" href="' + link + '" aria-label="View ' + p.name + '">' +
-          '<img src="' + img0.src + '" alt="' + img0.alt + '" loading="lazy" width="640" height="480"/></a>' +
+          '<a class="pcard__media pcard__media--single" href="' + link + '" aria-label="' + escAttr(t('js.viewAria', { name: p.name })) + '">' +
+          '<img src="' + thumbURL(img0.src, 640) + '" alt="' + img0.alt + '" loading="lazy" width="640" height="480"/></a>' +
           '<div class="pcard__body">' +
           '<p class="pcard__sku">' + p.sku + ' &middot; ' + p.catLabel + '</p>' +
           '<h3><a href="' + link + '">' + p.name + '</a></h3>' +
           '<p>' + p.tagline + '</p>' +
-          '<div class="pcard__meta"><span class="pill">' + p.colorsLabel + '</span><span class="pill">OEM / ODM</span><span class="pill">Custom Logo</span></div>' +
-          '<a class="pcard__cta" href="' + link + '">View product <span aria-hidden="true">&rarr;</span></a>' +
+          '<div class="pcard__meta"><span class="pill">' + localizeColors(p.colorsLabel) + '</span><span class="pill">OEM / ODM</span><span class="pill">' + t('home.pillLogo') + '</span></div>' +
+          '<a class="pcard__cta" href="' + link + '">' + t('js.viewProduct') + ' <span aria-hidden="true">&rarr;</span></a>' +
           '</div></article>';
       }).join('');
       if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -322,8 +401,9 @@
     });
     sortEl.addEventListener('change', function () { state.sort = sortEl.value; apply(); });
 
-    grid.innerHTML = '<div style="padding:48px 0;text-align:center;opacity:.6">Loading products…</div>';
+    grid.innerHTML = '<div style="padding:48px 0;text-align:center;opacity:.6">' + t('js.loading') + '</div>';
     window.SHIRUN_loadData().then(function (data) {
+      loadedData = data;
       window.SHIRUN_DATA = data;
       if (data.live) {
         renderPills(data.categories, data.products); // 分类 pills 来自后台
@@ -338,6 +418,15 @@
       if (sortEl.__luxsync) sortEl.__luxsync();
       apply();
     });
+
+    // 语言切换：重渲染分类 pills 与产品列表
+    if (window.I18N) {
+      window.I18N.onChange(function () {
+        if (!loadedData) return;
+        if (loadedData.live) renderPills(loadedData.categories, loadedData.products);
+        apply();
+      });
+    }
   };
 
   /* ---------- 产品详情页逻辑 ---------- */
@@ -366,16 +455,32 @@
       var waTop = el('pdWaTop');
       if (waTop) waTop.href = window.SHIRUN_WA(p.waText);
 
+      // 合并卡片：每行值均来自后台产品字段，与管理后台「产品管理」一一对应，无前端写死数据
+      // （材质←material，头围←sizes，帽檐←cap_shape，配色数量←colors，定制←customization；SKU←sku）
+      var rows = [
+        [t('js.specSku'), p.rawSku || ''],
+        [t('js.specMaterial'), p.material],
+        [t('js.specFit'), p.fit],
+        [t('js.specBrim'), p.brim],
+        [t('js.specColors'), localizeColors(p.colorsLabel)],
+        [t('js.specCustomization'), p.customization]
+      ].filter(function (r) { return r[1] && r[1] !== '—'; });
+      var specTable = el('pdSpecs');
+      if (specTable) specTable.innerHTML = rows.map(function (r) {
+        return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>';
+      }).join('');
+      renderProductNote(p);
+
       var main = el('pdMain');
       var thumbs = el('pdThumbs');
       if (!main || !thumbs || !p.images.length) return;
-      main.src = p.images[0].src;
+      main.src = thumbURL(p.images[0].src, 960);
       main.alt = p.images[0].alt;
       main.dataset.index = '0';
-      main.dataset.gallery = JSON.stringify(p.images);
+      main.dataset.gallery = JSON.stringify(p.images); // 灯箱用原图 URL
       thumbs.innerHTML = p.images.map(function (im, i) {
-        return '<button class="pdthumb' + (i === 0 ? ' is-active' : '') + '" type="button" data-i="' + i + '" aria-label="Show image ' + (i + 1) + ' of ' + p.images.length + ': ' + im.alt + '">' +
-          '<img src="' + im.src + '" alt="" loading="lazy" width="120" height="120"/></button>';
+        return '<button class="pdthumb' + (i === 0 ? ' is-active' : '') + '" type="button" data-i="' + i + '" aria-label="' + escAttr(t('js.showImageAria', { i: i + 1, n: p.images.length, alt: im.alt })) + '">' +
+          '<img src="' + thumbURL(im.src, 160) + '" alt="" loading="lazy" width="120" height="120"/></button>';
       }).join('');
       thumbs.addEventListener('click', function (e) {
         var b = e.target.closest('.pdthumb');
@@ -383,30 +488,14 @@
         thumbs.querySelectorAll('.pdthumb').forEach(function (x) { x.classList.remove('is-active'); });
         b.classList.add('is-active');
         var im = p.images[+b.dataset.i];
-        main.src = im.src; main.alt = im.alt; main.dataset.index = b.dataset.i;
+        main.src = thumbURL(im.src, 960); main.alt = im.alt; main.dataset.index = b.dataset.i;
       });
-
-      var rows = [
-        ['Product SKU', p.sku],
-        ['Material', p.material],
-        ['Construction', p.construction],
-        ['Weight', p.weight],
-        ['Head Circumference', p.fit],
-        ['Brim', p.brim],
-        ['Colourways', p.colorsLabel],
-        ['Customization', p.customization],
-        ['MOQ & Lead Time', 'Confirmed per order']
-      ].filter(function (r) { return r[1] && r[1] !== '—'; });
-      var specTable = el('pdSpecs');
-      if (specTable) specTable.innerHTML = rows.map(function (r) {
-        return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>';
-      }).join('');
 
       var relBox = el('pdRelated');
       if (relBox) relBox.innerHTML = related.map(function (r) {
         var im0 = r.images[0] || { src: '', alt: r.name };
         return '<a class="relcard glass" href="product.html?slug=' + encodeURIComponent(r.slug || r.sku) + '">' +
-          '<img src="' + im0.src + '" alt="' + im0.alt + '" loading="lazy" width="200" height="150"/>' +
+          '<img src="' + thumbURL(im0.src, 320) + '" alt="' + im0.alt + '" loading="lazy" width="200" height="150"/>' +
           '<span class="relcard__sku">' + r.sku + '</span><b>' + r.name + '</b></a>';
       }).join('');
     }
@@ -420,9 +509,10 @@
       if (!p) {
         root.hidden = true;
         notFound.hidden = false;
-        document.title = 'Product Not Found — SHIRUN';
+        document.title = t('product.nfTitle') + ' — SHIRUN';
         return;
       }
+      p.rawSku = p.sku; // 静态兜底数据的 sku 即真实编号
       var related = window.SHIRUN_PRODUCTS.filter(function (x) { return x.slug !== p.slug && x.cat === p.cat; })
         .concat(window.SHIRUN_PRODUCTS.filter(function (x) { return x.slug !== p.slug && x.cat !== p.cat; }))
         .slice(0, 3);
@@ -453,5 +543,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     window.SHIRUN_initListing();
     window.SHIRUN_initDetail();
+    // 语言切换：详情页重新渲染（列表页在 initListing 内部处理；
+    // change 事件仅在用户切换语言时派发，初始渲染不会触发）
+    if (window.I18N) {
+      window.I18N.onChange(function () { window.SHIRUN_initDetail(); });
+    }
   });
 })();

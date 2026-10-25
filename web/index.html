@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-page="home">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
@@ -11,16 +11,16 @@
 <meta property="og:description" content="Perfection has no seams. Curated seamless cap craftsmanship, OEM customization and wholesale programs from Yiwu, China."/>
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://www.yiwushirun.com/"/>
-<meta property="og:image" content="static/img/cap-image-01.png"/>
+<meta property="og:image" content="static/img/cap-image-01.jpg"/>
 <meta name="robots" content="index,follow,max-image-preview:large"/>
 <link rel="icon" href="static/img/favicon.svg" type="image/svg+xml"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="static/css/luxury.css"/>
+<link rel="stylesheet" href="static/css/luxury.css?v=20261025"/>
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main" data-i18n="common.skipToContent">Skip to content</a>
 
 <!-- Ambient aurora backdrop -->
 <div class="aurora" aria-hidden="true">
@@ -36,19 +36,18 @@
       <span class="brand__name">SHIRUN</span><span class="brand__dot" aria-hidden="true"></span>
       <span class="brand__sub">HEADWEAR</span>
     </a>
-    <nav class="nav__links" aria-label="Primary">
-      <a href="products.html">Products</a>
-      <a href="products.html?cat=visors">Sun Visors</a>
-      <a href="craftsmanship.html">Craft</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
+    <nav class="nav__links" aria-label="Primary" data-i18n-attr="aria-label:common.primaryNav">
+      <a href="products.html" data-i18n="common.navProducts">Products</a>
+      <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+      <a href="about.html" data-i18n="common.navAbout">About</a>
+      <a href="contact.html" data-i18n="common.navContact">Contact</a>
     </nav>
     <div class="nav__actions">
-      <a class="btn btn--gold btn--nav" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener">
+      <a class="btn btn--gold btn--nav" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-i18n="common.whatsapp">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24s8.24 3.7 8.24 8.24-3.7 8.24-8.24 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.15.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28"/></svg>
         WhatsApp
       </a>
-      <button class="nav__toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+      <button class="nav__toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu" data-i18n-attr="aria-label:common.openMenu">
         <span></span><span></span>
       </button>
     </div>
@@ -57,14 +56,13 @@
 
 <!-- Mobile drawer -->
 <div class="drawer" id="mobileMenu" hidden>
-  <nav class="drawer__panel glass" aria-label="Mobile">
-    <a href="index.html">Home</a>
-    <a href="products.html">Products</a>
-    <a href="products.html?cat=visors">Sun Visors</a>
-    <a href="craftsmanship.html">Craft</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-    <a class="btn btn--gold" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener">WhatsApp Us</a>
+  <nav class="drawer__panel glass" aria-label="Mobile" data-i18n-attr="aria-label:common.mobileNav">
+    <a href="index.html" data-i18n="common.navHome">Home</a>
+    <a href="products.html" data-i18n="common.navProducts">Products</a>
+    <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+    <a href="about.html" data-i18n="common.navAbout">About</a>
+    <a href="contact.html" data-i18n="common.navContact">Contact</a>
+    <a class="btn btn--gold" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-i18n="common.whatsappUs">WhatsApp Us</a>
   </nav>
 </div>
 
@@ -73,21 +71,21 @@
 <section class="hero" id="top">
   <div class="wrap hero__grid">
     <div class="hero__copy reveal">
-      <p class="eyebrow">Seamless Headwear &middot; Yiwu, China</p>
-      <h1 class="hero__title" data-cms-hero="title">Perfection<br/><em>has no</em> seams.</h1>
-      <p class="hero__lead" data-cms-hero="lead">YIWU SHIRUN HEADWEAR curates seamless one-piece cap craftsmanship for brands and buyers who prefer a cleaner silhouette — quietly luxurious, precisely molded, ready for your label.</p>
+      <p class="eyebrow" data-i18n="home.heroEyebrow">Seamless Headwear &middot; Yiwu, China</p>
+      <h1 class="hero__title" data-cms-hero="title" data-i18n-html="home.heroTitle">Perfection<br/><em>has no</em> seams.</h1>
+      <p class="hero__lead" data-cms-hero="lead" data-i18n="home.heroLead">YIWU SHIRUN HEADWEAR curates seamless one-piece cap craftsmanship for brands and buyers who prefer a cleaner silhouette — quietly luxurious, precisely molded, ready for your label.</p>
       <div class="hero__actions">
-        <a class="btn btn--gold" href="#collection" data-cms-hero="cta1">Explore the Collection</a>
-        <a class="btn btn--glass" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-cms-hero="cta2">Speak with Us</a>
+        <a class="btn btn--gold" href="#collection" data-cms-hero="cta1" data-i18n="home.heroCta1">Explore the Collection</a>
+        <a class="btn btn--glass" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-cms-hero="cta2" data-i18n="home.heroCta2">Speak with Us</a>
       </div>
-      <p class="hero__note">OEM / ODM &middot; Custom logo &amp; colorway &middot; Wholesale &amp; export coordination</p>
+      <p class="hero__note" data-i18n="home.heroNote">OEM / ODM &middot; Custom logo &amp; colorway &middot; Wholesale &amp; export coordination</p>
     </div>
     <figure class="hero__media reveal reveal--d1">
       <div class="glass-frame">
-        <img src="static/img/cap-image-01.png" alt="Four seamless one-piece baseball caps in grey, black, beige and olive, arranged with sporting props" width="960" height="960" fetchpriority="high" data-cms-hero="image"/>
+        <img src="static/img/cap-image-01.jpg" alt="Four seamless one-piece baseball caps in grey, black, beige and olive, arranged with sporting props" width="960" height="960" fetchpriority="high" data-cms-hero="image"/>
         <figcaption class="glass-chip">
-          <strong>The Signature Silhouette</strong>
-          <span>One-piece molding &middot; selected production partners</span>
+          <strong data-i18n="home.heroChipTitle">The Signature Silhouette</strong>
+          <span data-i18n="home.heroChipSub">One-piece molding &middot; selected production partners</span>
         </figcaption>
       </div>
     </figure>
@@ -96,7 +94,7 @@
 
 <!-- ============ MARQUEE ============ -->
 <div class="marquee glass-edge" aria-hidden="true">
-  <div class="marquee__track">
+  <div class="marquee__track" data-i18n-html="home.marquee">
     <span>One-Piece Molding</span><i>&middot;</i><span>Seamless Sun Visors</span><i>&middot;</i><span>OEM / ODM</span><i>&middot;</i><span>Custom Logo &amp; Colorway</span><i>&middot;</i><span>Wholesale Programs</span><i>&middot;</i><span>Export Coordination</span><i>&middot;</i><span>Yiwu, China</span><i>&middot;</i>
     <span>One-Piece Molding</span><i>&middot;</i><span>Seamless Sun Visors</span><i>&middot;</i><span>OEM / ODM</span><i>&middot;</i><span>Custom Logo &amp; Colorway</span><i>&middot;</i><span>Wholesale Programs</span><i>&middot;</i><span>Export Coordination</span><i>&middot;</i><span>Yiwu, China</span><i>&middot;</i>
   </div>
@@ -106,9 +104,9 @@
 <section class="section" id="collection">
   <div class="wrap">
     <header class="section__head reveal">
-      <p class="eyebrow">01 &mdash; The Collection</p>
-      <h2>Three lines.<br/><em>One clean language.</em></h2>
-      <p class="lead">Each line is presented with its full range of colorways, so your buyers can review the palette before requesting samples or a quotation.</p>
+      <p class="eyebrow" data-i18n="home.colEyebrow">01 &mdash; The Collection</p>
+      <h2 data-i18n-html="home.colTitle">Three lines.<br/><em>One clean language.</em></h2>
+      <p class="lead" data-i18n="home.colLead">Each line is presented with its full range of colorways, so your buyers can review the palette before requesting samples or a quotation.</p>
     </header>
 
     <div class="cards3" id="cmsStaticLines">
@@ -121,12 +119,12 @@
         </div>
         <div class="pcard__body">
           <p class="pcard__sku">LG260008</p>
-          <h3>Solid Colour</h3>
-          <p>Seven considered hues for private label and everyday wholesale programs.</p>
+          <h3 data-i18n="home.line1Name">Solid Colour</h3>
+          <p data-i18n="home.line1Desc">Seven considered hues for private label and everyday wholesale programs.</p>
           <div class="pcard__meta">
-            <span class="pill">7 Colorways</span><span class="pill">OEM / ODM</span><span class="pill">Custom Logo</span>
+            <span class="pill" data-i18n="home.pillColor7">7 Colorways</span><span class="pill">OEM / ODM</span><span class="pill" data-i18n="home.pillLogo">Custom Logo</span>
           </div>
-          <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20LG260008%20Solid%20Colour%20seamless%20caps." target="_blank" rel="noopener">
+          <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20LG260008%20Solid%20Colour%20seamless%20caps." target="_blank" rel="noopener" data-i18n="home.enquireLine">
             Enquire this line <span aria-hidden="true">&rarr;</span>
           </a>
         </div>
@@ -141,12 +139,12 @@
         </div>
         <div class="pcard__body">
           <p class="pcard__sku">LG260010</p>
-          <h3>Camo</h3>
-          <p>Six camouflage colorways cut for outdoor, tactical-inspired and streetwear edits.</p>
+          <h3 data-i18n="home.line2Name">Camo</h3>
+          <p data-i18n="home.line2Desc">Six camouflage colorways cut for outdoor, tactical-inspired and streetwear edits.</p>
           <div class="pcard__meta">
-            <span class="pill">6 Colorways</span><span class="pill">OEM / ODM</span><span class="pill">Custom Logo</span>
+            <span class="pill" data-i18n="home.pillColor6">6 Colorways</span><span class="pill">OEM / ODM</span><span class="pill" data-i18n="home.pillLogo">Custom Logo</span>
           </div>
-          <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20LG260010%20Camo%20seamless%20caps." target="_blank" rel="noopener">
+          <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20LG260010%20Camo%20seamless%20caps." target="_blank" rel="noopener" data-i18n="home.enquireLine">
             Enquire this line <span aria-hidden="true">&rarr;</span>
           </a>
         </div>
@@ -154,19 +152,19 @@
 
       <article class="pcard glass reveal reveal--d2">
         <div class="pcard__media pcard__media--grid2">
-          <img src="static/img/cap-image-15.png" alt="Hip-hop seamless cap — grey" loading="lazy" width="600" height="450"/>
-          <img src="static/img/cap-image-16.png" alt="Hip-hop seamless cap — army green" loading="lazy" width="600" height="450"/>
-          <img src="static/img/cap-image-17.png" alt="Hip-hop seamless cap — black" loading="lazy" width="600" height="450"/>
-          <img src="static/img/cap-image-18.png" alt="Hip-hop seamless cap — white" loading="lazy" width="600" height="450"/>
+          <img src="static/img/cap-image-15.jpg" alt="Hip-hop seamless cap — grey" loading="lazy" width="600" height="450"/>
+          <img src="static/img/cap-image-16.jpg" alt="Hip-hop seamless cap — army green" loading="lazy" width="600" height="450"/>
+          <img src="static/img/cap-image-17.jpg" alt="Hip-hop seamless cap — black" loading="lazy" width="600" height="450"/>
+          <img src="static/img/cap-image-18.jpg" alt="Hip-hop seamless cap — white" loading="lazy" width="600" height="450"/>
         </div>
         <div class="pcard__body">
           <p class="pcard__sku">LG260012</p>
-          <h3>Hip-Hop</h3>
-          <p>Five tonal shades with a clean, modern streetwear silhouette.</p>
+          <h3 data-i18n="home.line3Name">Hip-Hop</h3>
+          <p data-i18n="home.line3Desc">Five tonal shades with a clean, modern streetwear silhouette.</p>
           <div class="pcard__meta">
-            <span class="pill">5 Colorways</span><span class="pill">OEM / ODM</span><span class="pill">Custom Logo</span>
+            <span class="pill" data-i18n="home.pillColor5">5 Colorways</span><span class="pill">OEM / ODM</span><span class="pill" data-i18n="home.pillLogo">Custom Logo</span>
           </div>
-          <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20LG260012%20Hip-Hop%20seamless%20caps." target="_blank" rel="noopener">
+          <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20LG260012%20Hip-Hop%20seamless%20caps." target="_blank" rel="noopener" data-i18n="home.enquireLine">
             Enquire this line <span aria-hidden="true">&rarr;</span>
           </a>
         </div>
@@ -181,9 +179,9 @@
 <section class="section" id="visors">
   <div class="wrap">
     <header class="section__head reveal">
-      <p class="eyebrow">02 &mdash; The Sun Visor Atelier</p>
-      <h2>Shade,<br/><em>sculpted.</em></h2>
-      <p class="lead">Five open-top silhouettes moulded for full-face coverage &mdash; from a featherweight kids&rsquo; fit to an extra-wide 28&nbsp;cm brim. Every line is UV-test documented and ready for your label.</p>
+      <p class="eyebrow" data-i18n="home.visorEyebrow">02 &mdash; The Sun Visor Atelier</p>
+      <h2 data-i18n-html="home.visorTitle">Shade,<br/><em>sculpted.</em></h2>
+      <p class="lead" data-i18n="home.visorLead">Five open-top silhouettes moulded for full-face coverage &mdash; from a featherweight kids&rsquo; fit to an extra-wide 28&nbsp;cm brim. Every line is UV-test documented and ready for your label.</p>
     </header>
 
     <div class="visors">
@@ -192,13 +190,13 @@
           <img src="static/img/visors/visor-crescent.jpg" alt="Model wearing the pink Seamless Crescent Sun Visor" loading="lazy" width="610" height="840"/>
         </div>
         <div class="vhero__body">
-          <p class="pcard__sku">The Crescent</p>
-          <h3>Seamless Crescent Visor</h3>
-          <p>Our signature two-tone crescent &mdash; quiet, sculptural, made to be worn all summer.</p>
+          <p class="pcard__sku" data-i18n="home.crescentSku">The Crescent</p>
+          <h3 data-i18n="home.crescentName">Seamless Crescent Visor</h3>
+          <p data-i18n="home.crescentDesc">Our signature two-tone crescent &mdash; quiet, sculptural, made to be worn all summer.</p>
           <div class="pcard__meta">
-            <span class="pill">95 g</span><span class="pill">Two-Tone</span><span class="pill">UV Tested</span>
+            <span class="pill">95 g</span><span class="pill" data-i18n="home.pillTwoTone">Two-Tone</span><span class="pill" data-i18n="home.pillUV">UV Tested</span>
           </div>
-          <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20Crescent%20Sun%20Visor." target="_blank" rel="noopener">Enquire <span aria-hidden="true">&rarr;</span></a>
+          <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20Crescent%20Sun%20Visor." target="_blank" rel="noopener"><span data-i18n="home.enquire">Enquire</span> <span aria-hidden="true">&rarr;</span></a>
         </div>
       </article>
 
@@ -206,50 +204,50 @@
         <article class="vrow glass reveal">
           <div class="vrow__thumb"><img src="static/img/visors/visor-kids.jpg" alt="Seamless Kids Sun Visor in eight colourways" loading="lazy" width="322" height="400"/></div>
           <div class="vrow__body">
-            <p class="pcard__sku">01 / Kids</p>
-            <h3>Seamless Kids&rsquo; Sun Visor</h3>
-            <p>A featherweight open-top visor sized for young explorers.</p>
-            <div class="pcard__meta"><span class="pill">60&ndash;65 g</span><span class="pill">40&ndash;60 cm</span><span class="pill">8 Colorways</span></div>
-            <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20Kids%20Sun%20Visor." target="_blank" rel="noopener">Enquire <span aria-hidden="true">&rarr;</span></a>
+            <p class="pcard__sku" data-i18n="home.kidsSku">01 / Kids</p>
+            <h3 data-i18n="home.kidsName">Seamless Kids&rsquo; Sun Visor</h3>
+            <p data-i18n="home.kidsDesc">A featherweight open-top visor sized for young explorers.</p>
+            <div class="pcard__meta"><span class="pill">60&ndash;65 g</span><span class="pill">40&ndash;60 cm</span><span class="pill" data-i18n="home.pillColor8">8 Colorways</span></div>
+            <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20Kids%20Sun%20Visor." target="_blank" rel="noopener"><span data-i18n="home.enquire">Enquire</span> <span aria-hidden="true">&rarr;</span></a>
           </div>
         </article>
 
         <article class="vrow glass reveal reveal--d1">
           <div class="vrow__thumb"><img src="static/img/visors/visor-uv.jpg" alt="Seamless UV Protection Sun Visor in blue grey" loading="lazy" width="448" height="264"/></div>
           <div class="vrow__body">
-            <p class="pcard__sku">02 / UV Protection</p>
-            <h3>Seamless UV Visor</h3>
-            <p>Everyday coverage with a wide curved brim; two-tone options for brand programs.</p>
-            <div class="pcard__meta"><span class="pill">60&ndash;65 g</span><span class="pill">40&ndash;60 cm</span><span class="pill">6 Colors + Two-Tone</span></div>
-            <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20UV%20Protection%20Sun%20Visor." target="_blank" rel="noopener">Enquire <span aria-hidden="true">&rarr;</span></a>
+            <p class="pcard__sku" data-i18n="home.uvSku">02 / UV Protection</p>
+            <h3 data-i18n="home.uvName">Seamless UV Visor</h3>
+            <p data-i18n="home.uvDesc">Everyday coverage with a wide curved brim; two-tone options for brand programs.</p>
+            <div class="pcard__meta"><span class="pill">60&ndash;65 g</span><span class="pill">40&ndash;60 cm</span><span class="pill" data-i18n="home.pillColor6TT">6 Colors + Two-Tone</span></div>
+            <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20UV%20Protection%20Sun%20Visor." target="_blank" rel="noopener"><span data-i18n="home.enquire">Enquire</span> <span aria-hidden="true">&rarr;</span></a>
           </div>
         </article>
 
         <article class="vrow glass reveal reveal--d2">
           <div class="vrow__thumb"><img src="static/img/visors/visor-stripe.jpg" alt="Seamless Stripe Sun Visor in cream" loading="lazy" width="438" height="363"/></div>
           <div class="vrow__body">
-            <p class="pcard__sku">03 / Stripe</p>
-            <h3>Seamless Stripe Visor</h3>
-            <p>A four-stripe textured shell with a softly curved silhouette.</p>
-            <div class="pcard__meta"><span class="pill">65&ndash;70 g</span><span class="pill">48&ndash;60 cm</span><span class="pill">7 Colorways</span></div>
-            <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20Stripe%20Sun%20Visor." target="_blank" rel="noopener">Enquire <span aria-hidden="true">&rarr;</span></a>
+            <p class="pcard__sku" data-i18n="home.stripeSku">03 / Stripe</p>
+            <h3 data-i18n="home.stripeName">Seamless Stripe Visor</h3>
+            <p data-i18n="home.stripeDesc">A four-stripe textured shell with a softly curved silhouette.</p>
+            <div class="pcard__meta"><span class="pill">65&ndash;70 g</span><span class="pill">48&ndash;60 cm</span><span class="pill" data-i18n="home.pillColor7">7 Colorways</span></div>
+            <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20Stripe%20Sun%20Visor." target="_blank" rel="noopener"><span data-i18n="home.enquire">Enquire</span> <span aria-hidden="true">&rarr;</span></a>
           </div>
         </article>
 
         <article class="vrow glass reveal reveal--d3">
           <div class="vrow__thumb"><img src="static/img/visors/visor-horn.jpg" alt="Seamless wide-brim horn sun visor in graphite" loading="lazy" width="534" height="271"/></div>
           <div class="vrow__body">
-            <p class="pcard__sku">04 / Wide Brim</p>
-            <h3>Seamless Horn Visor</h3>
-            <p>Extra-wide coverage engineered for full-face shade.</p>
-            <div class="pcard__meta"><span class="pill">95 g</span><span class="pill">28 cm Brim</span><span class="pill">6 Colorways</span></div>
-            <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20Wide-Brim%20Horn%20Sun%20Visor." target="_blank" rel="noopener">Enquire <span aria-hidden="true">&rarr;</span></a>
+            <p class="pcard__sku" data-i18n="home.hornSku">04 / Wide Brim</p>
+            <h3 data-i18n="home.hornName">Seamless Horn Visor</h3>
+            <p data-i18n="home.hornDesc">Extra-wide coverage engineered for full-face shade.</p>
+            <div class="pcard__meta"><span class="pill">95 g</span><span class="pill" data-i18n="home.pillBrim28">28 cm Brim</span><span class="pill" data-i18n="home.pillColor6">6 Colorways</span></div>
+            <a class="pcard__cta" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27m%20interested%20in%20the%20Seamless%20Wide-Brim%20Horn%20Sun%20Visor." target="_blank" rel="noopener"><span data-i18n="home.enquire">Enquire</span> <span aria-hidden="true">&rarr;</span></a>
           </div>
         </article>
       </div>
     </div>
 
-    <p class="vnote reveal">UV performance is documented by test reports; certified wording is confirmed per market before publication. All visor lines support custom logo, colourway and packaging &mdash; MOQ and lead time confirmed per order. <a href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20the%20Sun%20Visor%20collection." target="_blank" rel="noopener">Discuss the visor line<span aria-hidden="true"> &rarr;</span></a></p>
+    <p class="vnote reveal"><span data-i18n="home.visorNote">UV performance is documented by test reports; certified wording is confirmed per market before publication. All visor lines support custom logo, colourway and packaging &mdash; MOQ and lead time confirmed per order.</span> <a href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20the%20Sun%20Visor%20collection." target="_blank" rel="noopener"><span data-i18n="home.visorNoteCta">Discuss the visor line</span><span aria-hidden="true"> &rarr;</span></a></p>
   </div>
 </section>
 
@@ -257,18 +255,18 @@
 <section class="section" id="craft">
   <div class="wrap">
     <header class="section__head reveal">
-      <p class="eyebrow">03 &mdash; The Craft</p>
-      <h2>From mold<br/><em>to silhouette.</em></h2>
-      <p class="lead">The one-piece mold is where a seamless cap begins — a single formed shell, no stitched panels, nothing to interrupt the line.</p>
+      <p class="eyebrow" data-i18n="home.craftEyebrow">03 &mdash; The Craft</p>
+      <h2 data-i18n-html="home.craftTitle">From mold<br/><em>to silhouette.</em></h2>
+      <p class="lead" data-i18n="home.craftLead">The one-piece mold is where a seamless cap begins — a single formed shell, no stitched panels, nothing to interrupt the line.</p>
     </header>
     <div class="craft__grid" id="cmsStaticCraftGrid">
       <figure class="glass-frame reveal">
         <img src="static/img/cap-image-21.jpg" alt="One-piece cap mold used to form seamless shells" loading="lazy" width="900" height="640"/>
-        <figcaption class="glass-chip"><strong>The Mold</strong><span>Shell forming reference</span></figcaption>
+        <figcaption class="glass-chip"><strong data-i18n="home.moldChipTitle">The Mold</strong><span data-i18n="home.moldChipSub">Shell forming reference</span></figcaption>
       </figure>
       <figure class="glass-frame reveal reveal--d1">
         <img src="static/img/cap-image-24.jpg" alt="Finished seamless caps packed in cartons for export" loading="lazy" width="900" height="640"/>
-        <figcaption class="glass-chip"><strong>The Finish</strong><span>Packing &amp; order preparation</span></figcaption>
+        <figcaption class="glass-chip"><strong data-i18n="home.finishChipTitle">The Finish</strong><span data-i18n="home.finishChipSub">Packing &amp; order preparation</span></figcaption>
       </figure>
     </div>
     <div class="videos" id="cmsStaticCraftVideos">
@@ -277,14 +275,14 @@
           <img src="static/img/cap-image-25.jpg" alt="" loading="lazy" width="640" height="360"/>
           <span class="vcard__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg></span>
         </button>
-        <div class="vcard__body"><b>Logo Application</b><p>Branding detail from our production partners.</p></div>
+        <div class="vcard__body"><b data-i18n="home.videoLogoName">Logo Application</b><p data-i18n="home.videoLogoDesc">Branding detail from our production partners.</p></div>
       </div>
       <div class="vcard glass reveal reveal--d1">
         <button class="vcard__stage" type="button" data-video="static/videos/production-video-03.mp4" aria-label="Play video: production process reference">
           <img src="static/img/cap-image-27.jpg" alt="" loading="lazy" width="640" height="360"/>
           <span class="vcard__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg></span>
         </button>
-        <div class="vcard__body"><b>Production</b><p>Selected production environments, on the floor.</p></div>
+        <div class="vcard__body"><b data-i18n="home.videoProdName">Production</b><p data-i18n="home.videoProdDesc">Selected production environments, on the floor.</p></div>
       </div>
     </div>
     <!-- 后台工艺驱动（cms.js：craft_preview 非空时替换上方静态工艺内容） -->
@@ -296,15 +294,15 @@
 <section class="section" id="story">
   <div class="wrap story__grid">
     <div class="story__copy reveal">
-      <p class="eyebrow">04 &mdash; The House</p>
-      <h2>Born in Yiwu,<br/><em>worn worldwide.</em></h2>
-      <p>Yiwu sits at the heart of China&rsquo;s headwear trade. From here, SHIRUN brings together selected seamless-cap production partners under a single, considered service — one contact, one standard, one quiet promise: a cleaner cap.</p>
-      <p data-cms-factory>We coordinate product selection, sampling, customization, quality requirements, packing and shipment with the partner best suited to your program — so your order never becomes your logistics problem.</p>
-      <a class="text-link" href="#circle">Begin a conversation<span aria-hidden="true"> &rarr;</span></a>
+      <p class="eyebrow" data-i18n="home.storyEyebrow">04 &mdash; The House</p>
+      <h2 data-i18n-html="home.storyTitle">Born in Yiwu,<br/><em>worn worldwide.</em></h2>
+      <p data-i18n="home.storyP1">Yiwu sits at the heart of China&rsquo;s headwear trade. From here, SHIRUN brings together selected seamless-cap production partners under a single, considered service — one contact, one standard, one quiet promise: a cleaner cap.</p>
+      <p data-cms-factory data-i18n="home.storyP2">We coordinate product selection, sampling, customization, quality requirements, packing and shipment with the partner best suited to your program — so your order never becomes your logistics problem.</p>
+      <a class="text-link" href="#circle"><span data-i18n="home.storyCta">Begin a conversation</span><span aria-hidden="true"> &rarr;</span></a>
     </div>
     <figure class="glass-frame story__media reveal reveal--d1">
       <img src="static/img/cap-image-22.jpg" alt="Real production floor with material storage, sewing stations and work in progress" loading="lazy" width="1200" height="900"/>
-      <figcaption class="glass-chip"><strong>Real Production</strong><span>Working floors of our supply network</span></figcaption>
+      <figcaption class="glass-chip"><strong data-i18n="home.storyChipTitle">Real Production</strong><span data-i18n="home.storyChipSub">Working floors of our supply network</span></figcaption>
     </figure>
   </div>
 </section>
@@ -313,29 +311,29 @@
 <section class="section" id="values">
   <div class="wrap">
     <header class="section__head reveal">
-      <p class="eyebrow">05 &mdash; Brand Values</p>
-      <h2>What we<br/><em>stand behind.</em></h2>
+      <p class="eyebrow" data-i18n="home.valuesEyebrow">05 &mdash; Brand Values</p>
+      <h2 data-i18n-html="home.valuesTitle">What we<br/><em>stand behind.</em></h2>
     </header>
     <div class="grid4" id="cmsStaticValues">
       <div class="value glass reveal">
         <span class="value__num" aria-hidden="true">I</span>
-        <h3>Seamless Structure</h3>
-        <p>One-piece construction is the core of the range — a silhouette with nothing to forgive.</p>
+        <h3 data-i18n="home.val1Title">Seamless Structure</h3>
+        <p data-i18n="home.val1Desc">One-piece construction is the core of the range — a silhouette with nothing to forgive.</p>
       </div>
       <div class="value glass reveal reveal--d1">
         <span class="value__num" aria-hidden="true">II</span>
-        <h3>Your Mark, Made Quietly</h3>
-        <p>Logo, colorway, pattern and selected specifications — customized with restraint and precision.</p>
+        <h3 data-i18n="home.val2Title">Your Mark, Made Quietly</h3>
+        <p data-i18n="home.val2Desc">Logo, colorway, pattern and selected specifications — customized with restraint and precision.</p>
       </div>
       <div class="value glass reveal reveal--d2">
         <span class="value__num" aria-hidden="true">III</span>
-        <h3>Wholesale, Considered</h3>
-        <p>Built for bulk and repeat overseas programs, with packing tailored to your shelves.</p>
+        <h3 data-i18n="home.val3Title">Wholesale, Considered</h3>
+        <p data-i18n="home.val3Desc">Built for bulk and repeat overseas programs, with packing tailored to your shelves.</p>
       </div>
       <div class="value glass reveal reveal--d3">
         <span class="value__num" aria-hidden="true">IV</span>
-        <h3>Export, Handled</h3>
-        <p>Production follow-up, packing standards and shipment coordination — coordinated for you.</p>
+        <h3 data-i18n="home.val4Title">Export, Handled</h3>
+        <p data-i18n="home.val4Desc">Production follow-up, packing standards and shipment coordination — coordinated for you.</p>
       </div>
     </div>
     <!-- 后台优势配置驱动（cms.js：advantages 非空时替换上方静态价值卡） -->
@@ -347,14 +345,14 @@
 <section class="section section--tight" id="process">
   <div class="wrap">
     <header class="section__head reveal">
-      <p class="eyebrow">06 &mdash; Working With Us</p>
-      <h2>From enquiry<br/><em>to delivery.</em></h2>
+      <p class="eyebrow" data-i18n="home.procEyebrow">06 &mdash; Working With Us</p>
+      <h2 data-i18n-html="home.procTitle">From enquiry<br/><em>to delivery.</em></h2>
     </header>
     <div class="grid4 process4" id="cmsStaticProcess">
-      <div class="value glass reveal"><span class="value__num" aria-hidden="true">01</span><h3>Enquiry</h3><p>Tell us the line, colourway and quantity on WhatsApp or by enquiry form.</p></div>
-      <div class="value glass reveal reveal--d1"><span class="value__num" aria-hidden="true">02</span><h3>Confirmation</h3><p>We confirm specifications, logo artwork, packing and order details with you.</p></div>
-      <div class="value glass reveal reveal--d2"><span class="value__num" aria-hidden="true">03</span><h3>Sample</h3><p>A pre-production sample is prepared for your approval before bulk production.</p></div>
-      <div class="value glass reveal reveal--d3"><span class="value__num" aria-hidden="true">04</span><h3>Delivery</h3><p>Bulk production, quality follow-up, packing and shipment coordination.</p></div>
+      <div class="value glass reveal"><span class="value__num" aria-hidden="true">01</span><h3 data-i18n="home.step1Title">Enquiry</h3><p data-i18n="home.step1Desc">Tell us the line, colourway and quantity on WhatsApp or by enquiry form.</p></div>
+      <div class="value glass reveal reveal--d1"><span class="value__num" aria-hidden="true">02</span><h3 data-i18n="home.step2Title">Confirmation</h3><p data-i18n="home.step2Desc">We confirm specifications, logo artwork, packing and order details with you.</p></div>
+      <div class="value glass reveal reveal--d2"><span class="value__num" aria-hidden="true">03</span><h3 data-i18n="home.step3Title">Sample</h3><p data-i18n="home.step3Desc">A pre-production sample is prepared for your approval before bulk production.</p></div>
+      <div class="value glass reveal reveal--d3"><span class="value__num" aria-hidden="true">04</span><h3 data-i18n="home.step4Title">Delivery</h3><p data-i18n="home.step4Desc">Bulk production, quality follow-up, packing and shipment coordination.</p></div>
     </div>
     <!-- 后台流程配置驱动（cms.js：process_steps 非空时替换上方静态步骤） -->
     <div class="grid4 process4" id="cmsProcess" hidden></div>
@@ -367,17 +365,17 @@
     <div class="circle glass reveal">
       <div class="aurora__blob aurora__blob--inline" aria-hidden="true"></div>
       <div class="circle__copy">
-        <p class="eyebrow">By Introduction &middot; For Trade Partners</p>
-        <h2 class="circle__title">The Shirun Circle</h2>
-        <p class="circle__lead">A private channel for wholesale partners — deliberately small, intentionally personal.</p>
+        <p class="eyebrow" data-i18n="home.circleEyebrow">By Introduction &middot; For Trade Partners</p>
+        <h2 class="circle__title" data-i18n="home.circleTitle">The Shirun Circle</h2>
+        <p class="circle__lead" data-i18n="home.circleLead">A private channel for wholesale partners — deliberately small, intentionally personal.</p>
         <ul class="circle__list">
-          <li>First access to new sample development</li>
-          <li>Private colorway &amp; pattern coordination</li>
-          <li>A dedicated WhatsApp line for partner orders</li>
+          <li data-i18n="home.circleItem1">First access to new sample development</li>
+          <li data-i18n="home.circleItem2">Private colorway &amp; pattern coordination</li>
+          <li data-i18n="home.circleItem3">A dedicated WhatsApp line for partner orders</li>
         </ul>
         <div class="circle__actions">
-          <a class="btn btn--gold" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20request%20private%20access%20to%20The%20Shirun%20Circle." target="_blank" rel="noopener">Request Private Access</a>
-          <a class="btn btn--glass" href="#collection">Browse the Collection</a>
+          <a class="btn btn--gold" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20request%20private%20access%20to%20The%20Shirun%20Circle." target="_blank" rel="noopener" data-i18n="home.circleCta1">Request Private Access</a>
+          <a class="btn btn--glass" href="#collection" data-i18n="home.circleCta2">Browse the Collection</a>
         </div>
       </div>
       <figure class="circle__media" aria-hidden="true">
@@ -391,13 +389,13 @@
 <section class="section section--tight" id="contact">
   <div class="wrap contact glass reveal">
     <div>
-      <p class="eyebrow">Contact</p>
-      <h2 class="contact__title">Speak with SHIRUN</h2>
-      <p class="contact__row"><span>WhatsApp</span><a href="https://wa.me/8613388614562" target="_blank" rel="noopener" data-cms-contact="whatsapp">+86 133 8861 4562</a></p>
-      <p class="contact__row"><span>Studio</span><b data-cms-contact="address">Yiwu, Zhejiang, China</b></p>
+      <p class="eyebrow" data-i18n="home.contactEyebrow">Contact</p>
+      <h2 class="contact__title" data-i18n="home.contactTitle">Speak with SHIRUN</h2>
+      <p class="contact__row"><span data-i18n="home.contactWa">WhatsApp</span><a href="https://wa.me/8613388614562" target="_blank" rel="noopener" data-cms-contact="whatsapp">+86 133 8861 4562</a></p>
+      <p class="contact__row"><span data-i18n="home.contactStudio">Studio</span><b data-cms-contact="address">Yiwu, Zhejiang, China</b></p>
       <p class="lead" id="cmsContactBlurb" hidden style="margin-top:12px"></p>
     </div>
-    <a class="btn btn--gold btn--lg" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener">Start on WhatsApp</a>
+    <a class="btn btn--gold btn--lg" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" data-i18n="home.contactCta">Start on WhatsApp</a>
   </div>
 </section>
 </main>
@@ -407,26 +405,29 @@
   <div class="wrap footer__grid">
     <div>
       <p class="brand footer__brand"><span class="brand__name">SHIRUN</span><span class="brand__dot" aria-hidden="true"></span><span class="brand__sub">HEADWEAR</span></p>
-      <p class="footer__tag" id="cmsFooterTag">Seamless one-piece caps, curated from Yiwu, China.</p>
+      <p class="footer__tag" id="cmsFooterTag" data-i18n="common.footerTag">Seamless one-piece caps, curated from Yiwu, China.</p>
     </div>
-    <nav class="footer__nav" aria-label="Footer">
-      <a href="products.html">Products</a>
-      <a href="craftsmanship.html">Craft</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="#top">Back to top</a>
+    <nav class="footer__nav" aria-label="Footer" data-i18n-attr="aria-label:common.footerNav">
+      <a href="products.html" data-i18n="common.navProducts">Products</a>
+      <a href="craftsmanship.html" data-i18n="common.navCraft">Craft</a>
+      <a href="about.html" data-i18n="common.navAbout">About</a>
+      <a href="contact.html" data-i18n="common.navContact">Contact</a>
+      <a href="privacy.html" data-i18n="common.privacyPolicy">Privacy Policy</a>
+      <a href="#top" data-i18n="common.backToTop">Back to top</a>
     </nav>
-    <p class="footer__legal">&copy; 2026 Yiwu Shirun Headwear &middot; Wholesale &amp; OEM enquiries via WhatsApp</p>
+    <p class="footer__legal" data-i18n="common.footerLegal">&copy; 2026 Yiwu Shirun Headwear &middot; Wholesale &amp; OEM enquiries via WhatsApp</p>
   </div>
 </footer>
 
 <!-- Floating WhatsApp -->
-<a class="float-wa glass" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" aria-label="Chat with SHIRUN on WhatsApp">
+<a class="float-wa glass" href="https://wa.me/8613388614562?text=Hello%20SHIRUN%2C%20I%27d%20like%20to%20discuss%20a%20wholesale%20cap%20order." target="_blank" rel="noopener" aria-label="Chat with SHIRUN on WhatsApp" data-i18n-attr="aria-label:common.waChatAria">
   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24s8.24 3.7 8.24 8.24-3.7 8.24-8.24 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.15.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28"/></svg>
 </a>
 
-<script src="static/js/main.js" defer></script>
+<script src="static/js/i18n.js" defer></script>
+<script src="static/js/i18n/lang-en.js" defer></script>
+<script src="static/js/i18n/lang-zh.js" defer></script>
+<script src="static/js/main.js?v=20261025" defer></script>
 <script src="static/js/cms.js" defer></script>
 </body>
 </html>

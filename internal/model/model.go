@@ -72,6 +72,7 @@ type Product struct {
 	Category      *Category `json:"category,omitempty"`
 	ShortDesc     string    `json:"short_desc"`
 	DetailDesc    string    `json:"detail_desc"`
+	Note          string    `json:"note"` // 产品笔记（结构化 JSON 文本，前端解析渲染）
 	Material      string    `json:"material"`
 	CapShape      string    `json:"cap_shape"`
 	Colors        string    `json:"colors"`

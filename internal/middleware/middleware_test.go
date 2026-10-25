@@ -1,8 +1,12 @@
 package middleware
 
 import (
+	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"seamcap/internal/apperr"
 )
 
 func TestClientIP(t *testing.T) {
@@ -40,6 +44,35 @@ func TestClientIP(t *testing.T) {
 				t.Errorf("ClientIP = %q, want %q", got, c.want)
 			}
 		})
+	}
+}
+
+func TestNoStore(t *testing.T) {
+	h := NoStore(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Errorf("Cache-Control = %q, want no-store", got)
+	}
+}
+
+func TestWriteAuthErrorEscapesJSON(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeAuthError(rec, apperr.Unauthorized(`quote " and backslash \ must stay valid JSON`))
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("status = %d, want 401", rec.Code)
+	}
+	var body struct {
+		Error struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("response is not valid JSON: %v (%s)", err, rec.Body.String())
+	}
+	if body.Error.Code != apperr.CodeUnauthorized || body.Error.Message == "" {
+		t.Errorf("unexpected body: %+v", body)
 	}
 }
 

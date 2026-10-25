@@ -1,6 +1,10 @@
 example.com, www.example.com {
   encode gzip zstd
 
+  header {
+    Strict-Transport-Security "max-age=31536000"
+  }
+
   # handle_path 会剥掉前缀，再按各自 root 服务：/static/x -> web/static/x，/uploads/x -> uploads/x
   handle_path /static/* {
     root * /opt/seamcap/web/static

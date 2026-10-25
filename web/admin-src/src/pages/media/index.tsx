@@ -424,15 +424,10 @@ export default function MediaPage(): JSX.Element {
                 <div className="sc-media-preview__url">{mediaFullURL(preview.url)}</div>
               </div>
               <div className="sc-media-preview__actions">
-                <Button icon={<CopyOutlined />} onClick={() => void copyURL(preview)}>
-                  复制 URL
-                </Button>
-                <Button icon={<EditOutlined />} onClick={() => openAlt(preview)}>
-                  编辑 ALT
-                </Button>
-                <Button icon={<SwapOutlined />} onClick={() => openReplace(preview)}>
-                  替换
-                </Button>
+                {/* 纯文字按钮：右栏 300px 内四个动作必须单行，图标会挤到换行 */}
+                <Button onClick={() => void copyURL(preview)}>复制 URL</Button>
+                <Button onClick={() => openAlt(preview)}>编辑 ALT</Button>
+                <Button onClick={() => openReplace(preview)}>替换</Button>
                 <Popconfirm
                   title="删除该媒体？"
                   description="被引用的素材需先移除引用"
@@ -441,9 +436,7 @@ export default function MediaPage(): JSX.Element {
                   cancelText="取消"
                   onConfirm={() => remove(preview)}
                 >
-                  <Button danger icon={<DeleteOutlined />}>
-                    删除
-                  </Button>
+                  <Button danger>删除</Button>
                 </Popconfirm>
               </div>
             </div>

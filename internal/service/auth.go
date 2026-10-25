@@ -33,8 +33,13 @@ type AuthService struct {
 	secret []byte
 
 	loginLimiter *limiter
+	passLimiter  *limiter
+	hashSem      chan struct{}
 	dummyHash    string
 }
+
+// maxConcurrentArgon2 限制同时进行的 Argon2 运算数（单次 64MB，防并发内存放大）。
+const maxConcurrentArgon2 = 8
 
 func NewAuthService(cfg *config.Config, admins *repository.AdminRepo, audit *repository.AuditRepo, secret []byte) *AuthService {
 	// 占位哈希：用户名不存在时仍执行一次完整的 Argon2 校验，避免时序侧信道。
@@ -48,11 +53,28 @@ func NewAuthService(cfg *config.Config, admins *repository.AdminRepo, audit *rep
 		audit:        audit,
 		secret:       secret,
 		loginLimiter: newLimiter(5, 5*time.Minute),
+		passLimiter:  newLimiter(5, 5*time.Minute),
+		hashSem:      make(chan struct{}, maxConcurrentArgon2),
 		dummyHash:    dummy,
 	}
 }
 
+// acquireHash 非阻塞获取 Argon2 槽位；拿不到说明并发登录过多。
+func (s *AuthService) acquireHash() bool {
+	select {
+	case s.hashSem <- struct{}{}:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s *AuthService) releaseHash() { <-s.hashSem }
+
 // ---- 内存滑动窗口限流（登录用） ----
+
+// limiterMaxKeys 单个限流表的最大 key 数；超限时按过期/最久未活动淘汰，避免整表重置。
+const limiterMaxKeys = 20000
 
 type limiter struct {
 	mu     sync.Mutex
@@ -81,10 +103,29 @@ func (l *limiter) Allow(key string) bool {
 		return false
 	}
 	l.m[key] = append(stamps, now)
-	if len(l.m) > 10000 { // 防内存膨胀：粗暴重置
-		l.m = make(map[string][]time.Time)
+	if len(l.m) > limiterMaxKeys {
+		l.pruneLocked(now)
 	}
 	return true
+}
+
+// pruneLocked 先删除窗口内无活动的 key，仍超限时只淘汰最久未活动的 key，
+// 避免整表清空导致所有限流同时失效。
+func (l *limiter) pruneLocked(now time.Time) {
+	var oldestKey string
+	var oldest time.Time
+	for k, ts := range l.m {
+		if len(ts) == 0 || now.Sub(ts[len(ts)-1]) >= l.window {
+			delete(l.m, k)
+			continue
+		}
+		if oldestKey == "" || ts[len(ts)-1].Before(oldest) {
+			oldestKey, oldest = k, ts[len(ts)-1]
+		}
+	}
+	if len(l.m) > limiterMaxKeys && oldestKey != "" {
+		delete(l.m, oldestKey)
+	}
 }
 
 func (l *limiter) Reset(key string) {
@@ -200,6 +241,10 @@ func (s *AuthService) Login(username, password, ip, ua string, remember bool) (*
 	if !s.loginLimiter.Allow("user:" + username) {
 		return nil, apperr.RateLimited("Too many login attempts for this account, try again later")
 	}
+	if !s.acquireHash() {
+		return nil, apperr.RateLimited("Too many concurrent login attempts, try again later")
+	}
+	defer s.releaseHash()
 
 	admin, err := s.admins.GetAdminByUsername(username)
 	if err != nil {
@@ -207,9 +252,11 @@ func (s *AuthService) Login(username, password, ip, ua string, remember bool) (*
 	}
 	if admin == nil {
 		verifyPassword(s.dummyHash, password) // 恒定时间防御
+		_ = s.audit.Insert(nil, "login.failed", "admin", "", "unknown username", ip)
 		return nil, apperr.Unauthorized("Invalid username or password")
 	}
 	if !verifyPassword(admin.PasswordHash, password) {
+		_ = s.audit.Insert(&admin.ID, "login.failed", "admin", fmt.Sprint(admin.ID), "invalid password", ip)
 		return nil, apperr.Unauthorized("Invalid username or password")
 	}
 
@@ -301,6 +348,15 @@ var pwDigit = regexp.MustCompile(`[0-9]`)
 
 // ChangePassword 改密：校验当前密码 + 新密码强度（≥10 位，含字母数字），保留当前会话。
 func (s *AuthService) ChangePassword(admin *model.AdminUser, currentToken, current, next string) error {
+	key := fmt.Sprintf("pw:%d", admin.ID)
+	if !s.passLimiter.Allow(key) {
+		return apperr.RateLimited("Too many password change attempts, try again later")
+	}
+	if !s.acquireHash() {
+		return apperr.RateLimited("Too many concurrent password operations, try again later")
+	}
+	defer s.releaseHash()
+
 	if !verifyPassword(admin.PasswordHash, current) {
 		return apperr.InvalidField("current", "current password is incorrect")
 	}
@@ -314,6 +370,7 @@ func (s *AuthService) ChangePassword(admin *model.AdminUser, currentToken, curre
 	if err := s.admins.UpdatePassword(admin.ID, hash); err != nil {
 		return apperr.Internal(err.Error())
 	}
+	s.passLimiter.Reset(key)
 	// 其余会话全部失效，保留当前会话
 	if err := s.admins.DeleteOtherSessions(admin.ID, tokenHash(currentToken)); err != nil {
 		slog.Warn("delete other sessions failed", "error", err)

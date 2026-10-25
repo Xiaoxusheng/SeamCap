@@ -20,6 +20,7 @@ import (
 	"seamcap/internal/email"
 	"seamcap/internal/handler/admin"
 	"seamcap/internal/handler/public"
+	"seamcap/internal/imgsrv"
 	"seamcap/internal/logger"
 	mw "seamcap/internal/middleware"
 	"seamcap/internal/repository"
@@ -131,8 +132,9 @@ func main() {
 	r.Get("/sitemap.xml", pubH.Sitemap)
 	r.Get("/robots.txt", pubH.Robots)
 
-	// uploads 静态服务（生产建议由 Caddy/Nginx 直接服务并长缓存）
-	uploadsHandler := staticDirHandler(cfg.UploadDir, "/uploads/", "public, max-age=31536000, immutable")
+	// uploads 静态服务：原图直出 + ?w= 按需缩放缓存（低带宽场景列表用小图，
+	// 生产建议仍由 Caddy/Nginx 直接服务；缩放缓存目录见 IMAGE_CACHE_DIR）
+	uploadsHandler := imgsrv.New(cfg.UploadDir, "/uploads/", cfg.ImageCacheDir, "public, max-age=31536000, immutable")
 	if uploadsHandler != nil {
 		r.Handle("/uploads/*", uploadsHandler)
 	}
@@ -164,12 +166,12 @@ func main() {
 		"/about":              "about.html",
 		"/about.html":         "about.html",
 		// 与 sitemap 一致：页面管理 slug 路由（about-us / privacy-policy 由后台页面管理驱动）
-		"/about-us":           "about.html",
-		"/privacy-policy":     "privacy.html",
-		"/contact":            "contact.html",
-		"/contact.html":       "contact.html",
-		"/privacy":            "privacy.html",
-		"/privacy.html":       "privacy.html",
+		"/about-us":       "about.html",
+		"/privacy-policy": "privacy.html",
+		"/contact":        "contact.html",
+		"/contact.html":   "contact.html",
+		"/privacy":        "privacy.html",
+		"/privacy.html":   "privacy.html",
 	}
 	if st, err := os.Stat("web"); err == nil && st.IsDir() {
 		for route, file := range pages {
@@ -236,8 +238,19 @@ func pageHandler(file string) http.HandlerFunc {
 	}
 }
 
+// adminCSP 管理后台 SPA 的内容安全策略：只放行同源脚本与主题初始化内联脚本（SHA-256），
+// antd 运行时样式需要 inline style；外部媒体仅放行 https 预览。
+const adminCSP = "default-src 'self'; script-src 'self' 'sha256-a1dc004bfb44fd476066e3f2764f7e2a26064201908f1b6213876998d7ba3f1d'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+
+func setAdminHTMLHeaders(w http.ResponseWriter) {
+	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Content-Security-Policy", adminCSP)
+	w.Header().Set("Cache-Control", "no-cache")
+}
+
 // adminSPAHandler 管理后台 SPA：静态文件命中直接服务；未命中 fallback 到 index.html。
-// 管理页 HTML 响应附加 noindex / DENY（与 AdminSecurityHeaders 语义一致）。
+// 管理页 HTML 响应附加 noindex / DENY / CSP（与 AdminSecurityHeaders 语义一致）。
 func adminSPAHandler(dir string) http.HandlerFunc {
 	if st, err := os.Stat(dir); err != nil || !st.IsDir() {
 		return nil
@@ -248,9 +261,7 @@ func adminSPAHandler(dir string) http.HandlerFunc {
 		rel = strings.TrimSuffix(rel, "/")
 		if rel == "" || rel == "index.html" {
 			// 入口 HTML：不缓存（保证发版即生效）
-			w.Header().Set("X-Robots-Tag", "noindex")
-			w.Header().Set("X-Frame-Options", "DENY")
-			w.Header().Set("Cache-Control", "no-cache")
+			setAdminHTMLHeaders(w)
 			http.ServeFile(w, r, filepath.Join(dir, "index.html"))
 			return
 		}
@@ -269,9 +280,7 @@ func adminSPAHandler(dir string) http.HandlerFunc {
 			return
 		}
 		// SPA fallback：客户端路由刷新不 404
-		w.Header().Set("X-Robots-Tag", "noindex")
-		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("Cache-Control", "no-cache")
+		setAdminHTMLHeaders(w)
 		http.ServeFile(w, r, filepath.Join(dir, "index.html"))
 	}
 }

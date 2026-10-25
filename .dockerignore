@@ -25,8 +25,10 @@ docs
 design-system
 README.md
 
-# 环境变量与密钥（敏感信息不入镜像）
+# 环境变量与密钥（敏感信息不入镜像/构建上下文）
 .env
+.deploy_ssh
+.deploy-tmp
 
 # 前端：管理后台 SPA 在镜像内重新构建；node_modules 不进上下文
 web/admin
