@@ -1086,3 +1086,109 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @media (max-width: 640px) {
   .sgallery__thumb { width: 64px; height: 64px; border-radius: 10px; }
 }
+
+/* ---------- Packing & Dispatch（打包发货图库） ---------- */
+.pack-grid { columns: 3; column-gap: 18px; margin-top: 22px; }
+.pack-item {
+  position: relative; break-inside: avoid; margin: 0 0 18px;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: rgba(255,255,255,.025); overflow: hidden;
+}
+.pack-item__stage {
+  position: relative; display: block; width: 100%; padding: 0;
+  border: 0; background: none; cursor: zoom-in; overflow: hidden;
+}
+.pack-item__media { display: block; width: 100%; height: auto; }
+.pack-item__stage img.pack-item__media {
+  transition: transform var(--t-slow) var(--ease), filter var(--t-med);
+}
+.pack-item__stage:hover img.pack-item__media { transform: scale(1.035); filter: brightness(1.05); }
+.pack-item--video .pack-item__stage { cursor: pointer; aspect-ratio: 9 / 16; background: #0A0908; }
+.pack-item--video .pack-item__media { width: 100%; height: 100%; object-fit: cover; }
+.pack-item__play {
+  position: absolute; inset: 0; margin: auto; width: 60px; height: 60px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: rgba(12,10,9,.5); color: var(--ivory);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.3);
+  transition: transform var(--t-med) var(--ease), background var(--t-med);
+}
+.pack-item__play svg { width: 24px; height: 24px; margin-left: 3px; }
+.pack-item__stage:hover .pack-item__play { transform: scale(1.08); background: rgba(201,162,75,.85); color: var(--gold-ink); }
+.pack-item__stage.is-playing .pack-item__play { display: none; }
+.pack-item__meta { display: block; padding: 14px 16px 16px; border-top: 1px solid var(--line); }
+.pack-item__cat {
+  display: block; font-size: 9.5px; font-weight: 600; letter-spacing: .24em;
+  text-transform: uppercase; color: var(--gold);
+}
+.pack-item__title {
+  display: block; margin-top: 6px; font-family: var(--font-display);
+  font-size: 20px; font-weight: 600; line-height: 1.25; color: var(--ivory);
+}
+.pack-item__cap { display: block; margin-top: 4px; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+.pack-item--skeleton { border: 0; background: none; }
+.pack-item--skeleton .sc-skel {
+  display: block; height: 260px; border-radius: var(--r-lg);
+  background: linear-gradient(100deg, rgba(255,255,255,.05) 20%, rgba(255,255,255,.1) 40%, rgba(255,255,255,.05) 60%);
+  background-size: 220% 100%; animation: packShimmer 1.4s ease-in-out infinite;
+}
+.pack-item--skeleton:nth-child(3n+2) .sc-skel { height: 200px; }
+.pack-item--skeleton:nth-child(3n) .sc-skel { height: 300px; }
+@keyframes packShimmer { from { background-position: 120% 0; } to { background-position: -60% 0; } }
+.pack-note {
+  margin: 18px 2px 0; font-size: 12px; line-height: 1.6; color: var(--faint);
+}
+.pack-status {
+  margin-top: 18px; padding: 22px 24px; border-radius: var(--r-lg);
+  border: 1px dashed var(--line); color: var(--muted); font-size: 13.5px; text-align: center;
+}
+.pack-status[hidden] { display: none; }
+
+/* 打包图库灯箱（独立于产品详情灯箱，避免 id/脚本耦合） */
+.pack-lb {
+  position: fixed; inset: 0; z-index: 300; padding: 24px;
+  display: flex; align-items: center; justify-content: center; gap: 18px;
+  background: rgba(8,7,6,.9);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+.pack-lb[hidden] { display: none; }
+.pack-lb__figure { margin: 0; max-width: min(86vw, 980px); text-align: center; }
+.pack-lb__img {
+  max-width: 100%; max-height: 74vh; max-height: 70dvh;
+  border-radius: var(--r-lg); border: 1px solid var(--glass-line-strong);
+  box-shadow: var(--shadow-xl); animation: lbIn .25s var(--ease);
+}
+.pack-lb__cap { margin-top: 12px; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+.pack-lb__count {
+  position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+  margin: 0; font-size: 11px; letter-spacing: .2em; color: var(--muted);
+}
+.pack-lb__close, .pack-lb__nav {
+  width: 52px; height: 52px; border-radius: 50%; flex: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.08); border: 1px solid var(--glass-line-strong);
+  color: var(--ivory); transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
+}
+.pack-lb__close svg, .pack-lb__nav svg { width: 22px; height: 22px; }
+.pack-lb__close:hover, .pack-lb__nav:hover { background: rgba(201,162,75,.85); color: var(--gold-ink); transform: scale(1.06); }
+.pack-lb__close { position: absolute; top: 22px; right: 22px; }
+.pack-lb__nav[hidden] { display: none; }
+
+@media (max-width: 1080px) {
+  .pack-grid { columns: 2; }
+}
+@media (max-width: 640px) {
+  .pack-grid { columns: 1; }
+  .pack-item__title { font-size: 19px; }
+  .pack-lb { gap: 8px; padding: 16px; }
+  .pack-lb__nav { display: none; }
+  .pack-lb__close { top: 12px; right: 12px; }
+}
+
+/* 打包页中文标题较长，窄屏缩小字号避免末行只剩标点 */
+@media (max-width: 560px) {
+  [data-page="packing"] .page-hero__title { font-size: clamp(32px, 9.4vw, 42px); }
+}
+
+/* 打包页筛选条右侧计数：微弱灰在玻璃底上过淡，略提对比 */
+.filter-bar .result-count { color: var(--muted); }

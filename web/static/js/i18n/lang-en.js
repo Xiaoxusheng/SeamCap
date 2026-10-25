@@ -15,6 +15,7 @@
       navProducts: 'Products',
       navVisors: 'Sun Visors',
       navCraft: 'Craft',
+      navPacking: 'Packing',
       navAbout: 'About',
       navContact: 'Contact',
       whatsapp: 'WhatsApp',
@@ -49,6 +50,10 @@
       craft: {
         title: 'Craftsmanship \u2014 One-Piece Molding & OEM Detail | SHIRUN',
         desc: 'How a seamless cap is made: one-piece molding, custom logo application, quality follow-up and export packing \u2014 the craft behind SHIRUN headwear, coordinated from Yiwu, China.'
+      },
+      packing: {
+        title: 'Packing & Dispatch \u2014 Cartons, Marks & Loading | SHIRUN',
+        desc: 'How SHIRUN headwear orders leave the floor: hand-marked cartons, film-wrapped pallets, loading photos and logistics handovers \u2014 order records from Yiwu, China.'
       },
       about: {
         title: 'About \u2014 SHIRUN Headwear | Seamless Caps from Yiwu, China',
@@ -253,6 +258,32 @@
     },
 
     /* ---------- 关于页 ---------- */
+    packing: {
+      crumbHome: 'Home',
+      crumbHere: 'Packing',
+      title: 'Packed, marked, <em>shipped.</em>',
+      lead: 'Order records from the packing floor \u2014 cartons marked by hand, pallets wrapped for transit, loading photographed before the truck leaves. The last step of the craft, kept visible.',
+      filterAria: 'Packing categories',
+      catAria: 'Category',
+      filterAll: 'All',
+      catPacking: 'Packing',
+      catLoading: 'Loading',
+      catWarehouse: 'Warehouse',
+      count: '{n} records',
+      empty: 'No records in this category yet.',
+      privacyNote: 'Customer names and order numbers are blurred in these photos \u2014 every buyer\u2019s records stay private.',
+      playClip: 'Play clip',
+      openPhoto: 'Open photo',
+      altFallback: 'Packing and dispatch photo',
+      loadError: 'The gallery is taking longer to load \u2014 refresh the page, or message us on WhatsApp for packing photos.',
+      lbClose: 'Close',
+      lbPrev: 'Previous photo',
+      lbNext: 'Next photo',
+      ctaEyebrow: 'Next Step',
+      ctaTitle: 'Want your order photographed?',
+      ctaLead: 'Cartons, marks and loading are recorded for every shipment \u2014 ask for your order\u2019s folder before it leaves.',
+      ctaBtn: 'Ask on WhatsApp'
+    },
     about: {
       crumbHome: 'Home',
       crumbHere: 'About',

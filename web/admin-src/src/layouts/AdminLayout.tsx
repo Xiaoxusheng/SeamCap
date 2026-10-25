@@ -12,6 +12,7 @@ import {
   DownOutlined,
   FileTextOutlined,
   HomeOutlined,
+  InboxOutlined,
   LogoutOutlined,
   MailOutlined,
   MenuFoldOutlined,
@@ -70,6 +71,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { path: '/admin/media', label: '媒体库', icon: <PictureOutlined /> },
       { path: '/admin/craftsmanship', label: '工艺管理', icon: <ToolOutlined /> },
+      { path: '/admin/packing', label: '打包发货', icon: <InboxOutlined /> },
     ],
   },
   {
@@ -161,7 +163,11 @@ function resolveCrumbs(pathname: string): Crumb[] {
       { label: path.endsWith('/new') ? '新建' : '编辑' },
     ]
   }
-  if (path.startsWith('/admin/craftsmanship') || path.startsWith('/admin/media')) {
+  if (
+    path.startsWith('/admin/craftsmanship') ||
+    path.startsWith('/admin/media') ||
+    path.startsWith('/admin/packing')
+  ) {
     return [CRUMB_ROOT, { label: '素材与工艺' }]
   }
 

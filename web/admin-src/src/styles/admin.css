@@ -6224,3 +6224,17 @@ html[data-theme="dark"] .sc-skip-link {
   gap: 2px;
   flex-shrink: 0;
 }
+
+/* ---------- 打包发货素材库 ---------- */
+.sc-packing-order {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sc-packing-order .sc-tabular {
+  min-width: 20px;
+  margin-right: 4px;
+  color: var(--sc-text-secondary);
+  text-align: right;
+}

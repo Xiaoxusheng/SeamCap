@@ -13,6 +13,7 @@
       navProducts: '产品',
       navVisors: '空顶帽',
       navCraft: '工艺',
+      navPacking: '打包发货',
       navAbout: '关于',
       navContact: '联系',
       whatsapp: 'WhatsApp',
@@ -47,6 +48,10 @@
       craft: {
         title: '工艺 \u2014 一体成型与 OEM 细节 | SHIRUN 世润',
         desc: '无缝帽是如何制成的：一体成型、定制 Logo 印制、品质跟进与出口包装\u2014\u2014SHIRUN 帽饰背后的工艺，统筹自中国义乌。'
+      },
+      packing: {
+        title: '打包发货 \u2014 装箱、贴标与装车记录 | SHIRUN',
+        desc: '订单离开工厂前的样子：手写箱唛的纸箱、缠绕膜打包的托盘、装车与物流交接实拍\u2014\u2014来自义乌的打包发货记录。'
       },
       about: {
         title: '关于 \u2014 SHIRUN 世润帽业 | 来自中国义乌的无缝帽',
@@ -251,6 +256,32 @@
     },
 
     /* ---------- 关于页 ---------- */
+    packing: {
+      crumbHome: '首页',
+      crumbHere: '打包发货',
+      title: '装箱、贴标，<em>发运。</em>',
+      lead: '来自打包现场的订单记录\u2014\u2014手写标注的纸箱、为运输缠绕打包的托盘、装车前拍下的照片。工艺的最后一步，同样看得见。',
+      filterAria: '打包发货分类',
+      catAria: '分类',
+      filterAll: '全部',
+      catPacking: '打包',
+      catLoading: '装车',
+      catWarehouse: '仓储',
+      count: '{n} 条记录',
+      empty: '该分类下暂无记录。',
+      privacyNote: '照片中的客户名称与订单号已做模糊处理\u2014\u2014每位买家的记录都保持私密。',
+      playClip: '播放视频',
+      openPhoto: '查看大图',
+      altFallback: '打包发货实拍图',
+      loadError: '图库加载较慢\u2014\u2014请刷新页面，或通过 WhatsApp 向我们索取打包照片。',
+      lbClose: '关闭',
+      lbPrev: '上一张',
+      lbNext: '下一张',
+      ctaEyebrow: '下一步',
+      ctaTitle: '想看自己订单的打包照片？',
+      ctaLead: '每一单都会记录纸箱、箱唛与装车情况\u2014\u2014发货前可以向我们索取你这一单的图片记录。',
+      ctaBtn: 'WhatsApp 咨询'
+    },
     about: {
       crumbHome: '首页',
       crumbHere: '关于',

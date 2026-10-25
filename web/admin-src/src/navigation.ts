@@ -10,6 +10,7 @@ export const QUICK_NAV_ITEMS: QuickNavItem[] = [
   { path: '/admin/categories', label: '分类管理' },
   { path: '/admin/media', label: '媒体库' },
   { path: '/admin/craftsmanship', label: '工艺管理' },
+  { path: '/admin/packing', label: '打包发货' },
   { path: '/admin/home', label: '首页内容' },
   { path: '/admin/pages', label: '页面管理' },
   { path: '/admin/inquiries', label: '询价管理' },

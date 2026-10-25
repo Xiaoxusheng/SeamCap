@@ -165,6 +165,8 @@ func main() {
 		"/product.html":       "product.html",
 		"/craftsmanship":      "craftsmanship.html",
 		"/craftsmanship.html": "craftsmanship.html",
+		"/packing":            "packing.html",
+		"/packing.html":       "packing.html",
 		"/about":              "about.html",
 		"/about.html":         "about.html",
 		// 与 sitemap 一致：页面管理 slug 路由（about-us / privacy-policy 由后台页面管理驱动）

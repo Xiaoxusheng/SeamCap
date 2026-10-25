@@ -10,6 +10,7 @@ import Categories from './pages/categories'
 import MediaPage from './pages/media'
 import CraftList from './pages/craftsmanship'
 import CraftEdit from './pages/craftsmanship/edit'
+import PackingPage from './pages/packing'
 import PageList from './pages/pages'
 import PageEdit from './pages/pages/edit'
 import HomePage from './pages/home'
@@ -51,6 +52,7 @@ export default function App(): JSX.Element {
         <Route path="craftsmanship" element={<CraftList />} />
         <Route path="craftsmanship/new" element={<CraftEdit />} />
         <Route path="craftsmanship/:id/edit" element={<CraftEdit />} />
+        <Route path="packing" element={<PackingPage />} />
         <Route path="pages" element={<PageList />} />
         <Route path="pages/:slug/edit" element={<PageEdit />} />
         <Route path="home" element={<HomePage />} />
