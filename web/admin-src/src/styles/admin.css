@@ -546,7 +546,13 @@ select {
 
 .sc-sidebar__mark {
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 8px rgba(18, 163, 125, 0.35));
+  width: auto;
+  filter: drop-shadow(0 3px 10px rgba(250, 129, 0, 0.22));
+}
+
+/* 收起态：图形收一档，避免在 72px 窄栏里顶边 */
+.sc-shell.is-collapsed .sc-sidebar__mark {
+  height: 22px;
 }
 
 .sc-sidebar__brand-text {
@@ -4966,7 +4972,7 @@ button.sc-nav-group__title:hover .anticon {
   right: -130px;
   width: 380px;
   height: 380px;
-  background: radial-gradient(circle, rgba(61, 220, 171, 0.22), transparent 68%);
+  background: radial-gradient(circle, rgba(250, 129, 0, 0.20), transparent 68%);
   border-radius: 50%;
   content: "";
 }
@@ -4977,7 +4983,7 @@ button.sc-nav-group__title:hover .anticon {
   left: -120px;
   width: 420px;
   height: 420px;
-  background: radial-gradient(circle, rgba(18, 163, 125, 0.14), transparent 70%);
+  background: radial-gradient(circle, rgba(6, 41, 79, 0.55), transparent 70%);
   border-radius: 50%;
   content: "";
 }
@@ -5016,7 +5022,8 @@ button.sc-nav-group__title:hover .anticon {
 }
 
 .sc-login__mark {
-  filter: drop-shadow(0 4px 12px rgba(61, 220, 171, 0.28));
+  width: auto;
+  filter: drop-shadow(0 4px 14px rgba(250, 129, 0, 0.26));
 }
 
 .sc-login__copy {

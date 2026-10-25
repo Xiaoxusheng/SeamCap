@@ -70,32 +70,35 @@ fi
 echo ""
 echo "==> 4. 磁盘随机 IOPS（4K，SQLite 的真实瓶颈）"
 dd if=/dev/zero of=$TMP bs=4k count=8000 oflag=direct 2>/dev/null
-W_SEC=$(dd if=$TMP of=/dev/null bs=4k count=8000 iflag=direct 2>&1 | grep -oE '[0-9.]+ s' | tr -d ' s')
-IOPS=$(awk "BEGIN{printf \"%.0f\", 8000/$W_SEC}")
-echo "    4K 随机读：${IOPS} IOPS（顺序读 ${W_SEC}s / 8000 块）"
-# 参考：SATA SSD 约 15000-40000，NVMe 约 60000+，机械盘 <1000
-grade "$(awk "BEGIN{print 60000/$IOPS}")" 4 10 "读放大系数(越小越好)"
+W_SEC=$(dd if=$TMP of=/dev/null bs=4k count=8000 iflag=direct 2>&1 | grep -oE '[0-9.]+ s' | head -1 | tr -d ' s')
+IOPS=$(awk "BEGIN{printf \"%.0f\", 8000/${W_SEC:-1}}")
+echo "    4K 随机读：${IOPS} IOPS"
+echo "    参考：机械盘 <1000 · SATA SSD 15000+ · NVMe 60000+"
+if [ "$IOPS" -ge 15000 ]; then
+  echo "    ✅ 磁盘性能满足 SQLite 并发写入"; PASS=$((PASS+1))
+elif [ "$IOPS" -ge 6000 ]; then
+  echo "    ⚠  磁盘偏慢，后台批量操作时可能卡顿"; WARN=$((WARN+1))
+else
+  echo "    ❌ 磁盘过慢，SQLite 会成为瓶颈"; FAIL=$((FAIL+1))
+fi
 rm -f $TMP
 
 echo ""
 echo "==> 5. 网络延迟（到目标客群区域）"
 pingtest() {
-  local host=$1 label=$2
-  local rtt
-  rtt=$(ping -c 5 -W 2 -q "$host" 2>/dev/null | awk -F'/' '/rtt|round-trip/{print $5}')
+  ping -c 5 -W 2 -q "$1" 2>/dev/null | awk -F'/' '/rtt|round-trip/{print $5}'
+}
+for pair in "speed.cloudflare.com|Cloudflare 边缘" "8.8.8.8|Google DNS" "9.9.9.9|Quad9 DNS"; do
+  host=${pair%%|*}; label=${pair##*|}
+  rtt=$(pingtest "$host")
   if [ -n "$rtt" ]; then
     printf "    %-22s %s ms\n" "$label" "$rtt"
-    echo "$rtt"
   else
     printf "    %-22s 超时/不可达\n" "$label"
-    echo "999"
   fi
-}
-echo "    （仅供参考，anycast 目标不代表地理距离）"
-R_CF=$(pingtest speed.cloudflare.com "Cloudflare 边缘")
-R_GOOGLE=$(pingtest 8.8.8.8 "Google DNS")
-R_QUAD=$(pingtest 9.9.9.9 "Quad9 DNS")
-echo "    提示：准确的欧美客户延迟请用第三方多点测速（如 ping.pe）从伦敦/法兰克福/纽约发起"
+done
+echo "    提示：以上为 anycast 目标，不代表地理距离。"
+echo "    准确的欧美客户延迟请用 ping.pe，从纽约 / 伦敦 / 法兰克福三地发起测试。"
 
 echo ""
 echo "==> 6. 磁盘空间占用预估（本站在此机上的实际需求）"

@@ -44,7 +44,7 @@
         { src: img('cap-image-07.jpg'), alt: 'Solid colour seamless cap — olive' },
         { src: img('cap-image-08.jpg'), alt: 'Solid colour seamless cap — black' }
       ],
-      waText: "Hello SHIRUN, I'm interested in LG260008 Solid Colour seamless caps."
+      waText: "Hello SHIRUN HAT, I'm interested in LG260008 Solid Colour seamless caps."
     },
     {
       sku: 'LG260010', slug: 'lg260010-camouflage-seamless-cap', cat: 'caps', catLabel: 'Camouflage', name: 'Seamless Camo Cap',
@@ -60,7 +60,7 @@
         { src: img('cap-image-13.jpg'), alt: 'Camouflage seamless cap — blue camo' },
         { src: img('cap-image-14.jpg'), alt: 'Camouflage seamless cap — sand camo' }
       ],
-      waText: "Hello SHIRUN, I'm interested in LG260010 Camo seamless caps."
+      waText: "Hello SHIRUN HAT, I'm interested in LG260010 Camo seamless caps."
     },
     {
       sku: 'LG260012', slug: 'lg260012-hip-hop-seamless-cap', cat: 'caps', catLabel: 'Hip-Hop', name: 'Seamless Hip-Hop Cap',
@@ -75,7 +75,7 @@
         { src: img('cap-image-18.jpg'), alt: 'Hip-hop seamless cap — white' },
         { src: img('cap-image-19.jpg'), alt: 'Hip-hop seamless cap — light khaki' }
       ],
-      waText: "Hello SHIRUN, I'm interested in LG260012 Hip-Hop seamless caps."
+      waText: "Hello SHIRUN HAT, I'm interested in LG260012 Hip-Hop seamless caps."
     },
     {
       sku: 'VISOR-CRESCENT', slug: 'seamless-crescent-sun-visor', cat: 'visors', catLabel: 'Sun Visors', name: 'Seamless Crescent Visor',
@@ -86,7 +86,7 @@
       images: [
         { src: img('visors/visor-crescent.jpg'), alt: 'Model wearing the pink Seamless Crescent Sun Visor' }
       ],
-      waText: "Hello SHIRUN, I'm interested in the Seamless Crescent Sun Visor."
+      waText: "Hello SHIRUN HAT, I'm interested in the Seamless Crescent Sun Visor."
     },
     {
       sku: 'VISOR-KIDS', slug: 'seamless-kids-sun-visor', cat: 'visors', catLabel: 'Sun Visors', name: "Seamless Kids' Sun Visor",
@@ -97,7 +97,7 @@
       images: [
         { src: img('visors/visor-kids.jpg'), alt: 'Seamless Kids Sun Visor in eight colourways' }
       ],
-      waText: "Hello SHIRUN, I'm interested in the Seamless Kids' Sun Visor."
+      waText: "Hello SHIRUN HAT, I'm interested in the Seamless Kids' Sun Visor."
     },
     {
       sku: 'VISOR-UV', slug: 'seamless-uv-protection-sun-visor', cat: 'visors', catLabel: 'Sun Visors', name: 'Seamless UV Visor',
@@ -108,7 +108,7 @@
       images: [
         { src: img('visors/visor-uv.jpg'), alt: 'Seamless UV Protection Sun Visor in blue grey' }
       ],
-      waText: "Hello SHIRUN, I'm interested in the Seamless UV Protection Sun Visor."
+      waText: "Hello SHIRUN HAT, I'm interested in the Seamless UV Protection Sun Visor."
     },
     {
       sku: 'VISOR-STRIPE', slug: 'seamless-stripe-sun-visor', cat: 'visors', catLabel: 'Sun Visors', name: 'Seamless Stripe Visor',
@@ -119,7 +119,7 @@
       images: [
         { src: img('visors/visor-stripe.jpg'), alt: 'Seamless Stripe Sun Visor in cream' }
       ],
-      waText: "Hello SHIRUN, I'm interested in the Seamless Stripe Sun Visor."
+      waText: "Hello SHIRUN HAT, I'm interested in the Seamless Stripe Sun Visor."
     },
     {
       sku: 'VISOR-HORN', slug: 'seamless-wide-brim-horn-sun-visor', cat: 'visors', catLabel: 'Sun Visors', name: 'Seamless Horn Visor',
@@ -130,7 +130,7 @@
       images: [
         { src: img('visors/visor-horn.jpg'), alt: 'Seamless wide-brim horn sun visor in graphite' }
       ],
-      waText: "Hello SHIRUN, I'm interested in the Seamless Wide-Brim Horn Sun Visor."
+      waText: "Hello SHIRUN HAT, I'm interested in the Seamless Wide-Brim Horn Sun Visor."
     }
   ];
 
@@ -179,7 +179,7 @@
       noteRaw: p.note || '',
       isFeatured: !!p.is_featured,
       images: imgs,
-      waText: 'Hello SHIRUN, I\'m interested in ' + (waSku ? waSku + ' ' : '') + p.name + '.'
+      waText: 'Hello SHIRUN HAT, I\'m interested in ' + (waSku ? waSku + ' ' : '') + p.name + '.'
     };
   }
 

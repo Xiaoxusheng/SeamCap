@@ -339,10 +339,10 @@ export default function AdminLayout(): JSX.Element {
       </a>
 
       <aside className="sc-sidebar" aria-label="侧边导航">
-        <Link to="/admin/" className="sc-sidebar__brand" aria-label="SeamCap 管理后台首页">
-          <BrandMark className="sc-sidebar__mark" size={32} />
+        <Link to="/admin/" className="sc-sidebar__brand" aria-label="SHIRUN HAT 管理后台首页">
+          <BrandMark className="sc-sidebar__mark" height={24} />
           <span className="sc-sidebar__brand-text">
-            <span className="sc-sidebar__brand-name">SeamCap</span>
+            <span className="sc-sidebar__brand-name">SHIRUN HAT</span>
             <span className="sc-sidebar__brand-sub">Admin Console</span>
           </span>
         </Link>
@@ -350,7 +350,7 @@ export default function AdminLayout(): JSX.Element {
         {renderNav()}
 
         <div className="sc-sidebar__foot">
-          <span className="sc-sidebar__version">SeamCap Console · v1</span>
+          <span className="sc-sidebar__version">SHIRUN HAT Console · v1</span>
         </div>
       </aside>
 
@@ -376,9 +376,9 @@ export default function AdminLayout(): JSX.Element {
                 {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               </button>
             </Tooltip>
-            <Link to="/admin/" className="sc-topbar__brand-mobile" aria-label="SeamCap 工作台">
-              <BrandMark size={24} />
-              <span>SeamCap</span>
+            <Link to="/admin/" className="sc-topbar__brand-mobile" aria-label="SHIRUN HAT 工作台">
+              <BrandMark height={22} ink="#06294F" />
+              <span>SHIRUN HAT</span>
             </Link>
             <nav className="sc-breadcrumb" aria-label="面包屑">
               {crumbs.map((crumb, index) => (
@@ -487,7 +487,7 @@ export default function AdminLayout(): JSX.Element {
         </main>
 
         <footer className="sc-footer">
-          <span>SeamCap · Admin Console</span>
+          <span>SHIRUN HAT · Admin Console</span>
           <span aria-hidden="true">·</span>
           <span>会话仅存于 HttpOnly Cookie · 请勿在公共设备保持登录</span>
         </footer>
@@ -505,9 +505,9 @@ export default function AdminLayout(): JSX.Element {
         <div className="sc-drawer-nav">
           <div className="sc-drawer-nav__head">
             <Link to="/admin/" className="sc-sidebar__brand" onClick={() => setMobileOpen(false)}>
-              <BrandMark className="sc-sidebar__mark" size={32} />
+              <BrandMark className="sc-sidebar__mark" height={24} />
               <span className="sc-sidebar__brand-text">
-                <span className="sc-sidebar__brand-name">SeamCap</span>
+                <span className="sc-sidebar__brand-name">SHIRUN HAT</span>
                 <span className="sc-sidebar__brand-sub">Admin Console</span>
               </span>
             </Link>

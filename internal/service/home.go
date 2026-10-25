@@ -150,8 +150,8 @@ func (s *HomeService) Update(in HomeInput) (*model.HomeContent, error) {
 	if len(in.StoryMediaIDs) > 12 {
 		return nil, apperr.InvalidField("story_media_ids", "max 12 items")
 	}
-	if len(in.PackingPickIDs) > 6 {
-		return nil, apperr.InvalidField("packing_pick_ids", "max 6 items")
+	if len(in.PackingPickIDs) > 12 {
+		return nil, apperr.InvalidField("packing_pick_ids", "max 12 items")
 	}
 	if len(in.PackingPickIDs) > 0 {
 		items, err := s.packing.ListAdmin()

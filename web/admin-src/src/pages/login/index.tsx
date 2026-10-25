@@ -117,12 +117,12 @@ export default function Login(): JSX.Element {
 
   return (
     <div className="sc-login">
-      <aside className="sc-login__visual" aria-label="SeamCap 产品与工作台介绍">
+      <aside className="sc-login__visual" aria-label="SHIRUN HAT 产品与工作台介绍">
         <div className="sc-login__visual-inner">
           <div className="sc-login__brand">
-            <BrandMark className="sc-login__mark" size={34} />
+            <BrandMark className="sc-login__mark" height={30} />
             <div>
-              <div className="sc-login__brand-name">SeamCap</div>
+              <div className="sc-login__brand-name">SHIRUN HAT</div>
               <div className="sc-login__brand-sub">Admin Console</div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function Login(): JSX.Element {
           </div>
 
           <div className="sc-login__photo">
-            <img src="/static/img/cap-image-01.jpg" alt="SeamCap 无缝帽产品实拍" />
+            <img src="/static/img/cap-image-01.jpg" alt="SHIRUN HAT 无缝帽产品实拍" />
             <span className="sc-login__photo-tag">Seamless Caps · Factory Direct</span>
           </div>
 
@@ -179,9 +179,9 @@ export default function Login(): JSX.Element {
       <main className="sc-login__panel">
         <div className="sc-login__card">
           <div className="sc-login__mobile-brand">
-            <BrandMark size={32} />
+            <BrandMark height={24} ink="#06294F" />
             <span>
-              <strong>SeamCap</strong>
+              <strong>SHIRUN HAT</strong>
               <em>Admin Console</em>
             </span>
           </div>
@@ -287,7 +287,7 @@ export default function Login(): JSX.Element {
             连续失败 5 次将锁定 5 分钟（IP 与账号分别计数）· 验证码一次性使用
           </p>
         </div>
-        <p className="sc-login__copyright">SeamCap · Yiwu Shirun Headwear</p>
+        <p className="sc-login__copyright">SHIRUN HAT · Yiwu Shirun Headwear</p>
       </main>
     </div>
   )

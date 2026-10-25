@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { App, Button, Form, Input, Popconfirm, Select, Tooltip } from 'antd'
 import {
   ArrowDownOutlined,
@@ -6,10 +7,12 @@ import {
   DeleteOutlined,
   LinkOutlined,
   PictureOutlined,
+  PlayCircleFilled,
   PlusOutlined,
   SaveOutlined,
+  SwapOutlined,
 } from '@ant-design/icons'
-import { cachedMedia, fetchMedia, get, post, put } from '../../api/client'
+import { cacheMedia, cachedMedia, fetchMedia, get, post, put } from '../../api/client'
 import type { HomeContent, Media } from '../../api/types'
 import MediaIDField from '../../components/MediaIDField'
 import MediaPicker from '../../components/MediaPicker'
@@ -38,28 +41,60 @@ const PACK_CAT_LABELS: Record<string, string> = {
   warehouse: '仓库',
 }
 
+// 打包发货条目（/admin/packing 返回，带 LEFT JOIN 的媒体对象）
+interface PackRow {
+  id: number
+  category: string
+  title: string
+  caption: string
+  media_id: number
+  media?: { url: string; mime_type: string } | null
+  sort_order: number
+  status: string
+}
+
+// 行内缩略图：图片缩略 / 视频占位 / 未选择占位
+function PackThumb({ media }: { media?: { url: string; mime_type: string } | null }): JSX.Element {
+  const box: CSSProperties = {
+    width: 56,
+    height: 42,
+    borderRadius: 6,
+    flexShrink: 0,
+    border: '1px solid var(--sc-border, #e4e9e6)',
+    background: 'var(--sc-surface-soft, #f7f8f9)',
+    objectFit: 'cover',
+    display: 'grid',
+    placeItems: 'center',
+    color: 'var(--sc-text-muted, #86958f)',
+    fontSize: 16,
+  }
+  if (!media?.url) {
+    return (
+      <span style={box} aria-hidden="true">
+        <PictureOutlined />
+      </span>
+    )
+  }
+  if (media.mime_type.startsWith('video')) {
+    return (
+      <span style={box} aria-hidden="true">
+        <PlayCircleFilled />
+      </span>
+    )
+  }
+  return <img src={`${media.url}?w=160`} alt="" style={box} loading="lazy" />
+}
+
 // 表单字段：打包发货条目单选（value = packing item id），选项来自 /admin/packing
 function PackingSelect(props: {
   value?: number | null
   onChange?: (v: number | null) => void
+  items: PackRow[]
 }): JSX.Element {
-  const [options, setOptions] = useState<{ value: number; label: string }[]>([])
-  useEffect(() => {
-    let alive = true
-    void get<unknown>('/admin/packing').then((body) => {
-      if (!alive) return
-      const items = (body as { data?: { id: number; category?: string; title?: string }[] }).data ?? []
-      setOptions(
-        (Array.isArray(items) ? items : []).map((it) => ({
-          value: it.id,
-          label: `#${it.id} ${PACK_CAT_LABELS[it.category ?? ''] ?? it.category ?? '打包'} · ${it.title || '未命名'}`,
-        })),
-      )
-    })
-    return () => {
-      alive = false
-    }
-  }, [])
+  const options = props.items.map((it) => ({
+    value: it.id,
+    label: `#${it.id} ${PACK_CAT_LABELS[it.category] ?? it.category ?? '打包'} · ${it.title || '未命名'}`,
+  }))
   return (
     <Select
       value={props.value ?? undefined}
@@ -93,6 +128,22 @@ export default function HomePage(): JSX.Element {
   const [previewMedia, setPreviewMedia] = useState<Media | null>(null)
   const [packUploadOpen, setPackUploadOpen] = useState(false)
   const [packUploading, setPackUploading] = useState(false)
+  const [packItems, setPackItems] = useState<PackRow[]>([])
+  const [packSwapField, setPackSwapField] = useState<number | null>(null)
+  const packPicks = Form.useWatch('packing_pick_ids', form) as (number | null)[] | undefined
+
+  // 打包发货全量条目（含媒体对象）：供挑选项与行内缩略图/换图使用
+  const loadPackItems = useCallback(async (): Promise<void> => {
+    try {
+      const { data } = await get<PackRow[]>('/admin/packing')
+      setPackItems(Array.isArray(data) ? data : [])
+    } catch {
+      /* 静默：缩略图缺失不影响表单编辑 */
+    }
+  }, [])
+  useEffect(() => {
+    void loadPackItems()
+  }, [loadPackItems])
 
   const load = useCallback(async (): Promise<void> => {
     setLoading(true)
@@ -245,11 +296,41 @@ export default function HomePage(): JSX.Element {
         newIds.push(data.id)
       }
       form.setFieldsValue({ packing_pick_ids: [...current, ...newIds] })
+      void loadPackItems()
       message.success(`已上传并加入 ${newIds.length} 项（默认分类「打包」，可在「打包发货」页补充文案与分类）`)
     } catch (e) {
       message.error((e as Error).message)
     } finally {
       setPackUploading(false)
+    }
+  }
+
+  // 行内换图：媒体选择器（单选）→ 更新该打包发货条目的 media_id（其余字段保持不变）
+  const applyPackSwap = async (items: Media[]): Promise<void> => {
+    const m = items[0]
+    const fieldIdx = packSwapField
+    setPackSwapField(null)
+    if (!m || fieldIdx == null) return
+    const pickId = (form.getFieldValue('packing_pick_ids') as (number | null)[] | undefined)?.[fieldIdx]
+    const it = packItems.find((x) => x.id === pickId)
+    if (!it) {
+      message.warning('未找到对应条目，请刷新后重试')
+      return
+    }
+    try {
+      await put(`/admin/packing/${it.id}`, {
+        media_id: m.id,
+        category: it.category,
+        title: it.title,
+        caption: it.caption,
+        sort_order: it.sort_order,
+        status: it.status,
+      })
+      cacheMedia([m])
+      message.success('已更换图片')
+      await loadPackItems()
+    } catch (e) {
+      message.error((e as Error).message)
     }
   }
 
@@ -485,13 +566,17 @@ export default function HomePage(): JSX.Element {
             <PageSection
               id="sc-home-packfeature"
               title="首页发货展示"
-              description="挑选首页「发货展示」板块展示的条目与顺序（条目在「打包发货」页面维护）；不选时默认取前 3 条已发布素材，最多 6 项"
+              description="挑选首页「发货展示」板块展示的条目与顺序（条目在「打包发货」页面维护）；不选时默认取前 3 条已发布素材，最多 12 项"
             >
               <Form.List name="packing_pick_ids">
                 {(fields, { add, remove, move }) => (
                   <>
-                    {fields.map((field, index) => (
+                    {fields.map((field, index) => {
+                      const pickId = packPicks?.[field.name] ?? null
+                      const rowItem = packItems.find((x) => x.id === pickId)
+                      return (
                       <div className="sc-story-item" key={field.key}>
+                        <PackThumb media={rowItem?.media} />
                         <span className="sc-story-item__index">
                           {String(index + 1).padStart(2, '0')}
                         </span>
@@ -500,9 +585,19 @@ export default function HomePage(): JSX.Element {
                           noStyle
                           rules={[{ required: true, message: '请选择条目' }]}
                         >
-                          <PackingSelect />
+                          <PackingSelect items={packItems} />
                         </Form.Item>
                         <div className="sc-story-item__actions">
+                          <Tooltip title="更换图片/视频">
+                            <Button
+                              type="text"
+                              size="small"
+                              aria-label="更换图片"
+                              disabled={!pickId}
+                              icon={<SwapOutlined />}
+                              onClick={() => setPackSwapField(field.name)}
+                            />
+                          </Tooltip>
                           <Tooltip title="上移">
                             <Button
                               type="text"
@@ -543,21 +638,22 @@ export default function HomePage(): JSX.Element {
                           </Popconfirm>
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                     <div className="sc-list-add" style={{ display: 'flex', gap: 8 }}>
                       <Button
                         block
                         type="dashed"
                         icon={<PlusOutlined />}
-                        disabled={fields.length >= 6}
+                        disabled={fields.length >= 12}
                         onClick={() => add()}
                       >
-                        {fields.length >= 6 ? '已达 6 项上限' : '添加展示条目'}
+                        {fields.length >= 12 ? '已达 12 项上限' : '添加展示条目'}
                       </Button>
                       <Button
                         block
                         icon={<PictureOutlined />}
-                        disabled={fields.length >= 6}
+                        disabled={fields.length >= 12}
                         loading={packUploading}
                         onClick={() => setPackUploadOpen(true)}
                       >
@@ -786,6 +882,12 @@ export default function HomePage(): JSX.Element {
           setPackUploadOpen(false)
           if (items.length > 0) void uploadPackItems(items)
         }}
+      />
+      <MediaPicker
+        open={packSwapField != null}
+        multiple={false}
+        onCancel={() => setPackSwapField(null)}
+        onOk={(items) => void applyPackSwap(items)}
       />
     </div>
   )
