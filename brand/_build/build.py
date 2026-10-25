@@ -31,6 +31,14 @@ def place_mark(x, y, vis_w, navy=NAVY, orange=ORANGE, **kw):
     return g, BOX_W * s, BOX_H * s
 
 
+def place_mark_drawing(x, y, drawing_h, navy=NAVY, orange=ORANGE, **kw):
+    """按帽形绘图高度（不含描边外扩）放置，返回 (svg, 绘图宽, 绘图高)"""
+    s = drawing_h / MARK_H
+    g = mark_svg(fill_navy=navy, fill_orange=orange, scale=s,
+                 dx=x + MPAD * s, dy=y + MPAD * s, **kw)
+    return g, MARK_W * s, drawing_h
+
+
 def svg(w, h, body, bg=False):
     rect = f'<rect width="{w:.2f}" height="{h:.2f}" fill="#fff"/>' if bg else ""
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w:.2f} {h:.2f}" '
@@ -87,17 +95,19 @@ def build_primary(navy=NAVY, orange=ORANGE, with_r=False, tagline=True, mark_kw=
 
 # ---------------- 2. 横向组合 ----------------
 def build_horizontal(navy=NAVY, orange=ORANGE, with_r=False, mark_kw=None):
-    pad, gap, vis_h = 24.0, 46.0, 176.0
-    s = vis_h / BOX_H
-    mw = BOX_W * s
-    baseline = pad + vis_h
-    m, mw, mh = place_mark(pad, pad, mw, navy, orange, **(mark_kw or {}))
+    """帽形视觉中心与字标大写字母中线对齐（帽檐略微下沉越过基线，视觉更稳）"""
+    pad, gap = 20.0, 46.0
+    hat_h = 140.0            # 帽形绘图高度（大写高度的 1.4 倍）
+    dip = 18.0               # 帽檐相对基线的下沉量
+    hat_y = 10.0             # 帽顶
+    baseline = hat_y + hat_h - dip
+    m, mw, mh = place_mark_drawing(pad, hat_y, hat_h, navy, orange, **(mark_kw or {}))
     W = pad * 2 + mw + gap + WORD_W
     x0 = pad + mw + gap
     body = [m, wordmark(x0, baseline, navy)[0]]
     if with_r:
         body.append(reg_mark(x0 + WORD_W + 16, baseline - H + 24, 24, navy))
-    return svg(W, baseline + pad, "".join(body))
+    return svg(W, baseline + 32, "".join(body))
 
 
 # ---------------- 3. 竖向组合 ----------------
