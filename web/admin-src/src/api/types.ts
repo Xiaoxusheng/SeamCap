@@ -187,6 +187,9 @@ export interface HomeContent {
   contact_blurb: string
   advantages: Advantage[]
   process_steps: ProcessStep[]
+  story_media_ids: number[]
+  circle_image_id: number | null
+  circle_image?: Media | null
   footer_text: string
   updated_at: string
 }
@@ -252,4 +255,21 @@ export interface ApiErrorBody {
   code: string
   message: string
   fields?: Record<string, string>
+}
+
+// 打包发货素材（前台 Packing & Dispatch 图库）
+export type PackingCategory = 'packing' | 'loading' | 'warehouse'
+export type PackingStatus = 'published' | 'hidden'
+
+export interface PackingItem {
+  id: number
+  category: PackingCategory
+  title: string
+  caption: string
+  media_id: number
+  media?: Media | null
+  sort_order: number
+  status: PackingStatus
+  created_at: string
+  updated_at: string
 }

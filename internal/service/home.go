@@ -1,6 +1,8 @@
 package service
 
 import (
+	"strings"
+
 	"seamcap/internal/apperr"
 	"seamcap/internal/model"
 	"seamcap/internal/repository"
@@ -48,7 +50,24 @@ func (s *HomeService) GetPublic() (*HomeResponse, error) {
 	if crafts == nil {
 		crafts = []model.Craftsmanship{}
 	}
+	s.resolveStoryMedia(h)
 	return &HomeResponse{Hero: *h, Featured: featured, CraftPreview: crafts}, nil
+}
+
+// resolveStoryMedia 将工厂实景图库的媒体 ID 解析为公开端 {kind,url}（缺失的媒体跳过）。
+func (s *HomeService) resolveStoryMedia(h *model.HomeContent) {
+	h.StoryMedia = []model.StoryMediaItem{}
+	for _, id := range h.StoryMediaIDs {
+		m, err := s.media.GetByID(id)
+		if err != nil || m == nil {
+			continue
+		}
+		kind := "image"
+		if strings.HasPrefix(m.MimeType, "video") {
+			kind = "video"
+		}
+		h.StoryMedia = append(h.StoryMedia, model.StoryMediaItem{Kind: kind, URL: m.URL})
+	}
 }
 
 // GetAdmin 管理读取。
@@ -74,6 +93,8 @@ type HomeInput struct {
 	ContactBlurb string `json:"contact_blurb"`
 	Advantages   []model.Advantage   `json:"advantages"`
 	ProcessSteps []model.ProcessStep `json:"process_steps"`
+	StoryMediaIDs []int64            `json:"story_media_ids"`
+	CircleImageID *int64             `json:"circle_image_id"`
 	FooterText   string              `json:"footer_text"`
 }
 
@@ -85,11 +106,26 @@ func (s *HomeService) Update(in HomeInput) (*model.HomeContent, error) {
 	if in.ProcessSteps == nil {
 		in.ProcessSteps = []model.ProcessStep{}
 	}
+	if in.StoryMediaIDs == nil {
+		in.StoryMediaIDs = []int64{}
+	}
 	if len(in.Advantages) > 12 {
 		return nil, apperr.InvalidField("advantages", "max 12 items")
 	}
 	if len(in.ProcessSteps) > 12 {
 		return nil, apperr.InvalidField("process_steps", "max 12 items")
+	}
+	if len(in.StoryMediaIDs) > 12 {
+		return nil, apperr.InvalidField("story_media_ids", "max 12 items")
+	}
+	for _, id := range in.StoryMediaIDs {
+		m, err := s.media.GetByID(id)
+		if err != nil {
+			return nil, apperr.Internal(err.Error())
+		}
+		if m == nil {
+			return nil, apperr.InvalidField("story_media_ids", "media not found")
+		}
 	}
 	for _, a := range in.Advantages {
 		if charCount(a.Title) > 200 || charCount(a.Desc) > 1000 || charCount(a.Image) > 500 {
@@ -121,12 +157,21 @@ func (s *HomeService) Update(in HomeInput) (*model.HomeContent, error) {
 			return nil, apperr.InvalidField("hero_image_id", "media not found")
 		}
 	}
+	if in.CircleImageID != nil {
+		m, err := s.media.GetByID(*in.CircleImageID)
+		if err != nil {
+			return nil, apperr.Internal(err.Error())
+		}
+		if m == nil {
+			return nil, apperr.InvalidField("circle_image_id", "media not found")
+		}
+	}
 	h := &model.HomeContent{
 		HeroTitle: in.HeroTitle, HeroSubtitle: in.HeroSubtitle, HeroImageID: in.HeroImageID,
 		HeroVideoURL: in.HeroVideoURL, CTA1Text: in.CTA1Text, CTA1URL: in.CTA1URL,
 		CTA2Text: in.CTA2Text, CTA2URL: in.CTA2URL, FactoryIntro: in.FactoryIntro,
 		ContactBlurb: in.ContactBlurb, Advantages: in.Advantages, ProcessSteps: in.ProcessSteps,
-		FooterText: in.FooterText,
+		StoryMediaIDs: in.StoryMediaIDs, CircleImageID: in.CircleImageID, FooterText: in.FooterText,
 	}
 	if err := s.repo.Update(h); err != nil {
 		return nil, apperr.Internal(err.Error())

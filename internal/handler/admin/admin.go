@@ -34,6 +34,7 @@ type Admin struct {
 	Cats     *service.CategoryService
 	Media    *service.MediaService
 	Crafts   *service.CraftService
+	Packing  *service.PackingService
 	Pages    *service.PageService
 	Home     *service.HomeService
 	Settings *service.SettingsService
@@ -98,6 +99,13 @@ func (h *Admin) Routes() chi.Router {
 		r.Put("/craftsmanship/{id}", h.UpdateCraft)
 		r.Delete("/craftsmanship/{id}", h.DeleteCraft)
 		r.Put("/craftsmanship/{id}/media", h.SetCraftMedia)
+
+		// 打包发货素材库
+		r.Get("/packing", h.ListPacking)
+		r.Post("/packing", h.CreatePacking)
+		r.Get("/packing/{id}", h.GetPacking)
+		r.Put("/packing/{id}", h.UpdatePacking)
+		r.Delete("/packing/{id}", h.DeletePacking)
 
 		// 页面 / 首页 / 设置
 		r.Get("/pages", h.ListPages)
@@ -729,6 +737,85 @@ func (h *Admin) SetCraftMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	h.auditLog(r, "craft.media", "craftsmanship", strconv.FormatInt(id, 10), strconv.Itoa(len(in.Items))+" items")
 	handler.Data(w, c)
+}
+
+// ---- 打包发货素材库 ----
+
+// ListPacking GET /admin/packing。
+func (h *Admin) ListPacking(w http.ResponseWriter, r *http.Request) {
+	items, err := h.Packing.ListAdmin()
+	if err != nil {
+		handler.Error(w, err)
+		return
+	}
+	handler.Data(w, items)
+}
+
+// CreatePacking POST /admin/packing。
+func (h *Admin) CreatePacking(w http.ResponseWriter, r *http.Request) {
+	var in service.PackingInput
+	if err := handler.Decode(r, &in); err != nil {
+		handler.Error(w, err)
+		return
+	}
+	it, err := h.Packing.Create(in)
+	if err != nil {
+		handler.Error(w, err)
+		return
+	}
+	h.auditLog(r, "packing.create", "packing", strconv.FormatInt(it.ID, 10), it.Title)
+	handler.Created(w, it)
+}
+
+// GetPacking GET /admin/packing/{id}。
+func (h *Admin) GetPacking(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		handler.Error(w, err)
+		return
+	}
+	it, err := h.Packing.GetAdminByID(id)
+	if err != nil {
+		handler.Error(w, err)
+		return
+	}
+	handler.Data(w, it)
+}
+
+// UpdatePacking PUT /admin/packing/{id}。
+func (h *Admin) UpdatePacking(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		handler.Error(w, err)
+		return
+	}
+	var in service.PackingInput
+	if err := handler.Decode(r, &in); err != nil {
+		handler.Error(w, err)
+		return
+	}
+	it, err := h.Packing.Update(id, in)
+	if err != nil {
+		handler.Error(w, err)
+		return
+	}
+	h.auditLog(r, "packing.update", "packing", strconv.FormatInt(id, 10), it.Title)
+	handler.Data(w, it)
+}
+
+// DeletePacking DELETE /admin/packing/{id}。
+func (h *Admin) DeletePacking(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		handler.Error(w, err)
+		return
+	}
+	if err := h.Packing.Delete(id); err != nil {
+		handler.Error(w, err)
+		return
+	}
+	h.auditLog(r, "packing.delete", "packing", strconv.FormatInt(id, 10), "")
+	handler.Data(w, map[string]bool{"ok": true})
 }
 
 // ---- 页面 / 首页 / 设置 ----

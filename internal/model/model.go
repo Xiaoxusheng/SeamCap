@@ -116,6 +116,20 @@ type Craftsmanship struct {
 	Images []Media `json:"images,omitempty"`
 }
 
+// PackingItem 打包发货素材（图库条目：图片或视频 + 分类 + 文案）。
+type PackingItem struct {
+	ID        int64  `json:"id"`
+	Category  string `json:"category"` // packing | loading | warehouse
+	Title     string `json:"title"`
+	Caption   string `json:"caption"`
+	MediaID   int64  `json:"media_id"`
+	Media     *Media `json:"media,omitempty"`
+	SortOrder int    `json:"sort_order"`
+	Status    string `json:"status"` // published | hidden
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
 // Page 普通页面（受控 HTML）。
 type Page struct {
 	ID        int64  `json:"id"`
@@ -144,6 +158,12 @@ type ProcessStep struct {
 	VideoURL string `json:"video_url"`
 }
 
+// StoryMediaItem 首页工厂实景图库项（公开端：媒体 ID 解析结果）。
+type StoryMediaItem struct {
+	Kind string `json:"kind"` // image|video
+	URL  string `json:"url"`
+}
+
 // HomeContent 首页内容（单行 id=1）。
 type HomeContent struct {
 	HeroTitle     string `json:"hero_title"`
@@ -159,6 +179,10 @@ type HomeContent struct {
 	ContactBlurb  string `json:"contact_blurb"`
 	Advantages    []Advantage   `json:"advantages"`
 	ProcessSteps  []ProcessStep `json:"process_steps"`
+	StoryMediaIDs []int64         `json:"story_media_ids"`
+	StoryMedia    []StoryMediaItem `json:"story_media,omitempty"`
+	CircleImageID *int64          `json:"circle_image_id"`
+	CircleImage   *Media          `json:"circle_image,omitempty"`
 	FooterText    string        `json:"footer_text"`
 	UpdatedAt     string        `json:"updated_at"`
 }

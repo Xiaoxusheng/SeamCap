@@ -187,7 +187,7 @@
     <div class="visors">
       <article class="vhero glass reveal">
         <div class="vhero__media">
-          <img src="static/img/visors/visor-crescent.jpg" alt="Model wearing the pink Seamless Crescent Sun Visor" loading="lazy" width="610" height="840"/>
+          <img src="static/img/visors/visor-crescent.jpg" data-cms-visor="seamless-crescent-sun-visor" alt="Model wearing the pink Seamless Crescent Sun Visor" loading="lazy" width="610" height="840"/>
         </div>
         <div class="vhero__body">
           <p class="pcard__sku" data-i18n="home.crescentSku">The Crescent</p>
@@ -202,7 +202,7 @@
 
       <div class="vlist">
         <article class="vrow glass reveal">
-          <div class="vrow__thumb"><img src="static/img/visors/visor-kids.jpg" alt="Seamless Kids Sun Visor in eight colourways" loading="lazy" width="322" height="400"/></div>
+          <div class="vrow__thumb"><img src="static/img/visors/visor-kids.jpg" data-cms-visor="seamless-kids-sun-visor" alt="Seamless Kids Sun Visor in eight colourways" loading="lazy" width="322" height="400"/></div>
           <div class="vrow__body">
             <p class="pcard__sku" data-i18n="home.kidsSku">01 / Kids</p>
             <h3 data-i18n="home.kidsName">Seamless Kids&rsquo; Sun Visor</h3>
@@ -213,7 +213,7 @@
         </article>
 
         <article class="vrow glass reveal reveal--d1">
-          <div class="vrow__thumb"><img src="static/img/visors/visor-uv.jpg" alt="Seamless UV Protection Sun Visor in blue grey" loading="lazy" width="448" height="264"/></div>
+          <div class="vrow__thumb"><img src="static/img/visors/visor-uv.jpg" data-cms-visor="seamless-uv-protection-sun-visor" alt="Seamless UV Protection Sun Visor in blue grey" loading="lazy" width="448" height="264"/></div>
           <div class="vrow__body">
             <p class="pcard__sku" data-i18n="home.uvSku">02 / UV Protection</p>
             <h3 data-i18n="home.uvName">Seamless UV Visor</h3>
@@ -224,7 +224,7 @@
         </article>
 
         <article class="vrow glass reveal reveal--d2">
-          <div class="vrow__thumb"><img src="static/img/visors/visor-stripe.jpg" alt="Seamless Stripe Sun Visor in cream" loading="lazy" width="438" height="363"/></div>
+          <div class="vrow__thumb"><img src="static/img/visors/visor-stripe.jpg" data-cms-visor="seamless-stripe-sun-visor" alt="Seamless Stripe Sun Visor in cream" loading="lazy" width="438" height="363"/></div>
           <div class="vrow__body">
             <p class="pcard__sku" data-i18n="home.stripeSku">03 / Stripe</p>
             <h3 data-i18n="home.stripeName">Seamless Stripe Visor</h3>
@@ -235,7 +235,7 @@
         </article>
 
         <article class="vrow glass reveal reveal--d3">
-          <div class="vrow__thumb"><img src="static/img/visors/visor-horn.jpg" alt="Seamless wide-brim horn sun visor in graphite" loading="lazy" width="534" height="271"/></div>
+          <div class="vrow__thumb"><img src="static/img/visors/visor-horn.jpg" data-cms-visor="seamless-wide-brim-horn-sun-visor" alt="Seamless wide-brim horn sun visor in graphite" loading="lazy" width="534" height="271"/></div>
           <div class="vrow__body">
             <p class="pcard__sku" data-i18n="home.hornSku">04 / Wide Brim</p>
             <h3 data-i18n="home.hornName">Seamless Horn Visor</h3>
@@ -300,10 +300,12 @@
       <p data-cms-factory data-i18n="home.storyP2">We coordinate product selection, sampling, customization, quality requirements, packing and shipment with the partner best suited to your program — so your order never becomes your logistics problem.</p>
       <a class="text-link" href="#circle"><span data-i18n="home.storyCta">Begin a conversation</span><span aria-hidden="true"> &rarr;</span></a>
     </div>
-    <figure class="glass-frame story__media reveal reveal--d1">
+    <figure class="glass-frame story__media reveal reveal--d1" id="storyStaticMedia">
       <img src="static/img/cap-image-22.jpg" alt="Real production floor with material storage, sewing stations and work in progress" loading="lazy" width="1200" height="900"/>
       <figcaption class="glass-chip"><strong data-i18n="home.storyChipTitle">Real Production</strong><span data-i18n="home.storyChipSub">Working floors of our supply network</span></figcaption>
     </figure>
+    <!-- 后台工厂实景图库（cms.js：home.story_media 非空时替换上方静态图，支持图片+视频、缩略图切换） -->
+    <div class="sgallery" id="cmsStoryMedia" hidden></div>
   </div>
 </section>
 
@@ -379,7 +381,7 @@
         </div>
       </div>
       <figure class="circle__media" aria-hidden="true">
-        <img src="static/img/cap-image-20.jpg" alt="" loading="lazy" width="800" height="600"/>
+        <img src="static/img/cap-image-20.jpg" data-cms-circle-image alt="" loading="lazy" width="800" height="600"/>
       </figure>
     </div>
   </div>

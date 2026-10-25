@@ -25,6 +25,7 @@ type Public struct {
 	Products *service.ProductService
 	Cats     *service.CategoryService
 	Crafts   *service.CraftService
+	Packing  *service.PackingService
 	Pages    *service.PageService
 	Inqs     *service.InquiryService
 
@@ -47,6 +48,7 @@ func (h *Public) Routes() chi.Router {
 	r.Get("/categories", h.ListCategories)
 	r.Get("/craftsmanship", h.ListCrafts)
 	r.Get("/craftsmanship/{slug}", h.GetCraft)
+	r.Get("/packing", h.ListPacking)
 	r.Get("/pages/{slug}", h.GetPage)
 	r.Post("/inquiries", h.SubmitInquiry)
 	return r
@@ -159,6 +161,19 @@ func (h *Public) GetCraft(w http.ResponseWriter, r *http.Request) {
 	handler.Data(w, c)
 }
 
+// ListPacking GET /api/v1/packing：打包发货素材（已发布，按排序）。
+func (h *Public) ListPacking(w http.ResponseWriter, r *http.Request) {
+	items, err := h.Packing.ListPublic()
+	if err != nil {
+		handler.Error(w, err)
+		return
+	}
+	if items == nil {
+		items = []model.PackingItem{}
+	}
+	handler.Data(w, items)
+}
+
 // GetPage GET /api/v1/pages/{slug}。
 func (h *Public) GetPage(w http.ResponseWriter, r *http.Request) {
 	p, err := h.Pages.GetPublic(chi.URLParam(r, "slug"))
@@ -198,6 +213,7 @@ func (h *Public) Sitemap(w http.ResponseWriter, r *http.Request) {
 		seo.Entry{Loc: "/"},
 		seo.Entry{Loc: "/products"},
 		seo.Entry{Loc: "/craftsmanship"},
+		seo.Entry{Loc: "/packing"},
 		seo.Entry{Loc: "/about-us"},
 		seo.Entry{Loc: "/contact"},
 	)

@@ -72,6 +72,7 @@ func main() {
 	catRepo := repository.NewCategoryRepo(db, mediaRepo)
 	prodRepo := repository.NewProductRepo(db, mediaRepo)
 	craftRepo := repository.NewCraftRepo(db, mediaRepo)
+	packingRepo := repository.NewPackingRepo(db, mediaRepo)
 	pageRepo := repository.NewPageRepo(db)
 	homeRepo := repository.NewHomeRepo(db)
 	settingsRepo := repository.NewSettingsRepo(db)
@@ -89,6 +90,7 @@ func main() {
 	catSvc := service.NewCategoryService(catRepo, prodRepo, mediaRepo)
 	mediaSvc := service.NewMediaService(mediaRepo, store, cfg.MaxImageMB, cfg.MaxVideoMB)
 	craftSvc := service.NewCraftService(craftRepo, mediaRepo)
+	packingSvc := service.NewPackingService(packingRepo, mediaRepo)
 	pageSvc := service.NewPageService(pageRepo)
 	homeSvc := service.NewHomeService(homeRepo, mediaRepo, prodRepo, craftRepo)
 	settingsSvc := service.NewSettingsService(settingsRepo)
@@ -111,11 +113,11 @@ func main() {
 	// Handler
 	pubH := &public.Public{
 		Settings: settingsSvc, Home: homeSvc, Products: prodSvc, Cats: catSvc,
-		Crafts: craftSvc, Pages: pageSvc, Inqs: inqSvc,
+		Crafts: craftSvc, Packing: packingSvc, Pages: pageSvc, Inqs: inqSvc,
 		DB: db, BaseURL: cfg.BaseURL, Started: time.Now(), Logger: log,
 	}
 	admH := &admin.Admin{
-		Auth: authSvc, Prods: prodSvc, Cats: catSvc, Media: mediaSvc, Crafts: craftSvc,
+		Auth: authSvc, Prods: prodSvc, Cats: catSvc, Media: mediaSvc, Crafts: craftSvc, Packing: packingSvc,
 		Pages: pageSvc, Home: homeSvc, Settings: settingsSvc, Inqs: inqSvc,
 		Dash: dashSvc, Audit: auditRepo, Mail: mailSender,
 		Captcha: captcha.NewManager(5 * time.Minute),

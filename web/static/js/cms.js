@@ -8,7 +8,9 @@
      data-cms-page-title="{slug}"  页面 hero 标题替换
      data-cms-contact="whatsapp|address"  联系信息行
      data-cms-hero="title|lead|image|cta1|cta2"  首页 Hero
+     [data-cms-circle-image]               首页 The Shirun Circle 板块配图
      #cmsFeatured / #cmsStaticLines        首页推荐产品 / 静态产品线兜底
+     img[data-cms-visor="{slug}"]          首页遮阳帽陈列区图片（取该产品后台主图）
      #cmsCraftList / #cmsStaticCraftGrid / #cmsStaticCraftVideos  首页工艺预览
      #cmsValues / #cmsStaticValues、#cmsProcess / #cmsStaticProcess  优势/流程（流程卡可带配图或视频）
      [data-cms-factory]、#cmsContactBlurb、#cmsFooterTag  文案替换
@@ -263,6 +265,13 @@
       if (hero.hero_image.alt_text) img.alt = hero.hero_image.alt_text;
     }
 
+    // The Shirun Circle 板块配图（后台「首页设置」管理；为空时保留静态兜底图）
+    var cimg = document.querySelector('[data-cms-circle-image]');
+    if (cimg && hero.circle_image && hero.circle_image.url) {
+      var cUrl = safeURL(hero.circle_image.url);
+      if (cUrl) cimg.src = thumbURL(cUrl, 960);
+    }
+
     [['cta1', hero.cta1_text, hero.cta1_url], ['cta2', hero.cta2_text, hero.cta2_url]].forEach(function (pair) {
       var a = document.querySelector('[data-cms-hero="' + pair[0] + '"]');
       if (!a) return;
@@ -276,17 +285,89 @@
     });
   }
 
+  /* ---------- 3.5 首页工厂实景图库（The House 板块，后台 story_media 驱动） ---------- */
+
+  // items: [{kind:'image'|'video', url}]；标题芯片克隆静态兜底里已本地化的文案
+  function storyGalleryHTML(items) {
+    var seq = (items || []).filter(function (it) { return it && safeURL(it.url); });
+    if (!seq.length) return '';
+
+    var staticChip = document.querySelector('#storyStaticMedia .glass-chip');
+    var chipHTML = staticChip ? staticChip.innerHTML : '<strong>Real Production</strong>';
+
+    var first = seq[0];
+    var firstSrc = safeURL(first.url);
+    var stageInner = first.kind === 'video'
+      ? '<video src="' + esc(firstSrc) + '" controls playsinline preload="metadata" aria-label="Factory video"></video>'
+      : '<img src="' + esc(thumbURL(firstSrc, 960)) + '" alt="Real production floor" loading="lazy" width="1200" height="900"/>';
+
+    var thumbs = seq.map(function (it, j) {
+      var u = safeURL(it.url);
+      var active = j === 0 ? ' is-active' : '';
+      if (it.kind === 'video') {
+        return '<button class="sgallery__thumb sgallery__thumb--video' + active + '" type="button" data-kind="video" data-src="' + esc(u) + '"' +
+          ' aria-label="Play factory video">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.14v14l11-7-11-7z"/></svg></button>';
+      }
+      return '<button class="sgallery__thumb' + active + '" type="button" data-kind="image" data-src="' + esc(thumbURL(u, 960)) + '"' +
+        ' aria-label="Show factory photo ' + (j + 1) + ' of ' + seq.length + '">' +
+        '<img src="' + esc(thumbURL(u, 160)) + '" alt="" loading="lazy" width="160" height="160"/></button>';
+    }).join('');
+
+    return '<figure class="glass-frame sgallery__stage reveal reveal--d1">' + stageInner +
+      '<figcaption class="glass-chip">' + chipHTML + '</figcaption></figure>' +
+      '<div class="sgallery__thumbs">' + thumbs + '</div>';
+  }
+
+  // 缩略图切换：点击换主舞台（图片/视频）；离开视频时暂停播放
+  function bindStoryGallery(scope) {
+    var thumbs = scope.querySelectorAll('button.sgallery__thumb');
+    var stage = scope.querySelector('.sgallery__stage');
+    if (!thumbs.length || !stage) return;
+    thumbs.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (btn.classList.contains('is-active')) return;
+        var oldVideo = stage.querySelector('video');
+        if (oldVideo) { try { oldVideo.pause(); } catch (e) { /* noop */ } }
+        thumbs.forEach(function (x) { x.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+        var chip = stage.querySelector('figcaption');
+        var chipHTML = chip ? chip.outerHTML : '';
+        var kind = btn.getAttribute('data-kind');
+        var src = safeURL(btn.getAttribute('data-src'));
+        if (!src) return;
+        if (kind === 'video') {
+          stage.innerHTML = '<video src="' + esc(src) + '" controls playsinline preload="metadata" aria-label="Factory video"></video>' + chipHTML;
+        } else {
+          stage.innerHTML = '<img src="' + esc(src) + '" alt="Real production floor" loading="lazy" width="1200" height="900"/>' + chipHTML;
+        }
+      });
+    });
+  }
+
   function bindHome() {
     var hasHero = document.querySelector('[data-cms-hero]');
     var featuredBox = document.getElementById('cmsFeatured');
     var craftBox = document.getElementById('cmsCraftList');
-    if (!hasHero && !featuredBox && !craftBox &&
+    if (!hasHero && !featuredBox && !craftBox && !document.getElementById('cmsStoryMedia') &&
         !document.getElementById('cmsValues') && !document.getElementById('cmsProcess')) return;
 
     getJSON('/home').then(function (home) {
       if (!home) return;
       var hero = home.hero || {};
       applyHero(hero);
+
+      // 工厂实景图库：后台 story_media 驱动 The House 板块（图片+视频、缩略图切换）
+      var smBox = document.getElementById('cmsStoryMedia');
+      if (smBox && hero.story_media && hero.story_media.length) {
+        smBox.innerHTML = storyGalleryHTML(hero.story_media);
+        if (smBox.innerHTML) {
+          show(smBox);
+          hide(document.getElementById('storyStaticMedia'));
+          bindStoryGallery(smBox);
+          reveal(smBox);
+        }
+      }
 
       // 推荐产品：后台标记 featured 的产品驱动 Collection 板块
       if (featuredBox && home.featured_products && home.featured_products.length) {
@@ -338,6 +419,30 @@
         var ft = document.getElementById('cmsFooterTag');
         if (ft) ft.textContent = hero.footer_text;
       }
+    }).catch(function () { /* 静态兜底 */ });
+  }
+
+  /* ---------- 3b. 首页遮阳帽陈列区：图片由后台产品主图驱动 ---------- *
+   * 该区块的文案与结构保持静态（含 i18n 词典），只把图片替换为后台主图，
+   * 这样在后台改「产品 → 主图」即可同步首页，无需改 HTML。
+   * 映射：img[data-cms-visor="{slug}"] → products.main_image（缺省回退图库首图）。 */
+  function bindVisorImages() {
+    var nodes = document.querySelectorAll('[data-cms-visor]');
+    if (!nodes.length) return;
+    getJSON('/products?per_page=60').then(function (list) {
+      if (!Array.isArray(list) || !list.length) return;
+      var bySlug = {};
+      list.forEach(function (p) { if (p && p.slug) bySlug[p.slug] = p; });
+      Array.prototype.forEach.call(nodes, function (img) {
+        var p = bySlug[img.getAttribute('data-cms-visor')];
+        if (!p) return;
+        var m = p.main_image || (p.images && p.images.length ? p.images[0] : null);
+        if (!m || !m.url) return;
+        var u = safeURL(m.url);
+        if (!u) return;
+        img.src = thumbURL ? thumbURL(u, 960) : u;
+        img.alt = m.alt_text || p.name || img.alt;
+      });
     }).catch(function () { /* 静态兜底 */ });
   }
 
@@ -468,6 +573,7 @@
   bindSite();
   bindPages();
   bindHome();
+  bindVisorImages();
   bindCraft();
 
   /* ---------- 语言切换：重新拉取 CMS 内容（覆盖 i18n 词典占位，CMS 数据优先） ---------- */

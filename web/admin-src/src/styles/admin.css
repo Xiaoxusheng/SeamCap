@@ -6190,3 +6190,37 @@ html[data-theme="dark"] .sc-skip-link {
   height: 42px !important;
   border-radius: 8px !important;
 }
+/* --------------------------------------------------------------------------
+   Home story gallery editor（工厂实景图库）
+   -------------------------------------------------------------------------- */
+
+.sc-story-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: var(--sc-bg-soft);
+  border: 1px solid var(--sc-border-soft);
+  border-radius: 9px;
+}
+
+.sc-story-item__index {
+  flex-shrink: 0;
+  min-width: 20px;
+  color: var(--sc-primary);
+  font-family: var(--sc-font-code);
+  font-size: 10.5px;
+}
+
+.sc-story-item .sc-media-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-story-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}

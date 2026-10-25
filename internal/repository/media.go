@@ -140,6 +140,12 @@ func (r *MediaRepo) RefCount(id int64) (int64, []string, error) {
 	if err := check(`SELECT COUNT(*) FROM home_content WHERE hero_image_id = ?`, "home.hero"); err != nil {
 		return 0, nil, err
 	}
+	if err := check(`SELECT COUNT(*) FROM home_content WHERE circle_image_id = ?`, "home.circle"); err != nil {
+		return 0, nil, err
+	}
+	if err := check(`SELECT COUNT(*) FROM packing_items WHERE media_id = ?`, "packing.gallery"); err != nil {
+		return 0, nil, err
+	}
 	return n, refs, nil
 }
 

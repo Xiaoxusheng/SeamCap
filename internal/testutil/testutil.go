@@ -22,6 +22,7 @@ type Repos struct {
 	Cat      *repository.CategoryRepo
 	Prod     *repository.ProductRepo
 	Craft    *repository.CraftRepo
+	Packing  *repository.PackingRepo
 	Page     *repository.PageRepo
 	Home     *repository.HomeRepo
 	Settings *repository.SettingsRepo
@@ -106,6 +107,7 @@ func NewEnv(t *testing.T) *Env {
 			Cat:      repository.NewCategoryRepo(db, repository.NewMediaRepo(db)),
 			Prod:     repository.NewProductRepo(db, repository.NewMediaRepo(db)),
 			Craft:    repository.NewCraftRepo(db, repository.NewMediaRepo(db)),
+			Packing:  repository.NewPackingRepo(db, repository.NewMediaRepo(db)),
 			Page:     repository.NewPageRepo(db),
 			Home:     repository.NewHomeRepo(db),
 			Settings: repository.NewSettingsRepo(db),

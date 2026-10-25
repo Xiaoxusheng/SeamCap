@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { App, Button, Form, Input, Popconfirm, Tooltip } from 'antd'
 import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
   DeleteOutlined,
   LinkOutlined,
   PictureOutlined,
@@ -21,6 +23,7 @@ const SECTIONS = [
   { id: 'media', label: '首屏素材' },
   { id: 'cta', label: 'CTA 按钮' },
   { id: 'factory', label: '工厂介绍' },
+  { id: 'story', label: '工厂实景图库' },
   { id: 'advantages', label: '工厂优势' },
   { id: 'process', label: '工艺流程' },
   { id: 'contact', label: '联系介绍' },
@@ -63,6 +66,8 @@ export default function HomePage(): JSX.Element {
         contact_blurb: h.contact_blurb,
         advantages: h.advantages.length > 0 ? h.advantages : [{}],
         process_steps: h.process_steps.length > 0 ? h.process_steps : [{}],
+        story_media_ids: h.story_media_ids ?? [],
+        circle_image_id: h.circle_image_id,
         footer_text: h.footer_text,
       })
     } catch (e) {
@@ -129,6 +134,7 @@ export default function HomePage(): JSX.Element {
       const payload = {
         ...values,
         hero_image_id: values.hero_image_id ?? null,
+        circle_image_id: values.circle_image_id ?? null,
         advantages: (values.advantages ?? []).map(
           (a: { title?: string; desc?: string; image?: string }) => ({
             title: a.title ?? '',
@@ -144,6 +150,9 @@ export default function HomePage(): JSX.Element {
           image: s.image ?? '',
           video_url: s.video_url ?? '',
         })),
+        story_media_ids: (values.story_media_ids ?? []).filter(
+          (id: number | null | undefined) => id != null,
+        ),
       }
       await put('/admin/home', payload)
       message.success('首页内容已更新，前台立即生效')
@@ -253,7 +262,7 @@ export default function HomePage(): JSX.Element {
             <PageSection
               id="sc-home-media"
               title="首屏主图与视频"
-              description="Hero 背景素材；视频优先级高于图片"
+              description="Hero 背景素材（视频优先级高于图片）与 The Shirun Circle 板块配图"
             >
               <div className="sc-form-grid">
                 <Form.Item name="hero_image_id" label="背景图" className="sc-span-2">
@@ -266,6 +275,14 @@ export default function HomePage(): JSX.Element {
                   extra="MP4 地址；留空则使用背景图"
                 >
                   <Input maxLength={500} placeholder="https://... or /uploads/2026/10/xxx.mp4" />
+                </Form.Item>
+                <Form.Item
+                  name="circle_image_id"
+                  label="The Shirun Circle 配图"
+                  className="sc-span-2"
+                  extra="首页「The Shirun Circle」板块右侧配图；留空则沿用内置默认图"
+                >
+                  <MediaIDField />
                 </Form.Item>
               </div>
             </PageSection>
@@ -300,6 +317,84 @@ export default function HomePage(): JSX.Element {
                   placeholder="Our factory in Yiwu specializes in seamless knitting caps..."
                 />
               </Form.Item>
+            </PageSection>
+
+            <PageSection
+              id="sc-home-story"
+              title="工厂实景图库"
+              description="首页 The House 板块「Real Production」配图；按顺序展示，支持图片与视频（视频从媒体库选择 MP4），最多 12 项。留空时前台使用默认图。"
+            >
+              <Form.List name="story_media_ids">
+                {(fields, { add, remove, move }) => (
+                  <>
+                    {fields.map((field, index) => (
+                      <div className="sc-story-item" key={field.key}>
+                        <span className="sc-story-item__index">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <Form.Item
+                          name={[field.name]}
+                          noStyle
+                          rules={[{ required: true, message: '请选择媒体' }]}
+                        >
+                          <MediaIDField />
+                        </Form.Item>
+                        <div className="sc-story-item__actions">
+                          <Tooltip title="上移">
+                            <Button
+                              type="text"
+                              size="small"
+                              aria-label="上移"
+                              disabled={index === 0}
+                              icon={<ArrowUpOutlined />}
+                              onClick={() => move(index, index - 1)}
+                            />
+                          </Tooltip>
+                          <Tooltip title="下移">
+                            <Button
+                              type="text"
+                              size="small"
+                              aria-label="下移"
+                              disabled={index === fields.length - 1}
+                              icon={<ArrowDownOutlined />}
+                              onClick={() => move(index, index + 1)}
+                            />
+                          </Tooltip>
+                          <Popconfirm
+                            title="删除该项？"
+                            description="保存后将从公开站首页图库移除"
+                            okText="删除"
+                            okButtonProps={{ danger: true }}
+                            cancelText="取消"
+                            onConfirm={() => remove(field.name)}
+                          >
+                            <Tooltip title="删除该项">
+                              <Button
+                                type="text"
+                                size="small"
+                                danger
+                                aria-label="删除该项"
+                                icon={<DeleteOutlined />}
+                              />
+                            </Tooltip>
+                          </Popconfirm>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="sc-list-add">
+                      <Button
+                        block
+                        type="dashed"
+                        icon={<PlusOutlined />}
+                        disabled={fields.length >= 12}
+                        onClick={() => add()}
+                      >
+                        {fields.length >= 12 ? '已达 12 项上限' : '添加图库项'}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </Form.List>
             </PageSection>
 
             <PageSection

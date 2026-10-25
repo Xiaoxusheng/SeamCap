@@ -15,6 +15,7 @@ type svcEnv struct {
 	Cats     *CategoryService
 	Media    *MediaService
 	Crafts   *CraftService
+	Packing  *PackingService
 	Pages    *PageService
 	Home     *HomeService
 	Settings *SettingsService
@@ -31,6 +32,7 @@ func newSvcEnv(t *testing.T) *svcEnv {
 	s.Cats = NewCategoryService(e.Repos.Cat, e.Repos.Prod, e.Repos.Media)
 	s.Media = NewMediaService(e.Repos.Media, e.Store, e.Cfg.MaxImageMB, e.Cfg.MaxVideoMB)
 	s.Crafts = NewCraftService(e.Repos.Craft, e.Repos.Media)
+	s.Packing = NewPackingService(e.Repos.Packing, e.Repos.Media)
 	s.Pages = NewPageService(e.Repos.Page)
 	s.Home = NewHomeService(e.Repos.Home, e.Repos.Media, e.Repos.Prod, e.Repos.Craft)
 	s.Settings = NewSettingsService(e.Repos.Settings)
