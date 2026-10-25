@@ -35,8 +35,8 @@ rsync -av --exclude-from=.gitignore --exclude .env ./ user@server:/opt/seamcap/
 在服务器项目根目录创建 `.env`（可从本地 `.env` 复制后改），关键字段：
 
 ```ini
-DOMAIN=yiwushirun.com               # 主域名，不带 https:// 不带 www（nginx 证书/反代用）
-BASE_URL=https://yiwushirun.com     # 影响链接生成与 sitemap
+DOMAIN=shirunhat.com               # 主域名，不带 https:// 不带 www（nginx 证书/反代用）
+BASE_URL=https://shirunhat.com     # 影响链接生成与 sitemap
 INITIAL_ADMIN_USER=admin
 INITIAL_ADMIN_PASSWORD=首个管理密码   # 首次启动自动建号，登录后立即改
 # 邮件（询盘通知）
@@ -57,7 +57,7 @@ SMTP_TLS=ssl
 
 ```bash
 cd /opt/seamcap
-export DOMAIN=yiwushirun.com   # 与 .env 中 DOMAIN 一致
+export DOMAIN=shirunhat.com   # 与 .env 中 DOMAIN 一致
 
 # 1) 生成占位自签证书（让 nginx 能先启动，稍后被正式证书覆盖）
 mkdir -p certbot/conf/live/$DOMAIN certbot/www
@@ -80,7 +80,7 @@ docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
 docker compose exec nginx nginx -s reload
 ```
 
-完成后访问 `https://yiwushirun.com` 即为正式站（80 自动 301 到 443，www 自动 301 到根域名）。
+完成后访问 `https://shirunhat.com` 即为正式站（80 自动 301 到 443，www 自动 301 到根域名）。
 
 若宿主机 `./data`、`./uploads` 已存在且属于某个普通用户，需放开容器写权限：
 在 `docker-compose.yml` 里打开 `user: "uid:gid"`（改成 `stat -c '%u:%g' data` 的输出）。
