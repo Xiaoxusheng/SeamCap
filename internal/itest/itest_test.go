@@ -58,7 +58,8 @@ func newServer(t *testing.T) *server {
 	media := service.NewMediaService(env.Repos.Media, env.Store, env.Cfg.MaxImageMB, env.Cfg.MaxVideoMB)
 	crafts := service.NewCraftService(env.Repos.Craft, env.Repos.Media)
 	pages := service.NewPageService(env.Repos.Page)
-	home := service.NewHomeService(env.Repos.Home, env.Repos.Media, env.Repos.Prod, env.Repos.Craft)
+	packing := service.NewPackingService(env.Repos.Packing, env.Repos.Media)
+	home := service.NewHomeService(env.Repos.Home, env.Repos.Media, env.Repos.Prod, env.Repos.Craft, packing)
 	settings := service.NewSettingsService(env.Repos.Settings)
 	inqs := service.NewInquiryService(env.Repos.Inq, env.Repos.Prod, env.Mail, env.Cfg.RateLimitInquiryPerHour)
 	inqs.MinInterval = 0

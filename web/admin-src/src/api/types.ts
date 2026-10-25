@@ -188,6 +188,7 @@ export interface HomeContent {
   advantages: Advantage[]
   process_steps: ProcessStep[]
   story_media_ids: number[]
+  packing_pick_ids: number[]
   circle_image_id: number | null
   circle_image?: Media | null
   footer_text: string

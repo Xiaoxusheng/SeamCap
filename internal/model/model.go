@@ -181,6 +181,8 @@ type HomeContent struct {
 	ProcessSteps  []ProcessStep `json:"process_steps"`
 	StoryMediaIDs []int64         `json:"story_media_ids"`
 	StoryMedia    []StoryMediaItem `json:"story_media,omitempty"`
+	PackingPickIDs []int64        `json:"packing_pick_ids"`
+	PackingFeature []PackingItem  `json:"packing_feature,omitempty"`
 	CircleImageID *int64          `json:"circle_image_id"`
 	CircleImage   *Media          `json:"circle_image,omitempty"`
 	FooterText    string        `json:"footer_text"`

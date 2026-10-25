@@ -34,7 +34,7 @@ func newSvcEnv(t *testing.T) *svcEnv {
 	s.Crafts = NewCraftService(e.Repos.Craft, e.Repos.Media)
 	s.Packing = NewPackingService(e.Repos.Packing, e.Repos.Media)
 	s.Pages = NewPageService(e.Repos.Page)
-	s.Home = NewHomeService(e.Repos.Home, e.Repos.Media, e.Repos.Prod, e.Repos.Craft)
+	s.Home = NewHomeService(e.Repos.Home, e.Repos.Media, e.Repos.Prod, e.Repos.Craft, s.Packing)
 	s.Settings = NewSettingsService(e.Repos.Settings)
 	s.Inqs = NewInquiryService(e.Repos.Inq, e.Repos.Prod, e.Mail, e.Cfg.RateLimitInquiryPerHour)
 	s.Inqs.MinInterval = 0 // 测试不等待

@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # ============================================================================
 # SeamCap 一键部署脚本（通用）
-# 流程：本地交叉编译 Linux 二进制 → 上传二进制/迁移/前端静态 → 服务器重建
-#       Docker 镜像并重启 → 健康检查
+# 流程：本地构建管理后台 SPA + 交叉编译 Linux 二进制 → 上传产物 → 服务器
+#       仅组装镜像（不编译）→ 重启 → 健康检查
 # 用法：
 #   bash deploy/deploy.sh                # 完整部署（默认目标 xyx.homes）
+#   SKIP_ADMIN_BUILD=1 bash deploy/deploy.sh     # 跳过 SPA 构建（admin-src 无改动时省 20~60 秒）
 #   SEAMCAP_SERVER=root@other.host SEAMCAP_DIR=/opt/seamcap bash deploy/deploy.sh
-# 依赖：ssh/scp 免密登录（公钥须已加到服务器 authorized_keys）、Go、tar、curl
+# 依赖：ssh/scp 免密登录（公钥须已加到服务器 authorized_keys）、Go、Node、tar、curl
+# 说明：服务器端使用 Dockerfile.runtime「轻量组装」，内存峰值 <100MB，
+#       1C1G / 1C2G 的低配机器即可承载（完整构建版 Dockerfile 需 2GB+，会 OOM）。
 # 任何一步失败立即中止（不做部分部署、不误报成功）
 # ============================================================================
 set -euo pipefail
@@ -32,17 +35,30 @@ remote() { ssh "${SSH_OPTS[@]}" "$SERVER" "$@" 2>&1 | sed -E "/$SSH_FILTER/d"; }
 # 上传封装
 put() { scp "${SSH_OPTS[@]}" "$1" "$SERVER:$2" 2>&1 | sed -E "/$SSH_FILTER/d"; }
 
-echo "==> [1/5] 连通性检查：$SERVER:$DIR（$URL）"
+echo "==> [1/6] 连通性检查：$SERVER:$DIR（$URL）"
 remote "echo SSH_OK" >/dev/null
 echo "    SSH 通道正常"
 
-echo "==> [2/5] 本地交叉编译 Linux 二进制（linux/amd64, CGO=0）"
+echo "==> [2/6] 本地构建产物（管理后台 SPA + linux/amd64 二进制）"
+# 管理后台：产物落在 web/admin，由 Dockerfile.runtime 直接打包进镜像。
+# SKIP_ADMIN_BUILD=1 可跳过（仅当确认 web/admin-src 无改动）。
+if [ "${SKIP_ADMIN_BUILD:-0}" != "1" ] && [ -d web/admin-src ]; then
+  echo "    构建管理后台 SPA..."
+  if [ -d web/admin-src/node_modules ]; then
+    ( cd web/admin-src && npm run build )
+  else
+    ( cd web/admin-src && npm ci && npm run build )
+  fi
+  echo "    web/admin $(du -sh web/admin | cut -f1)"
+fi
+echo "    交叉编译 Go 二进制（CGO=0，静态链）..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o bin/seamcap ./cmd/server
 echo "    bin/seamcap $(du -h bin/seamcap | cut -f1)"
 
-echo "==> [3/5] 上传二进制 / 迁移 / 前端静态与后台 SPA"
+echo "==> [3/6] 上传二进制 / 迁移 / 前端静态与后台 SPA / 组装用 Dockerfile"
 remote "mkdir -p $DIR/bin $DIR/migrations $DIR/web" >/dev/null
 put bin/seamcap "$DIR/bin/seamcap"
+put Dockerfile.runtime "$DIR/Dockerfile.runtime"
 # 迁移全量同步（tar 流式，新增迁移文件自动带上，不再逐个枚举）
 tar -C migrations -czf - . | ssh "${SSH_OPTS[@]}" "$SERVER" \
   "mkdir -p $DIR/migrations && tar -C $DIR/migrations -xzf -" 2>&1 | sed -E "/$SSH_FILTER/d" || {
@@ -54,11 +70,14 @@ tar -C web --exclude='admin-src' -czf - . | ssh "${SSH_OPTS[@]}" "$SERVER" \
   echo "❌ web 同步失败"; exit 1; }
 echo "    上传完成"
 
-echo "==> [4/5] 服务器重建镜像并重启容器"
-remote "cd $DIR && docker compose build 2>&1 | tail -2 && docker compose up -d 2>&1 | tail -2"
+echo "==> [4/6] 服务器组装镜像（Dockerfile.runtime，不编译）并重启"
+remote "cd $DIR && export APP_DOCKERFILE=Dockerfile.runtime && docker compose build 2>&1 | tail -2 && docker compose up -d 2>&1 | tail -2"
 remote "docker ps --format '{{.Names}} {{.Status}}' | grep '^seamcap '"
 
-echo "==> [5/5] 健康检查（等待容器就绪）"
+echo "==> [5/6] 清理悬空镜像（避免低配机器磁盘被历史层撑满）"
+remote "docker image prune -f 2>&1 | tail -1" || echo "    跳过（不影响部署结果）"
+
+echo "==> [6/6] 健康检查（等待容器就绪）"
 sleep 4
 ok=0
 for i in 1 2 3 4 5; do

@@ -1,0 +1,53 @@
+# syntax=docker/dockerfile:1
+# SeamCap 生产镜像 —— 轻量组装版（runtime only）
+# ============================================================================
+# 与 Dockerfile 的区别：不在服务器上编译任何东西，只把本地已构建好的产物装进镜像。
+#
+# 为什么要它：
+#   完整版 Dockerfile 会在服务器上跑 npm ci + vite build + go build，
+#   构建峰值内存 1.5~2.5GB —— 1C1G / 1C2G 的机器会直接 OOM，被迫买 2C4G。
+#   本文件构建耗时约 10 秒、内存峰值 <100MB，$5~10/月的小机器即可承载。
+#
+# 前置条件（由 deploy/deploy.sh 自动满足）：
+#   - bin/seamcap       linux/amd64 二进制（CGO_ENABLED=0）
+#   - migrations/*.sql
+#   - web/              前台静态页 + web/admin（本地 npm run build 的产物）
+#
+# 何时改用完整版 Dockerfile：
+#   在服务器/CI 上从源码构建（本地没有 Go/Node 环境），或需要镜像内自证可复现构建。
+# ============================================================================
+FROM alpine:3.20
+
+# ca-certificates：SMTP SSL / HTTPS 外呼；tzdata：时区；wget：健康检查
+RUN apk add --no-cache ca-certificates tzdata wget
+
+RUN addgroup -g 10001 seamcap \
+ && adduser -D -u 10001 -G seamcap seamcap
+
+WORKDIR /app
+
+# 二进制 + 迁移 + 前端（含 admin SPA）
+COPY bin/seamcap ./seamcap
+COPY migrations/ ./migrations/
+COPY web/ ./web/
+
+# 数据目录（运行时以卷挂载持久化：SQLite + secret.key + 上传文件）
+RUN mkdir -p /app/data /app/uploads \
+ && chown -R seamcap:seamcap /app
+VOLUME ["/app/data", "/app/uploads"]
+
+USER seamcap
+
+ENV APP_ENV=production \
+    PORT=8080 \
+    DB_PATH=/app/data/seamcap.db \
+    UPLOAD_DIR=/app/uploads \
+    BACKUP_DIR=/app/data/backups
+
+EXPOSE 8080
+
+# 探活走 /robots.txt（不查库、开销极小）
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/robots.txt || exit 1
+
+ENTRYPOINT ["/app/seamcap"]

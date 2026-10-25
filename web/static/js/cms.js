@@ -11,7 +11,7 @@
      [data-cms-circle-image]               首页 The Shirun Circle 板块配图
      #cmsFeatured / #cmsStaticLines        首页推荐产品 / 静态产品线兜底
      img[data-cms-visor="{slug}"]          首页遮阳帽陈列区图片（取该产品后台主图）
-     #cmsCraftList / #cmsStaticCraftGrid / #cmsStaticCraftVideos  首页工艺预览
+     #cmsPackingTeaser                     首页发货展示（/home 的 hero.packing_feature，后台挑选）
      #cmsValues / #cmsStaticValues、#cmsProcess / #cmsStaticProcess  优势/流程（流程卡可带配图或视频）
      [data-cms-factory]、#cmsContactBlurb、#cmsFooterTag  文案替换
      #cmsCraftModules / #cmsStaticModules  工艺页模块
@@ -383,29 +383,26 @@
       '</span></a>';
   }
 
-  function bindPackingTeaser() {
+  // 首页发货展示：数据来自 /home 的 hero.packing_feature（后台「首页内容→首页发货展示」挑选；
+  // 未挑选时后端默认取前 3 条已发布素材）
+  function renderPackingTeaser(items) {
     var box = document.getElementById('cmsPackingTeaser');
     var section = document.getElementById('packing-teaser');
     if (!box || !section) return;
-    getJSON('/packing').then(function (items) {
-      if (!items || !items.length) return; // 无素材时整个板块保持隐藏
-      // 优先图片；不足 3 张时用视频补位
-      var imgs = items.filter(function (it) { return !(it.media && /^video\//.test(it.media.mime_type || '')); });
-      var picked = (imgs.length >= 3 ? imgs : items).slice(0, 3);
-      var html = picked.map(packTeaserCard).join('');
-      if (!html) return;
-      box.innerHTML = html;
-      show(section);
-      show(box);
-      reveal(section);
-    }).catch(function () { /* 静态：板块保持隐藏 */ });
+    if (!items || !items.length) return; // 无素材时整个板块保持隐藏
+    var html = items.map(packTeaserCard).join('');
+    if (!html) return;
+    box.innerHTML = html;
+    show(section);
+    show(box);
+    reveal(section);
   }
 
   function bindHome() {
     var hasHero = document.querySelector('[data-cms-hero]');
     var featuredBox = document.getElementById('cmsFeatured');
-    var craftBox = document.getElementById('cmsCraftList');
-    if (!hasHero && !featuredBox && !craftBox && !document.getElementById('cmsStoryMedia') &&
+    if (!hasHero && !featuredBox && !document.getElementById('cmsStoryMedia') &&
+        !document.getElementById('cmsPackingTeaser') &&
         !document.getElementById('cmsValues') && !document.getElementById('cmsProcess')) return;
 
     getJSON('/home').then(function (home) {
@@ -425,22 +422,15 @@
         }
       }
 
+      // 发货展示：后台挑选条目（packing_feature 已由后端按顺序解析）
+      renderPackingTeaser(hero.packing_feature);
+
       // 推荐产品：后台标记 featured 的产品驱动 Collection 板块
       if (featuredBox && home.featured_products && home.featured_products.length) {
         featuredBox.innerHTML = home.featured_products.map(productCard).join('');
         show(featuredBox);
         hide(document.getElementById('cmsStaticLines'));
         reveal(featuredBox);
-      }
-
-      // 工艺预览：后台工艺驱动 Craft 板块（首页只取前 3 个，保持单行三卡；全部模块见工艺页）
-      if (craftBox && home.craft_preview && home.craft_preview.length) {
-        craftBox.innerHTML = '<div class="cards3">' +
-          home.craft_preview.slice(0, 3).map(craftCard).join('') + '</div>';
-        show(craftBox);
-        hide(document.getElementById('cmsStaticCraftGrid'));
-        hide(document.getElementById('cmsStaticCraftVideos'));
-        reveal(craftBox);
       }
 
       // 优势 / 流程（字段位于 hero 子对象）
@@ -631,7 +621,6 @@
   bindHome();
   bindVisorImages();
   bindCraft();
-  bindPackingTeaser();
 
   /* ---------- 语言切换：重新拉取 CMS 内容（覆盖 i18n 词典占位，CMS 数据优先） ---------- */
   if (window.I18N) {
@@ -643,7 +632,6 @@
         bindPages();
         bindHome();
         bindCraft();
-        bindPackingTeaser();
       }, 120);
     });
   }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { App, Button, Form, Input, Popconfirm, Tooltip } from 'antd'
+import { App, Button, Form, Input, Popconfirm, Select, Tooltip } from 'antd'
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
@@ -9,9 +9,10 @@ import {
   PlusOutlined,
   SaveOutlined,
 } from '@ant-design/icons'
-import { cachedMedia, fetchMedia, get, put } from '../../api/client'
+import { cachedMedia, fetchMedia, get, post, put } from '../../api/client'
 import type { HomeContent, Media } from '../../api/types'
 import MediaIDField from '../../components/MediaIDField'
+import MediaPicker from '../../components/MediaPicker'
 import MediaURLField from '../../components/MediaURLField'
 import PageHeader from '../../components/PageHeader'
 import PageSection from '../../components/PageSection'
@@ -24,11 +25,54 @@ const SECTIONS = [
   { id: 'cta', label: 'CTA 按钮' },
   { id: 'factory', label: '工厂介绍' },
   { id: 'story', label: '工厂实景图库' },
+  { id: 'packfeature', label: '首页发货展示' },
   { id: 'advantages', label: '工厂优势' },
   { id: 'process', label: '工艺流程' },
   { id: 'contact', label: '联系介绍' },
   { id: 'footer', label: '页脚' },
 ]
+
+const PACK_CAT_LABELS: Record<string, string> = {
+  packing: '打包',
+  loading: '装车',
+  warehouse: '仓库',
+}
+
+// 表单字段：打包发货条目单选（value = packing item id），选项来自 /admin/packing
+function PackingSelect(props: {
+  value?: number | null
+  onChange?: (v: number | null) => void
+}): JSX.Element {
+  const [options, setOptions] = useState<{ value: number; label: string }[]>([])
+  useEffect(() => {
+    let alive = true
+    void get<unknown>('/admin/packing').then((body) => {
+      if (!alive) return
+      const items = (body as { data?: { id: number; category?: string; title?: string }[] }).data ?? []
+      setOptions(
+        (Array.isArray(items) ? items : []).map((it) => ({
+          value: it.id,
+          label: `#${it.id} ${PACK_CAT_LABELS[it.category ?? ''] ?? it.category ?? '打包'} · ${it.title || '未命名'}`,
+        })),
+      )
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+  return (
+    <Select
+      value={props.value ?? undefined}
+      onChange={(v) => props.onChange?.(v ?? null)}
+      options={options}
+      showSearch
+      optionFilterProp="label"
+      placeholder="选择打包发货条目"
+      allowClear
+      style={{ width: '100%' }}
+    />
+  )
+}
 
 // 首页内容：分区导航 + 分区表单 + 当前表单值的实时首屏预览
 export default function HomePage(): JSX.Element {
@@ -47,6 +91,8 @@ export default function HomePage(): JSX.Element {
   const footerText = Form.useWatch('footer_text', form) as string | undefined
   const heroVideo = Form.useWatch('hero_video_url', form) as string | undefined
   const [previewMedia, setPreviewMedia] = useState<Media | null>(null)
+  const [packUploadOpen, setPackUploadOpen] = useState(false)
+  const [packUploading, setPackUploading] = useState(false)
 
   const load = useCallback(async (): Promise<void> => {
     setLoading(true)
@@ -67,6 +113,7 @@ export default function HomePage(): JSX.Element {
         advantages: h.advantages.length > 0 ? h.advantages : [{}],
         process_steps: h.process_steps.length > 0 ? h.process_steps : [{}],
         story_media_ids: h.story_media_ids ?? [],
+        packing_pick_ids: h.packing_pick_ids ?? [],
         circle_image_id: h.circle_image_id,
         footer_text: h.footer_text,
       })
@@ -153,6 +200,9 @@ export default function HomePage(): JSX.Element {
         story_media_ids: (values.story_media_ids ?? []).filter(
           (id: number | null | undefined) => id != null,
         ),
+        packing_pick_ids: (values.packing_pick_ids ?? []).filter(
+          (id: number | null | undefined) => id != null,
+        ),
       }
       await put('/admin/home', payload)
       message.success('首页内容已更新，前台立即生效')
@@ -165,6 +215,41 @@ export default function HomePage(): JSX.Element {
       }
     } finally {
       setSaving(false)
+    }
+  }
+
+  // 上传新图并加入首页发货展示：MediaPicker 上传/选图 → 建「打包发货」条目 → 追加到挑选列表末尾
+  const uploadPackItems = async (items: Media[]): Promise<void> => {
+    try {
+      setPackUploading(true)
+      const list = await get<{ sort_order?: number }[]>('/admin/packing')
+      const existing = list.data ?? []
+      let nextSort = (Array.isArray(existing) ? existing : []).reduce(
+        (acc, it) => Math.max(acc, it.sort_order ?? 0),
+        0,
+      ) + 1
+      const current = ((form.getFieldValue('packing_pick_ids') as (number | null)[] | undefined) ?? []).filter(
+        (x) => x != null,
+      )
+      const newIds: number[] = []
+      for (const m of items) {
+        const { data } = await post<{ id: number }>('/admin/packing', {
+          category: 'packing',
+          title: (m.original_name || '').replace(/\.[^.]+$/, ''),
+          caption: '',
+          media_id: m.id,
+          sort_order: nextSort,
+          status: 'published',
+        })
+        nextSort += 1
+        newIds.push(data.id)
+      }
+      form.setFieldsValue({ packing_pick_ids: [...current, ...newIds] })
+      message.success(`已上传并加入 ${newIds.length} 项（默认分类「打包」，可在「打包发货」页补充文案与分类）`)
+    } catch (e) {
+      message.error((e as Error).message)
+    } finally {
+      setPackUploading(false)
     }
   }
 
@@ -398,6 +483,93 @@ export default function HomePage(): JSX.Element {
             </PageSection>
 
             <PageSection
+              id="sc-home-packfeature"
+              title="首页发货展示"
+              description="挑选首页「发货展示」板块展示的条目与顺序（条目在「打包发货」页面维护）；不选时默认取前 3 条已发布素材，最多 6 项"
+            >
+              <Form.List name="packing_pick_ids">
+                {(fields, { add, remove, move }) => (
+                  <>
+                    {fields.map((field, index) => (
+                      <div className="sc-story-item" key={field.key}>
+                        <span className="sc-story-item__index">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <Form.Item
+                          name={[field.name]}
+                          noStyle
+                          rules={[{ required: true, message: '请选择条目' }]}
+                        >
+                          <PackingSelect />
+                        </Form.Item>
+                        <div className="sc-story-item__actions">
+                          <Tooltip title="上移">
+                            <Button
+                              type="text"
+                              size="small"
+                              aria-label="上移"
+                              disabled={index === 0}
+                              icon={<ArrowUpOutlined />}
+                              onClick={() => move(index, index - 1)}
+                            />
+                          </Tooltip>
+                          <Tooltip title="下移">
+                            <Button
+                              type="text"
+                              size="small"
+                              aria-label="下移"
+                              disabled={index === fields.length - 1}
+                              icon={<ArrowDownOutlined />}
+                              onClick={() => move(index, index + 1)}
+                            />
+                          </Tooltip>
+                          <Popconfirm
+                            title="移除该项？"
+                            description="保存后首页发货展示将不再展示该条目"
+                            okText="移除"
+                            okButtonProps={{ danger: true }}
+                            cancelText="取消"
+                            onConfirm={() => remove(field.name)}
+                          >
+                            <Tooltip title="移除该项">
+                              <Button
+                                type="text"
+                                size="small"
+                                danger
+                                aria-label="移除该项"
+                                icon={<DeleteOutlined />}
+                              />
+                            </Tooltip>
+                          </Popconfirm>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="sc-list-add" style={{ display: 'flex', gap: 8 }}>
+                      <Button
+                        block
+                        type="dashed"
+                        icon={<PlusOutlined />}
+                        disabled={fields.length >= 6}
+                        onClick={() => add()}
+                      >
+                        {fields.length >= 6 ? '已达 6 项上限' : '添加展示条目'}
+                      </Button>
+                      <Button
+                        block
+                        icon={<PictureOutlined />}
+                        disabled={fields.length >= 6}
+                        loading={packUploading}
+                        onClick={() => setPackUploadOpen(true)}
+                      >
+                        上传新图并加入
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </Form.List>
+            </PageSection>
+
+            <PageSection
               id="sc-home-advantages"
               title="工厂优势"
               description="以卡片形式展示在首页，最多 12 项，按顺序排列"
@@ -606,6 +778,15 @@ export default function HomePage(): JSX.Element {
           </aside>
         </div>
       </Form>
+      <MediaPicker
+        open={packUploadOpen}
+        multiple
+        onCancel={() => setPackUploadOpen(false)}
+        onOk={(items) => {
+          setPackUploadOpen(false)
+          if (items.length > 0) void uploadPackItems(items)
+        }}
+      />
     </div>
   )
 }

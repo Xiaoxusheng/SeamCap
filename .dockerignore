@@ -10,7 +10,6 @@
 # 本地数据与产物：运行时通过卷挂载，绝不进镜像
 data
 uploads
-bin
 tmp_verify
 _diag
 .smoke_*
@@ -18,6 +17,11 @@ _diag
 *.db
 *.db-wal
 *.db-shm
+# bin/ 下的 linux 二进制供「轻量组装」模式（Dockerfile.runtime）直接 COPY；
+# 完整构建模式不 COPY 它，仅多传约 13MB 构建上下文。
+# 注意：先排除内容再开例外，直接写 `bin` 再 `!bin/seamcap` 不生效（父目录被剪枝）。
+bin/*
+!bin/seamcap
 
 # 部署脚本与文档（镜像内不需要）
 deploy
@@ -30,7 +34,8 @@ README.md
 .deploy_ssh
 .deploy-tmp
 
-# 前端：管理后台 SPA 在镜像内重新构建；node_modules 不进上下文
-web/admin
+# 前端：node_modules 不进上下文。
+# web/admin 不再排除 —— 「轻量组装」模式直接使用本地构建产物；
+# 完整构建模式会用它覆盖后重新构建，结果一致。
 web/admin-src/node_modules
 node_modules

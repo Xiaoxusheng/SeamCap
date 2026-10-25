@@ -3,7 +3,14 @@
 # 首次部署步骤见 deploy/DOCKER.md（含证书签发三步）
 services:
   app:
-    build: .
+    build:
+      context: .
+      # 镜像构建方式：
+      #   Dockerfile          = 完整构建（服务器上编译 Go + 管理后台 SPA，需 2GB+ 内存）
+      #   Dockerfile.runtime  = 轻量组装（只打包本地已构建产物，<100MB 内存，1C1G 可跑）
+      # deploy.sh 会显式传 APP_DOCKERFILE=Dockerfile.runtime；
+      # 手动 docker compose build 时若不设置该变量，仍走完整构建，保证没预编译产物也能起。
+      dockerfile: ${APP_DOCKERFILE:-Dockerfile}
     image: seamcap:latest
     container_name: seamcap
     restart: unless-stopped

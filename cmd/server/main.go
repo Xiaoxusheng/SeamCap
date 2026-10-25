@@ -92,7 +92,7 @@ func main() {
 	craftSvc := service.NewCraftService(craftRepo, mediaRepo)
 	packingSvc := service.NewPackingService(packingRepo, mediaRepo)
 	pageSvc := service.NewPageService(pageRepo)
-	homeSvc := service.NewHomeService(homeRepo, mediaRepo, prodRepo, craftRepo)
+	homeSvc := service.NewHomeService(homeRepo, mediaRepo, prodRepo, craftRepo, packingSvc)
 	settingsSvc := service.NewSettingsService(settingsRepo)
 	inqSvc := service.NewInquiryService(inqRepo, prodRepo, mailSender, cfg.RateLimitInquiryPerHour)
 	dashSvc := service.NewDashboardService(prodRepo, craftRepo, inqRepo)

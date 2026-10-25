@@ -1,8 +1,24 @@
 # SeamCap Docker 部署指南
 
-## 0. 镜像结构
+## 0. 镜像结构与两种构建方式
 
-三阶段多阶段构建（`Dockerfile`）：
+镜像始终是三阶段产物的最终形态（alpine 运行时 + 非 root 用户 + 二进制/web/migrations），
+但**构建发生在哪里**有两种模式，按服务器配置选择：
+
+| 模式 | 用哪个 Dockerfile | 编译位置 | 服务器内存峰值 | 适用机器 |
+|---|---|---|---|---|
+| **轻量组装**（推荐） | `Dockerfile.runtime` | 本地（`deploy.sh` 先构建产物再上传） | < 100 MB | 1C1G / 1C2G 即可 |
+| 完整构建 | `Dockerfile` | 服务器 | 1.5–2.5 GB | 2C4G 起（1G/2G 会 OOM） |
+
+```bash
+# 轻量组装（deploy.sh 默认走这条，无需手动设置）
+APP_DOCKERFILE=Dockerfile.runtime docker compose build
+
+# 完整构建（服务器上有源码、本地没 Go/Node 环境时用）
+docker compose build
+```
+
+> 完整版的三个构建阶段如下，仅在 `Dockerfile` 中执行：
 
 | 阶段 | 基础镜像 | 做什么 |
 |---|---|---|
@@ -13,6 +29,9 @@
 数据目录通过卷挂载持久化，**不在镜像内**：
 - `/app/data` → 宿主 `./data`（SQLite 库、secret.key、备份）
 - `/app/uploads` → 宿主 `./uploads`（图片/视频）
+
+> 选轻量组装的额外好处：部署耗时从 3–5 分钟降到约 30 秒，且历史镜像层不会在低配机器的
+> 20–40GB 磁盘上堆积（`deploy.sh` 末尾会自动 `docker image prune -f`）。
 
 ## 1. 服务器准备
 
