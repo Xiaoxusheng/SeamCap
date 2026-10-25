@@ -647,6 +647,24 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .pcard__media--single { display: block; aspect-ratio: 4 / 3.2; overflow: hidden; }
 .pcard__media--single img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--t-med) var(--ease); }
 .pcard:hover .pcard__media--single img { transform: scale(1.04); }
+
+/* ---------- 主图占位（产品已上线、后台尚未上传实拍图） ---------- */
+.media-pending {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 7px; text-align: center;
+}
+.media-pending__mark {
+  font-family: var(--font-display); font-size: 18px; letter-spacing: .3em;
+  padding-left: .3em; text-transform: uppercase; color: #8D8377;
+}
+.media-pending__txt {
+  font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #A89C8C;
+}
+.pcard__media--empty {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(150deg, #FAF8F3 0%, #EFEAE0 100%);
+}
+.pcard__media--empty .media-pending { padding: 0 16px; }
 .pcard h3 a { color: inherit; }
 .pcard h3 a:hover { color: var(--gold-bright); }
 .empty {
@@ -660,6 +678,23 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .pd-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 44px; align-items: start; }
 .pd-gal__main { aspect-ratio: 1 / 1; overflow: hidden; cursor: zoom-in; }
 .pd-gal__main img { width: 100%; height: 100%; object-fit: cover; }
+.pd-gal__main--empty {
+  cursor: default; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(150deg, #FAF8F3 0%, #EEE8DD 100%);
+}
+/* 全局 img{display:block} 会盖掉 [hidden]，占位态改用显式 display 控制 */
+.pd-gal__main--empty img { display: none; }
+.pd-gal--noimg .pd-thumbs, .pd-gal--noimg .pd-hint { display: none; }
+.media-pending--lg { gap: 12px; }
+.media-pending--lg .media-pending__mark { font-size: 30px; }
+.media-pending--lg .media-pending__txt { font-size: 10.5px; color: #9C9081; }
+/* 无图时图库列不被内容宽度撑缩（移动端按内容收缩会缩成小块） */
+.pd-gal--noimg { width: 100%; }
+@media (max-width: 560px) {
+  .media-pending__txt { font-size: 8.5px; letter-spacing: .14em; }
+  .media-pending--lg .media-pending__mark { font-size: 24px; }
+  .media-pending--lg .media-pending__txt { font-size: 9px; letter-spacing: .16em; }
+}
 .pd-thumbs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .pdthumb {
   width: 84px; height: 84px; border-radius: var(--r-sm); overflow: hidden;

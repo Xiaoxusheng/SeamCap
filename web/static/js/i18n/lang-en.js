@@ -401,6 +401,7 @@
       noteAudience: 'Good for',
       noteColors: 'Colour guide',
       noteSummary: 'In one line',
+      photoPending: 'Photography coming soon',
       constructionValue: 'One-piece seamless molding',
       videoBack: 'Video',
       backToVideo: 'Back to video',

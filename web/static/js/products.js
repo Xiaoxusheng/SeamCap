@@ -360,13 +360,20 @@
       }
       grid.innerHTML = list.map(function (p, i) {
         var d = i < 3 ? ' reveal--d' + i : '';
-        var img0 = p.images[0] || { src: '', alt: p.name };
+        var hasImg = !!(p.images && p.images.length);
+        var img0 = hasImg ? p.images[0] : { src: '', alt: p.name };
         var link = 'product.html?slug=' + encodeURIComponent(p.slug || p.sku);
+        // 无主图的产品：渲染品牌占位块，避免列表出现破图（实拍图上传后自动恢复）
+        var media = hasImg
+          ? '<img src="' + thumbURL(img0.src, 640) + '" alt="' + img0.alt + '" loading="lazy" width="640" height="480"/>'
+          : '<span class="media-pending"><span class="media-pending__mark">SHIRUN</span><span class="media-pending__txt">' + t('js.photoPending') + '</span></span>';
+        // 无后台 SKU 时不把 URL slug 当编号展示（与详情参数表一致）
+        var skuLabel = p.rawSku === undefined ? p.sku : p.rawSku;
         return '<article class="pcard glass reveal ' + d + '">' +
-          '<a class="pcard__media pcard__media--single" href="' + link + '" aria-label="' + escAttr(t('js.viewAria', { name: p.name })) + '">' +
-          '<img src="' + thumbURL(img0.src, 640) + '" alt="' + img0.alt + '" loading="lazy" width="640" height="480"/></a>' +
+          '<a class="pcard__media pcard__media--single' + (hasImg ? '' : ' pcard__media--empty') + '" href="' + link + '" aria-label="' + escAttr(t('js.viewAria', { name: p.name })) + '">' +
+          media + '</a>' +
           '<div class="pcard__body">' +
-          '<p class="pcard__sku">' + p.sku + ' &middot; ' + p.catLabel + '</p>' +
+          '<p class="pcard__sku">' + (skuLabel ? skuLabel + ' &middot; ' : '') + p.catLabel + '</p>' +
           '<h3><a href="' + link + '">' + p.name + '</a></h3>' +
           '<p>' + p.tagline + '</p>' +
           '<div class="pcard__meta"><span class="pill">' + localizeColors(p.colorsLabel) + '</span><span class="pill">OEM / ODM</span><span class="pill">' + t('home.pillLogo') + '</span></div>' +
@@ -439,13 +446,41 @@
     var notFound = document.getElementById('pdNotFound');
     var el = function (id) { return document.getElementById(id); };
 
+    // 图库状态：有图 → 正常灯箱；无图 → 品牌占位块（不留破图与空白列，实拍图上传后自动恢复）
+    function setGalleryState(hasImages) {
+      var galMain = document.querySelector('.pd-gal__main');
+      if (!galMain) return;
+      var gal = galMain.closest('.pd-gal');
+      var mainImg = el('pdMain');
+      var thumbs = el('pdThumbs');
+      var hint = document.querySelector('.pd-hint');
+      var pending = galMain.querySelector('.media-pending');
+      galMain.classList.toggle('pd-gal__main--empty', !hasImages);
+      if (gal) gal.classList.toggle('pd-gal--noimg', !hasImages);
+      if (mainImg) mainImg.hidden = !hasImages;
+      if (thumbs) thumbs.hidden = !hasImages;
+      if (hint) hint.hidden = !hasImages;
+      if (!hasImages) {
+        if (!pending) {
+          pending = document.createElement('div');
+          pending.className = 'media-pending media-pending--lg';
+          pending.innerHTML = '<span class="media-pending__mark">SHIRUN</span><span class="media-pending__txt"></span>';
+          galMain.appendChild(pending);
+        }
+        var txt = pending.querySelector('.media-pending__txt');
+        if (txt) txt.textContent = t('js.photoPending');
+      } else if (pending) {
+        pending.remove();
+      }
+    }
+
     function render(p, related) {
-      document.title = p.name + ' — ' + p.sku + ' | SHIRUN';
+      document.title = p.name + (p.rawSku ? ' — ' + p.rawSku : '') + ' | SHIRUN';
       var meta = document.querySelector('meta[name="description"]');
       if (meta) meta.setAttribute('content', p.tagline);
 
       var pdCat = el('pdCat');
-      if (pdCat) pdCat.textContent = p.catLabel + ' · ' + p.sku;
+      if (pdCat) pdCat.textContent = p.catLabel + (p.rawSku ? ' · ' + p.rawSku : '');
       var pdName = el('pdName');
       if (pdName) pdName.textContent = p.name;
       var pdDesc = el('pdDesc');
@@ -473,6 +508,7 @@
 
       var main = el('pdMain');
       var thumbs = el('pdThumbs');
+      setGalleryState(!!p.images.length);
       if (!main || !thumbs || !p.images.length) return;
       main.src = thumbURL(p.images[0].src, 960);
       main.alt = p.images[0].alt;

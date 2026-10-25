@@ -399,6 +399,7 @@
       noteAudience: '适合人群',
       noteColors: '颜色参考',
       noteSummary: '一句话总结',
+      photoPending: '实拍图制作中',
       constructionValue: '一体成型无缝工艺',
       videoBack: '视频',
       backToVideo: '返回视频',
