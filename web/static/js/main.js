@@ -350,6 +350,66 @@
     });
   }
 
+  /* ---------- 10. 白天 / 夜间主题切换 ---------- */
+  var themeBtns = document.querySelectorAll('[data-theme-toggle]');
+  function syncThemeBtns() {
+    var isLight = window.ShirunTheme && window.ShirunTheme.current() === 'light';
+    var label = isLight ? t('common.themeToDark') : t('common.themeToLight');
+    themeBtns.forEach(function (btn) {
+      btn.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('title', label);
+    });
+  }
+  themeBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!window.ShirunTheme) return;
+      window.ShirunTheme.toggle();
+      syncThemeBtns();
+    });
+  });
+  if (themeBtns.length) {
+    syncThemeBtns();
+    document.addEventListener('themechange', syncThemeBtns);
+    if (window.I18N) window.I18N.onChange(syncThemeBtns);
+  }
+
+  /* ---------- 11. 玻璃镜头高光（指针跟随，仅桌面 hover 设备） ----------
+     用事件委托而不是逐个绑定：CMS 动态渲染的卡片（#cmsFeatured 等）也能生效。 */
+  (function initLens() {
+    var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (!canHover || reduceMotion) return;
+    var SEL = '.pcard, .vhero, .vrow, .value, .circle, .form-panel, .pack-item, .relcard';
+    var current = null, raf = 0, mx = 0, my = 0;
+
+    function clear(el) {
+      if (!el) return;
+      el.style.removeProperty('--lx');
+      el.style.removeProperty('--ly');
+    }
+    function paint() {
+      raf = 0;
+      if (!current) return;
+      var r = current.getBoundingClientRect();
+      current.style.setProperty('--lx', Math.round(mx - r.left) + 'px');
+      current.style.setProperty('--ly', Math.round(my - r.top) + 'px');
+    }
+
+    document.addEventListener('pointermove', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest(SEL) : null;
+      if (el !== current) {
+        clear(current);
+        current = el;
+        if (el) el.classList.add('lens');
+      }
+      if (!current) return;
+      mx = e.clientX; my = e.clientY;
+      if (!raf) raf = requestAnimationFrame(paint);
+    }, { passive: true });
+
+    document.addEventListener('pointerleave', function () { clear(current); }, true);
+  })();
+
   /* ---------- 9. WhatsApp 链接：微信内置浏览器兜底 ----------
      微信 WebView 不允许 target="_blank" 新开页面，外链点击无反应。
      这里全局拦截 wa.me / whatsapp.com 链接：改为当前页跳转尝试拉起
