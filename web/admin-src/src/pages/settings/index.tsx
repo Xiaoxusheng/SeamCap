@@ -149,7 +149,7 @@ export default function SettingsPage(): JSX.Element {
             <div className="sc-settings-section__body">
               <div className="sc-form-grid">
                 <Form.Item name="site_name" label="站点名称">
-                  <Input maxLength={500} placeholder="SeamCap" />
+                  <Input maxLength={500} placeholder="SHIRUN HAT" />
                 </Form.Item>
                 <Form.Item name="logo_url" label="Logo 图">
                   <MediaURLField placeholder="选图或手填 /uploads/... 或外链" />

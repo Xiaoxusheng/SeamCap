@@ -263,10 +263,11 @@ html[data-theme="light"] .brand__logo--light { display: block; }
   position: absolute; left: 14px; right: 14px; height: 1.6px;
   background: var(--ivory); transition: transform var(--t-med) var(--ease), top var(--t-med) var(--ease);
 }
-.nav__toggle span:nth-child(1) { top: 19px; }
-.nav__toggle span:nth-child(2) { top: 26px; }
-.nav__toggle[aria-expanded="true"] span:nth-child(1) { top: 22px; transform: rotate(45deg); }
-.nav__toggle[aria-expanded="true"] span:nth-child(2) { top: 22px; transform: rotate(-45deg); }
+/* 线条按按钮中心定位（任意尺寸都居中）：中心距 7px */
+.nav__toggle span:nth-child(1) { top: calc(50% - 4.3px); }
+.nav__toggle span:nth-child(2) { top: calc(50% + 2.7px); }
+.nav__toggle[aria-expanded="true"] span:nth-child(1) { top: calc(50% - 0.8px); transform: rotate(45deg); }
+.nav__toggle[aria-expanded="true"] span:nth-child(2) { top: calc(50% - 0.8px); transform: rotate(-45deg); }
 
 /* 中等宽度：收紧导航间距防折行 */
 @media (max-width: 1280px) {
@@ -1006,8 +1007,8 @@ html[data-theme="light"] .brand__logo--light { display: block; }
   .nav__inner { height: 62px; padding: 0 6px 0 16px; gap: 10px; }
   /* 小屏三个控件（语言 / 主题 / 汉堡）压缩尺寸，保证胶囊不挤压品牌 */
   .nav__actions { gap: 8px; }
-  .nav__actions .lang-switch { width: 38px; height: 38px; min-width: 38px; min-height: 38px; }
-  .theme-toggle { width: 38px; height: 38px; }
+  .nav__actions .lang-switch { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
+  .theme-toggle { width: 40px; height: 40px; }
   .nav__actions .nav__toggle { width: 40px; height: 40px; }
   .brand__logo { height: 22px; }
   .footer__brand .brand__logo { height: 20px; }
@@ -1042,9 +1043,9 @@ html[data-theme="light"] .brand__logo--light { display: block; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  min-width: 44px;
-  padding: 10px 14px;
+  min-height: 46px;
+  min-width: 46px;
+  padding: 0;
   border-radius: var(--r-pill);
   border: 1px solid var(--glass-line);
   background: var(--glass-bg);
@@ -1226,7 +1227,7 @@ html[data-theme="light"] .brand__logo--light { display: block; }
    主题切换按钮（白天 / 夜间）
    ============================================================ */
 .theme-toggle {
-  flex: none; width: 42px; height: 42px; border-radius: 50%;
+  flex: none; width: 46px; height: 46px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--glass-line-strong);
   background: var(--glass-bg);
