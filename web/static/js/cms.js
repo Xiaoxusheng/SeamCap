@@ -142,6 +142,14 @@
       document.querySelectorAll('[data-cms-contact="address"]').forEach(function (el) {
         if (s.address) el.textContent = s.address;
       });
+      // 后台「站点设置→Logo 图」：有值时替换页脚品牌区（白底衬片保证任意主题可读）
+      if (s.logo_url) {
+        document.querySelectorAll('.footer__brand .brand__logo').forEach(function (img) {
+          img.src = s.logo_url;
+        });
+        var fp = document.querySelector('.footer__brand');
+        if (fp) fp.classList.add('brand--custom');
+      }
     }).catch(function () { /* 静态兜底 */ });
   }
 
