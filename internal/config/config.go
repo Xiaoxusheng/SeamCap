@@ -47,6 +47,11 @@ type Config struct {
 	// TrustedProxies 受信反代网段（CIDR）；仅这些来源的 X-Forwarded-For 会被信任
 	TrustedProxies []string
 
+	// CookieSecureOverride 会话 Cookie 的 Secure 标记：auto(默认，跟随 APP_ENV) | true | false
+	// 纯 HTTP 部署（如直接用公网 IP 访问、未接 TLS）必须设为 false，
+	// 否则浏览器会丢弃 Secure Cookie，导致管理后台登录后立刻掉线。
+	CookieSecureOverride string
+
 	SessionTTL  time.Duration
 	RememberTTL time.Duration
 }
@@ -113,6 +118,8 @@ func Load() (*Config, error) {
 
 		TrustedProxies: splitCSV(get("TRUSTED_PROXIES",
 			"127.0.0.0/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7")),
+
+		CookieSecureOverride: strings.ToLower(get("COOKIE_SECURE", "auto")),
 	}
 
 	if c.SessionTTLHours <= 0 {
@@ -149,3 +156,15 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) IsProduction() bool { return c.AppEnv == "production" }
+
+// SessionCookieSecure 决定会话 Cookie 是否带 Secure 标记。
+// 显式 COOKIE_SECURE=true/false 优先；未设置（auto）时跟随 APP_ENV。
+func (c *Config) SessionCookieSecure() bool {
+	switch c.CookieSecureOverride {
+	case "true", "1", "yes", "on":
+		return true
+	case "false", "0", "no", "off":
+		return false
+	}
+	return c.IsProduction()
+}

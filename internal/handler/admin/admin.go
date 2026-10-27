@@ -140,7 +140,7 @@ func (h *Admin) setSessionCookie(w http.ResponseWriter, token string, maxAge int
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   h.Cfg.IsProduction(),
+		Secure:   h.Cfg.SessionCookieSecure(),
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   maxAge,
 	})
