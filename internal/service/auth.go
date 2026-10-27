@@ -22,6 +22,7 @@ import (
 	"seamcap/internal/config"
 	"seamcap/internal/model"
 	"seamcap/internal/repository"
+	"seamcap/internal/runtimecfg"
 	"seamcap/internal/secret"
 )
 
@@ -35,18 +36,35 @@ type AuthService struct {
 	loginLimiter *limiter
 	passLimiter  *limiter
 	hashSem      chan struct{}
-	dummyHash    string
 }
 
-// maxConcurrentArgon2 限制同时进行的 Argon2 运算数（单次 64MB，防并发内存放大）。
-const maxConcurrentArgon2 = 8
+// maxArgon2Concurrency Argon2 并发上限（单次运算固定申请 64MiB，并发越多内存越陡）。
+const maxArgon2Concurrency = 4
+
+// argon2Concurrency 按可用内存折算允许并发的 Argon2 运算数。
+// 每路峰值约 64MiB，GC 目标约为存活堆的两倍，因此每 512MiB 内存放行 1 路；
+// 下限 2 路（否则双击登录会互相把对方挤成 429），上限 maxArgon2Concurrency。
+func argon2Concurrency(limitBytes int64) int {
+	if limitBytes <= 0 {
+		return 2
+	}
+	n := int(limitBytes / (512 << 20))
+	if n < 2 {
+		n = 2
+	}
+	if n > maxArgon2Concurrency {
+		n = maxArgon2Concurrency
+	}
+	return n
+}
+
+// dummyPasswordHash 用户名不存在时用于校验的占位哈希（固定盐，密码为
+// "seamcap-timing-decoy"，不可登录）。固定常量而不是启动时现算，
+// 可以省掉启动瞬间那一次 64MiB 的 Argon2 分配；参数必须与 argonTime/
+// argonMemory/argonThreads 保持一致（由 TestDummyHashParamsMatch 守护）。
+const dummyPasswordHash = "$argon2id$v=19$m=65536,t=1,p=4$L76WSFRoQ9S1YWsw5VbTRw$0ZNeo7eI5UAdACWCDEtPrUruS2xXSMjZTMAzJRVnOUc"
 
 func NewAuthService(cfg *config.Config, admins *repository.AdminRepo, audit *repository.AuditRepo, secret []byte) *AuthService {
-	// 占位哈希：用户名不存在时仍执行一次完整的 Argon2 校验，避免时序侧信道。
-	dummy, err := hashPassword("dummy-password-for-timing")
-	if err != nil {
-		panic("seed dummy argon2 hash: " + err.Error())
-	}
 	return &AuthService{
 		cfg:          cfg,
 		admins:       admins,
@@ -54,8 +72,7 @@ func NewAuthService(cfg *config.Config, admins *repository.AdminRepo, audit *rep
 		secret:       secret,
 		loginLimiter: newLimiter(5, 5*time.Minute),
 		passLimiter:  newLimiter(5, 5*time.Minute),
-		hashSem:      make(chan struct{}, maxConcurrentArgon2),
-		dummyHash:    dummy,
+		hashSem:      make(chan struct{}, argon2Concurrency(runtimecfg.LimitBytes())),
 	}
 }
 
@@ -251,7 +268,7 @@ func (s *AuthService) Login(username, password, ip, ua string, remember bool) (*
 		return nil, apperr.Internal(err.Error())
 	}
 	if admin == nil {
-		verifyPassword(s.dummyHash, password) // 恒定时间防御
+		verifyPassword(dummyPasswordHash, password) // 恒定时间防御
 		_ = s.audit.Insert(nil, "login.failed", "admin", "", "unknown username", ip)
 		return nil, apperr.Unauthorized("Invalid username or password")
 	}

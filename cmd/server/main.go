@@ -5,7 +5,9 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
+	_ "net/http/pprof" // 可选诊断端口（PPROF_ADDR），默认关闭
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -24,6 +26,7 @@ import (
 	"seamcap/internal/logger"
 	mw "seamcap/internal/middleware"
 	"seamcap/internal/repository"
+	"seamcap/internal/runtimecfg"
 	"seamcap/internal/service"
 	"seamcap/internal/storage"
 )
@@ -36,6 +39,26 @@ func main() {
 	}
 	log := logger.New(cfg.LogLevel)
 	slog.SetDefault(log)
+
+	// Go 软内存上限：防止 GC 按默认 GOGC 把堆放大到机器物理内存之上（1C1G 上尤其重要）
+	if soft := runtimecfg.Apply(); soft > 0 {
+		log.Info("go memory limit applied", "limit_mb", soft>>20, "detected_mb", runtimecfg.LimitBytes()>>20)
+	}
+
+	// 可选诊断端口：PPROF_ADDR=127.0.0.1:6060 时开启 Go 运行时指标（堆/goroutine/GC）。
+	// 默认关闭；只建议绑定回环地址并通过 SSH 隧道访问，切勿直接暴露公网。
+	if addr := strings.TrimSpace(os.Getenv("PPROF_ADDR")); addr != "" {
+		// 只写端口（":6060"）时强制绑回环，避免误开到公网
+		if host, port, err := net.SplitHostPort(addr); err == nil && host == "" {
+			addr = net.JoinHostPort("127.0.0.1", port)
+		}
+		go func() {
+			log.Warn("pprof listening", "addr", addr)
+			if err := http.ListenAndServe(addr, nil); err != nil {
+				log.Error("pprof server failed", "error", err.Error())
+			}
+		}()
+	}
 
 	// 受信反代网段：非受信来源的 X-Forwarded-For 一律忽略
 	if err := mw.SetTrustedProxies(cfg.TrustedProxies); err != nil {

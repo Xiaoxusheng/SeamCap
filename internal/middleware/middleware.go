@@ -46,7 +46,12 @@ func RequestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 			if rec.status == 0 {
 				rec.status = 200
 			}
-			// /uploads 与静态资源降噪：仅 4xx/5xx 记 info，其余跳过
+			// /uploads 与静态资源降噪：成功请求直接跳过（占请求量绝大多数，
+			// 每条日志都是一次 JSON 编码 + 一次写盘，纯属 GC 与磁盘噪音）；
+			// 4xx/5xx 仍记录，便于排查缺图与缓存问题。
+			if rec.status < 400 && isStaticAsset(r.URL.Path) {
+				return
+			}
 			logger.LogAttrs(r.Context(), slog.LevelInfo, "http_request",
 				slog.String("method", r.Method),
 				slog.String("path", r.URL.Path),
@@ -57,6 +62,14 @@ func RequestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 			)
 		})
 	}
+}
+
+// isStaticAsset 静态资源前缀：这些路径成功时无需留日志。
+func isStaticAsset(p string) bool {
+	return strings.HasPrefix(p, "/uploads/") ||
+		strings.HasPrefix(p, "/static/") ||
+		strings.HasPrefix(p, "/admin/assets/") ||
+		p == "/favicon.ico"
 }
 
 // Recoverer panic 恢复：500 + 统一错误结构（不暴露堆栈给客户端）。

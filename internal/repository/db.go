@@ -30,14 +30,21 @@ func Open(dbPath, migrationsDir string) (*DB, error) {
 	if dataDir != "." {
 		_ = os.Chmod(dataDir, 0o700) // 已存在目录也收紧（库内含 PII 与密码哈希）
 	}
-	dsn := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)", dbPath)
+	// 连接级 pragma：
+	//   journal_mode(WAL)      —— 单写多读
+	//   busy_timeout(5000)     —— 写锁等待兜底
+	//   synchronous(NORMAL)    —— WAL 下的安全档位，省掉每次提交的 fsync
+	//   cache_size(-1024)      —— 每连接页缓存 1MiB（默认 2MiB），小内存机器上按连接数放大
+	dsn := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)"+
+		"&_pragma=foreign_keys(1)&_pragma=synchronous(NORMAL)&_pragma=cache_size(-1024)", dbPath)
 	sqldb, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}
 	// WAL 允许"单写多读"；写事务短小，busy_timeout 兜底。
+	// 空闲连接会各自保留页缓存，所以 idle 只留 2 条，避免为不用的连接付内存。
 	sqldb.SetMaxOpenConns(4)
-	sqldb.SetMaxIdleConns(4)
+	sqldb.SetMaxIdleConns(2)
 	sqldb.SetConnMaxLifetime(0)
 
 	db := &DB{sqldb}

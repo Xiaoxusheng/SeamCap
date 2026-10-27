@@ -506,7 +506,10 @@ func (h *Admin) ListMedia(w http.ResponseWriter, r *http.Request) {
 	handler.List(w, items, page)
 }
 
-const multipartMemory = 32 << 20
+// multipartMemory 内存缓冲上限：超过部分由标准库落到临时文件，FormFile 仍是流式读取。
+// 原来取 32MB，会让每个并发上传请求都可能占住 32MB 堆内存（1C1G 机器上的隐性峰值）；
+// 本接口只有 alt_text 等短文本字段，1MB 足够。
+const multipartMemory = 1 << 20
 
 func parseMultipartForm(r *http.Request) error {
 	if err := r.ParseMultipartForm(multipartMemory); err != nil {
