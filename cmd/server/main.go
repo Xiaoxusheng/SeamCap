@@ -150,6 +150,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(mw.RequestLogger(log))
 	r.Use(mw.Recoverer(log))
+	r.Use(mw.Compress) // gzip：HTML/CSS/JS/JSON；图片与视频原样透传
 	r.Use(mw.SecureHeaders)
 
 	r.Mount("/api/v1", pubH.Routes())
@@ -269,7 +270,9 @@ func pageHandler(file string) http.HandlerFunc {
 
 // adminCSP 管理后台 SPA 的内容安全策略：只放行同源脚本与主题初始化内联脚本（SHA-256），
 // antd 运行时样式需要 inline style；外部媒体仅放行 https 预览。
-const adminCSP = "default-src 'self'; script-src 'self' 'sha256-a1dc004bfb44fd476066e3f2764f7e2a26064201908f1b6213876998d7ba3f1d'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+// 注意：CSP 的内联脚本哈希必须是 base64（浏览器不认 hex），改动 web/admin/index.html
+// 的内联脚本后要同步这里，TestAdminCSPCoversInlineThemeScript 会拦住漏改。
+const adminCSP = "default-src 'self'; script-src 'self' 'sha256-odwAS/tE/UdgZuPydk9+KiYGQgGQjxtiE4dpmNe6Px0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 
 func setAdminHTMLHeaders(w http.ResponseWriter) {
 	w.Header().Set("X-Robots-Tag", "noindex")

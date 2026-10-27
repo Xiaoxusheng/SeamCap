@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -55,7 +55,7 @@ func TestAdminCSPCoversInlineThemeScript(t *testing.T) {
 			continue // 外链脚本没有内联内容
 		}
 		sum := sha256.Sum256(body)
-		want := "'sha256-" + hex.EncodeToString(sum[:]) + "'"
+		want := "'sha256-" + base64.StdEncoding.EncodeToString(sum[:]) + "'"
 		if !strings.Contains(adminCSP, want) {
 			t.Fatalf("adminCSP 未覆盖内联脚本哈希，请更新 adminCSP 加入 %s", want)
 		}

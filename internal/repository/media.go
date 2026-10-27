@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"strings"
 
 	"seamcap/internal/model"
 )
@@ -49,6 +50,34 @@ func (r *MediaRepo) GetByID(id int64) (*model.Media, error) {
 		return nil, nil
 	}
 	return m, err
+}
+
+// GetByIDs 批量取媒体（首页实景图库等场景），一次 IN 查询代替逐条 GetByID。
+// 返回 id→媒体 的映射；不存在的 id 不会出现在结果里。
+func (r *MediaRepo) GetByIDs(ids []int64) (map[int64]*model.Media, error) {
+	out := make(map[int64]*model.Media, len(ids))
+	if len(ids) == 0 {
+		return out, nil
+	}
+	ph := make([]string, len(ids))
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		ph[i] = "?"
+		args[i] = id
+	}
+	rows, err := r.db.Query(`SELECT `+mediaCols+` FROM media_assets WHERE id IN (`+strings.Join(ph, ",")+`)`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		m, err := scanMedia(rows)
+		if err != nil {
+			return nil, err
+		}
+		out[m.ID] = m
+	}
+	return out, rows.Err()
 }
 
 // GetBySHA256 按内容哈希查询（去重）。

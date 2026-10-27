@@ -85,9 +85,17 @@ func (s *HomeService) resolvePackingFeature(h *model.HomeContent) {
 // resolveStoryMedia 将工厂实景图库的媒体 ID 解析为公开端 {kind,url}（缺失的媒体跳过）。
 func (s *HomeService) resolveStoryMedia(h *model.HomeContent) {
 	h.StoryMedia = []model.StoryMediaItem{}
+	if len(h.StoryMediaIDs) == 0 {
+		return
+	}
+	// 一次 IN 查询取齐，避免按图 N+1 次打库
+	byID, err := s.media.GetByIDs(h.StoryMediaIDs)
+	if err != nil {
+		return
+	}
 	for _, id := range h.StoryMediaIDs {
-		m, err := s.media.GetByID(id)
-		if err != nil || m == nil {
+		m := byID[id]
+		if m == nil {
 			continue
 		}
 		kind := "image"
