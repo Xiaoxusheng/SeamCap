@@ -17,7 +17,7 @@ import {
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
-import { get } from '../../api/client'
+import { fetchDashboard } from '../../api/dashboard'
 import type { DashboardData, Inquiry, Product } from '../../api/types'
 import { InquiryStatusTag, ProductStatusTag } from '../../components/StatusTag'
 import PageHeader from '../../components/PageHeader'
@@ -143,11 +143,11 @@ export default function Dashboard(): JSX.Element {
   const [error, setError] = useState('')
   const [loadedAt, setLoadedAt] = useState('')
 
-  const load = useCallback(async (): Promise<void> => {
+  const load = useCallback(async (force = false): Promise<void> => {
     setLoading(true)
     setError('')
     try {
-      const { data: d } = await get<DashboardData>('/admin/dashboard')
+      const d = await fetchDashboard(force)
       setData(d)
       setLoadedAt(dayjs().format('HH:mm'))
     } catch (e) {
@@ -203,7 +203,7 @@ export default function Dashboard(): JSX.Element {
               aria-label="刷新数据"
               icon={<ReloadOutlined />}
               loading={loading}
-              onClick={() => void load()}
+              onClick={() => void load(true)}
             />
           </Tooltip>
         </>
@@ -215,7 +215,7 @@ export default function Dashboard(): JSX.Element {
     return (
       <div>
         {header}
-        <PageError message={error} onRetry={() => void load()} />
+        <PageError message={error} onRetry={() => void load(true)} />
       </div>
     )
   }

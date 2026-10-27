@@ -8,6 +8,18 @@ export default defineConfig({
   build: {
     outDir: '../admin',
     emptyOutDir: true,
+    // 依赖拆成独立 chunk：发版时只有业务代码的 hash 变化，
+    // antd/react 仍命中一年期 immutable 缓存，老后台用户不用重新下 1MB
+    rollupOptions: {
+      output: {
+        manualChunks(id: string): string | undefined {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('antd') || id.includes('@ant-design') || id.includes('rc-')) return 'antd'
+          if (id.includes('react') || id.includes('scheduler')) return 'react'
+          return 'vendor'
+        },
+      },
+    },
   },
   server: {
     port: 5173,

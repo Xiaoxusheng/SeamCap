@@ -32,8 +32,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import type { ThemeMode } from '../context/ThemeContext'
-import { get } from '../api/client'
-import type { DashboardData } from '../api/types'
+import { fetchDashboard } from '../api/dashboard'
 import ChangePasswordModal from '../components/ChangePasswordModal'
 import BrandMark from '../components/BrandMark'
 import GlobalSearch from '../components/GlobalSearch'
@@ -225,15 +224,21 @@ export default function AdminLayout(): JSX.Element {
 
   useEffect(() => {
     let alive = true
-    void get<DashboardData>('/admin/dashboard')
-      .then(({ data }) => {
-        if (alive) setNewInquiries(data.inquiries.new)
-      })
-      .catch(() => {})
+    const loadBadge = (): void => {
+      void fetchDashboard()
+        .then((d) => {
+          if (alive) setNewInquiries(d.inquiries.new)
+        })
+        .catch(() => {})
+    }
+    // 徽标不需要跟着每次路由切换刷新：进入后台取一次，之后每分钟刷新
+    loadBadge()
+    const timer = window.setInterval(loadBadge, 60_000)
     return () => {
       alive = false
+      window.clearInterval(timer)
     }
-  }, [location.pathname])
+  }, [])
 
   const userMenu: MenuProps = {
     items: [
