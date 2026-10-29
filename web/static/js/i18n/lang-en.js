@@ -26,7 +26,6 @@
       privacyPolicy: 'Privacy Policy',
       footerTag: 'Seamless one-piece caps, curated from Yiwu, China.',
       footerLegal: '\u00A9 2026 Yiwu Shirun Headwear \u00B7 Wholesale & OEM enquiries via WhatsApp',
-      langSwitchAria: 'Switch language',
       openMenu: 'Open menu',
       closeMenu: 'Close menu',
       primaryNav: 'Primary',

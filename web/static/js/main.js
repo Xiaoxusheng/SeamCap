@@ -19,6 +19,37 @@
   }
   window.SHIRUN_thumbURL = thumbURL;
 
+  /* ---------- 0.5 首页加载动画（仅首页存在 #bootLoader 时启用） ----------
+     load 后淡出；至少展示 800ms 避免闪一下，最多 3.6s 防止图片/字体
+     卡住时遮罩久留；reduce-motion 下直接跳过。 */
+  (function bootLoader() {
+    var el = document.getElementById('bootLoader');
+    if (!el) return;
+    var MIN_SHOW = 800, MAX_WAIT = 3600;
+    var start = (window.performance && performance.now) ? performance.now() : Date.now();
+    var done = false;
+
+    function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+    function hide() {
+      if (done) return;
+      done = true;
+      el.classList.add('is-done');
+      document.body.classList.remove('is-booting');
+      setTimeout(function () {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 700);
+    }
+    function finish() {
+      setTimeout(hide, Math.max(0, MIN_SHOW - (now() - start)));
+    }
+
+    if (reduceMotion) { hide(); return; }
+    document.body.classList.add('is-booting');
+    if (document.readyState === 'complete') finish();
+    else window.addEventListener('load', finish, { once: true });
+    setTimeout(hide, MAX_WAIT);
+  })();
+
   /* ---------- 1. 导航滚动状态 ---------- */
   var nav = document.getElementById('nav');
   function onScroll() {
@@ -32,25 +63,45 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  /* ---------- 2. 移动端抽屉菜单 ---------- */
+  /* ---------- 2. 移动端抽屉菜单（焦点移入 / Tab 循环 / 关闭归还） ---------- */
   var toggle = document.getElementById('navToggle');
   var drawer = document.getElementById('mobileMenu');
   if (toggle && drawer) {
     var panel = drawer.querySelector('.drawer__panel');
+    var lastFocus = null;
+
+    function drawerFocusables() {
+      if (!panel) return [];
+      return Array.prototype.filter.call(
+        panel.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+        function (el) { return el.getClientRects().length > 0; }
+      );
+    }
+
     function closeDrawer() {
+      if (drawer.hidden) return;
       drawer.hidden = true;
       document.body.classList.remove('drawer-open');
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', t('common.openMenu'));
+      (lastFocus && lastFocus.focus ? lastFocus : toggle).focus();
+      lastFocus = null;
     }
+
+    function openDrawer() {
+      lastFocus = document.activeElement;
+      drawer.hidden = false;
+      document.body.classList.add('drawer-open');
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-label', t('common.closeMenu'));
+      var items = drawerFocusables();
+      if (items.length) { items[0].focus(); }
+      else if (panel) { panel.focus(); }
+    }
+
     toggle.addEventListener('click', function () {
-      var open = toggle.getAttribute('aria-expanded') === 'true';
-      if (open) { closeDrawer(); } else {
-        drawer.hidden = false;
-        document.body.classList.add('drawer-open');
-        toggle.setAttribute('aria-expanded', 'true');
-        toggle.setAttribute('aria-label', t('common.closeMenu'));
-      }
+      if (toggle.getAttribute('aria-expanded') === 'true') { closeDrawer(); }
+      else { openDrawer(); }
     });
     // 点击链接或遮罩关闭
     drawer.addEventListener('click', function (e) {
@@ -59,7 +110,25 @@
       }
     });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !drawer.hidden) { closeDrawer(); toggle.focus(); }
+      if (drawer.hidden) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDrawer();
+        return;
+      }
+      if (e.key !== 'Tab' || !panel) return;
+      var items = drawerFocusables();
+      if (!items.length) { e.preventDefault(); panel.focus(); return; }
+      var first = items[0];
+      var last = items[items.length - 1];
+      var active = document.activeElement;
+      var inside = panel.contains(active);
+      if (e.shiftKey) {
+        if (!inside || active === first) { e.preventDefault(); last.focus(); }
+      } else if (!inside || active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
   }
 
@@ -463,8 +532,8 @@
       var num = waExtractNumber(href);
       var copied = num ? waCopy(num) : false;
       var msg = (copied && num)
-        ? '正在打开 WhatsApp…号码 ' + num + ' 已复制，若未跳转请手动粘贴'
-        : '正在打开 WhatsApp…若未跳转，请用系统浏览器打开本页';
+        ? 'Opening WhatsApp… Number ' + num + ' copied. If nothing happens, paste it manually.'
+        : 'Opening WhatsApp… If nothing happens, open this page in your browser.';
       waToast(msg);
       // 稍作延迟让提示先呈现，再当前页跳转拉起 WhatsApp
       setTimeout(function () { window.location.href = href; }, 800);

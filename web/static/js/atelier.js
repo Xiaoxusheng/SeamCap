@@ -23,21 +23,39 @@
   var drawer = document.getElementById('atDrawer');
   var lastFocus = null;
 
+  function drawerFocusables() {
+    if (!drawer) return [];
+    return Array.prototype.filter.call(
+      drawer.querySelectorAll('a[href], button:not([disabled])'),
+      function (el) { return el.getClientRects().length > 0; }
+    );
+  }
+
+  function setBurgerLabel(open) {
+    if (!burger) return;
+    var key = open ? 'common.closeMenu' : 'common.openMenu';
+    var fallback = open ? 'Close menu' : 'Open menu';
+    burger.setAttribute('aria-label', window.I18N ? window.I18N.t(key) : fallback);
+  }
+
   function openDrawer() {
     if (!drawer || !burger) return;
     lastFocus = document.activeElement;
     drawer.hidden = false;
     document.body.classList.add('is-locked');
     burger.setAttribute('aria-expanded', 'true');
-    var first = drawer.querySelector('a, button');
-    if (first) first.focus();
+    setBurgerLabel(true);
+    var items = drawerFocusables();
+    if (items.length) items[0].focus();
   }
   function closeDrawer() {
-    if (!drawer || !burger) return;
+    if (!drawer || !burger || drawer.hidden) return;
     drawer.hidden = true;
     document.body.classList.remove('is-locked');
     burger.setAttribute('aria-expanded', 'false');
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    setBurgerLabel(false);
+    (lastFocus && lastFocus.focus ? lastFocus : burger).focus();
+    lastFocus = null;
   }
   if (burger && drawer) {
     burger.addEventListener('click', function () {
@@ -47,7 +65,25 @@
       if (e.target === drawer || (e.target.closest && e.target.closest('a'))) closeDrawer();
     });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !drawer.hidden) closeDrawer();
+      if (drawer.hidden) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDrawer();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var items = drawerFocusables();
+      if (!items.length) { e.preventDefault(); return; }
+      var first = items[0];
+      var last = items[items.length - 1];
+      var active = document.activeElement;
+      var inside = drawer.contains(active);
+      if (e.shiftKey) {
+        if (!inside || active === first) { e.preventDefault(); last.focus(); }
+      } else if (!inside || active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
   }
 

@@ -84,6 +84,9 @@ body {
 }
 a, button { -webkit-tap-highlight-color: transparent; }
 img, video { max-width: 100%; display: block; }
+/* <picture> 只做格式协商，不参与布局：让内部 img 保持原有 grid/flex 位置 */
+picture { display: contents; }
+picture > source { display: none; }
 a { color: inherit; text-decoration: none; }
 h1, h2, h3 { font-family: var(--font-display); font-weight: 500; line-height: 1.05; margin: 0; letter-spacing: .01em; }
 h1 em, h2 em, h3 em { font-style: italic; color: var(--gold-bright); }
@@ -144,6 +147,57 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   from { transform: translate3d(0,0,0) scale(1); }
   to   { transform: translate3d(4vw,3vh,0) scale(1.12); }
 }
+
+/* ---------- Boot splash（首页加载动画） ----------
+   全屏遮罩 + 品牌字标 + 一道「接缝」扫光；main.js 在 load 后淡出。
+   CSS 兜底：JS 失效时 8s 后自动隐藏，避免遮罩一直压在页面上。 */
+.boot {
+  position: fixed; inset: 0; z-index: 400;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(58vw 58vw at 78% -14%, rgba(201,162,75,.16), transparent 62%),
+    radial-gradient(46vw 46vw at 10% 112%, rgba(236,214,170,.08), transparent 60%),
+    var(--bg);
+  transition: opacity .55s var(--ease), visibility .55s var(--ease);
+  animation: boot-failsafe 0s linear 8s forwards;
+}
+.boot__inner {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 22px; padding: 24px;
+  transition: transform .55s var(--ease);
+}
+.boot__brand { opacity: 0; transform: translateY(10px); animation: boot-rise .65s var(--ease) .04s forwards; }
+.boot .brand__logo { height: clamp(26px, 4.2vw, 36px); }
+.boot__seam {
+  position: relative; overflow: hidden;
+  width: clamp(150px, 20vw, 210px); height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,162,75,.5), transparent);
+  transform: scaleX(0);
+  animation: boot-seam .65s var(--ease) .18s forwards;
+}
+.boot__seam::after {           /* 沿缝线滑过的金色高光 */
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  transform: translateX(-100%);
+  animation: boot-sweep 1.6s var(--ease) .9s infinite;
+}
+.boot.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+.boot.is-done .boot__inner { transform: translateY(-8px); }
+body.is-booting { overflow: hidden; }
+@keyframes boot-rise { to { opacity: 1; transform: none; } }
+@keyframes boot-seam { to { transform: scaleX(1); } }
+@keyframes boot-sweep {
+  0%        { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(100%); }
+}
+@keyframes boot-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+html[data-theme="light"] .boot {
+  background:
+    radial-gradient(58vw 58vw at 78% -14%, rgba(201,162,75,.20), transparent 62%),
+    radial-gradient(46vw 46vw at 10% 112%, rgba(212,178,120,.14), transparent 60%),
+    var(--bg);
+}
+@media print { .boot { display: none !important; } }
 
 /* ---------- Liquid glass primitives ---------- */
 .glass {
@@ -279,15 +333,11 @@ html[data-theme="light"] .brand__logo--light { display: block; }
 @media (max-width: 1080px) {
   .nav__links { display: none; }
   .nav__toggle { display: block; }
-  /* 语言切换器与汉堡按钮同尺寸（46×46），保证右侧两按钮对齐 */
-  .nav__actions .lang-switch {
-    width: 46px; height: 46px; min-width: 46px; min-height: 46px;
-    padding: 0; font-size: 11.5px; letter-spacing: .04em;
-  }
 }
 
 /* ---------- Mobile drawer ---------- */
 .drawer { position: fixed; inset: 0; z-index: 90; background: rgba(12,10,9,.55); }
+body.drawer-open { overflow: hidden; }
 .drawer__panel {
   position: absolute; top: 98px; right: 24px; left: 24px;
   border-radius: var(--r-lg); padding: 14px 22px;
@@ -999,9 +1049,8 @@ html[data-theme="light"] .brand__logo--light { display: block; }
   /* 1) iOS：输入类字号 ≥16px 防聚焦自动放大 */
   .field input, .field select, .field textarea,
   .searchbox input { font-size: 16px; }
-  /* 2) 抽屉贴合并锁定body滚动（JS 配合） */
+  /* 2) 抽屉贴合（滚动锁在基础样式里，所有抽屉宽度都生效） */
   .drawer__panel { top: 88px; left: 16px; right: 16px; }
-  body.drawer-open { overflow: hidden; }
   /* 3) 缩略图与点按目标 */
   .pdthumb { width: 72px; height: 72px; }
   .consent input { width: 20px; height: 20px; }
@@ -1011,9 +1060,8 @@ html[data-theme="light"] .brand__logo--light { display: block; }
 @media (max-width: 560px) {
   .wrap { width: calc(100% - 40px); }
   .nav__inner { height: 62px; padding: 0 6px 0 16px; gap: 10px; }
-  /* 小屏三个控件（语言 / 主题 / 汉堡）压缩尺寸，保证胶囊不挤压品牌 */
+  /* 小屏控件（主题 / 汉堡）压缩尺寸，保证胶囊不挤压品牌 */
   .nav__actions { gap: 8px; }
-  .nav__actions .lang-switch { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
   .nav__actions .theme-toggle { width: 40px; height: 40px; }
   .nav__actions .nav__toggle { width: 40px; height: 40px; }
   .brand__logo { height: 22px; }
@@ -1040,49 +1088,6 @@ html[data-theme="light"] .brand__logo--light { display: block; }
   .aurora__blob { animation: none; }
   .marquee__track { animation: none; flex-wrap: wrap; width: 100%; justify-content: center; }
   .reveal { opacity: 1; transform: none; }
-}
-
-/* ---------- i18n 语言切换器 ---------- */
-.lang-switch {
-  appearance: none;
-  -webkit-appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 46px;
-  min-width: 46px;
-  padding: 0;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--glass-line);
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(var(--blur));
-  backdrop-filter: blur(var(--blur));
-  color: var(--ivory);
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  line-height: 1;
-  white-space: nowrap;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
-}
-.lang-switch:hover {
-  color: var(--gold-bright);
-  border-color: var(--glass-line-strong);
-}
-.lang-switch:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
-}
-.lang-switch:active { transform: scale(.96); }
-
-/* 移动端抽屉内：通栏胶囊，与其他抽屉按钮节奏一致 */
-.drawer__panel .lang-switch {
-  width: 100%;
-  text-align: center;
-  margin-top: 4px;
 }
 
 /* ---------- 产品信息合并卡片：参数行 + 产品笔记小节（均在管理后台可编辑） ---------- */

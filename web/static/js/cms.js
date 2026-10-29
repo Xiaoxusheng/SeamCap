@@ -73,6 +73,17 @@
     el.style.display = 'none';
   }
 
+  // CMS 图片替换：静态兜底图可能包在 <picture><source webp> 里，
+  // 直接改 img.src 会被 source 覆盖，这里先移除同组 source。
+  function setImgSrc(img, url) {
+    var pic = img && img.parentNode;
+    if (pic && pic.tagName === 'PICTURE') {
+      var sources = pic.querySelectorAll('source');
+      for (var i = 0; i < sources.length; i++) sources[i].parentNode.removeChild(sources[i]);
+    }
+    img.src = url;
+  }
+
   // 动态渲染的 .reveal 元素需要单独触发显现动画
   function reveal(scope) {
     var els = scope.querySelectorAll('.reveal');
@@ -273,7 +284,7 @@
       v.style.borderRadius = 'inherit';
       img.replaceWith(v);
     } else if (img && hero.hero_image && hero.hero_image.url) {
-      img.src = thumbURL(safeURL(hero.hero_image.url), 960);
+      setImgSrc(img, thumbURL(safeURL(hero.hero_image.url), 960));
       if (hero.hero_image.alt_text) img.alt = hero.hero_image.alt_text;
     }
 
@@ -281,7 +292,7 @@
     var cimg = document.querySelector('[data-cms-circle-image]');
     if (cimg && hero.circle_image && hero.circle_image.url) {
       var cUrl = safeURL(hero.circle_image.url);
-      if (cUrl) cimg.src = thumbURL(cUrl, 960);
+      if (cUrl) setImgSrc(cimg, thumbURL(cUrl, 960));
     }
 
     [['cta1', hero.cta1_text, hero.cta1_url], ['cta2', hero.cta2_text, hero.cta2_url]].forEach(function (pair) {
@@ -494,7 +505,7 @@
         if (!m || !m.url) return;
         var u = safeURL(m.url);
         if (!u) return;
-        img.src = thumbURL ? thumbURL(u, 960) : u;
+        setImgSrc(img, thumbURL ? thumbURL(u, 960) : u);
         img.alt = m.alt_text || p.name || img.alt;
       });
     }).catch(function () { /* 静态兜底 */ });

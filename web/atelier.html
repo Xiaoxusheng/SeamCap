@@ -10,10 +10,11 @@
 <meta name="robots" content="noindex,nofollow"/>
 <link rel="icon" href="static/img/favicon.svg" type="image/svg+xml"/>
   <link rel="apple-touch-icon" href="static/img/apple-touch-icon.png"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="static/css/atelier.css?v=20261025"/>
+  <link rel="preload" href="static/fonts/montserrat-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="static/fonts/cormorant-garamond-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="static/fonts/cormorant-garamond-italic-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="stylesheet" href="static/css/fonts.css?v=20261029"/>
+<link rel="stylesheet" href="static/css/atelier.css?v=20261029"/>
 </head>
 <body class="at">
 <div class="at-grain" aria-hidden="true"></div>
@@ -50,8 +51,8 @@
   </div>
 </header>
 
-<div class="at-drawer" id="atDrawer" hidden>
-  <nav class="drawer__panel at-drawer__panel" aria-label="Mobile" data-i18n-attr="aria-label:common.mobileNav">
+<div class="at-drawer" id="atDrawer" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+  <nav class="drawer__panel at-drawer__panel" tabindex="-1" aria-label="Mobile" data-i18n-attr="aria-label:common.mobileNav">
     <a href="#objects" data-i18n="atelier.navObjects">Objects</a>
     <a href="#making" data-i18n="atelier.navMaking">Making</a>
     <a href="#standard" data-i18n="atelier.navStandard">Standard</a>
@@ -82,7 +83,7 @@
 
       <figure class="at-hero__object" data-lens>
         <div class="at-object__frame glass">
-          <img src="static/img/cap-image-05.jpg" alt="Obsidian seamless cap, three-quarter view" width="1280" height="1280"/>
+          <picture><source type="image/webp" srcset="static/img/cap-image-05-1200.webp"/><img src="static/img/cap-image-05.jpg" alt="Obsidian seamless cap, three-quarter view" width="1280" height="1280"/></picture>
           <figcaption class="at-object__cap"><span data-i18n="atelier.heroObjectLabel">No. 05 — Obsidian</span><span class="at-object__year">2026</span></figcaption>
         </div>
         <div class="at-spec glass" aria-label="Specification">
@@ -114,7 +115,7 @@
       <div class="at-objects">
         <article class="at-card" data-lens>
           <a class="at-card__media" href="products.html" aria-label="Obsidian cap — view in catalogue">
-            <img src="static/img/cap-image-05.jpg" alt="Obsidian black seamless cap" width="1280" height="1280" loading="lazy"/>
+            <picture><source type="image/webp" srcset="static/img/cap-image-05-600.webp"/><img src="static/img/cap-image-05.jpg" alt="Obsidian black seamless cap" width="1280" height="1280" loading="lazy"/></picture>
             <span class="at-card__tag" data-i18n="atelier.tagSignature">Signature</span>
           </a>
           <div class="at-card__rail glass">
@@ -131,7 +132,7 @@
 
         <article class="at-card" data-lens>
           <a class="at-card__media" href="products.html" aria-label="Olive Field cap — view in catalogue">
-            <img src="static/img/cap-image-04.jpg" alt="Olive field seamless cap" width="1280" height="1280" loading="lazy"/>
+            <picture><source type="image/webp" srcset="static/img/cap-image-04-600.webp"/><img src="static/img/cap-image-04.jpg" alt="Olive field seamless cap" width="1280" height="1280" loading="lazy"/></picture>
             <span class="at-card__tag" data-i18n="atelier.tagSeasonal">Seasonal</span>
           </a>
           <div class="at-card__rail glass">
@@ -148,7 +149,7 @@
 
         <article class="at-card" data-lens>
           <a class="at-card__media" href="products.html" aria-label="Bone cap — view in catalogue">
-            <img src="static/img/cap-image-18.jpg" alt="Bone ivory seamless cap" width="1280" height="1280" loading="lazy"/>
+            <picture><source type="image/webp" srcset="static/img/cap-image-18-600.webp"/><img src="static/img/cap-image-18.jpg" alt="Bone ivory seamless cap" width="1280" height="1280" loading="lazy"/></picture>
             <span class="at-card__tag" data-i18n="atelier.tagAtelier">Atelier</span>
           </a>
           <div class="at-card__rail glass">
@@ -190,7 +191,7 @@
             <p data-i18n="atelier.ch1P2">The shell keeps its shape through wear and washing, and the silhouette stays clean from every angle.</p>
           </div>
           <figure class="at-chapter__media at-lensimg">
-            <img src="static/img/cap-image-21.jpg" alt="One-piece cap mold used to form seamless shells" width="587" height="1280" loading="lazy"/>
+            <picture><source type="image/webp" srcset="static/img/cap-image-21-587.webp"/><img src="static/img/cap-image-21.jpg" alt="One-piece cap mold used to form seamless shells" width="587" height="1280" loading="lazy"/></picture>
             <figcaption class="glass"><span data-i18n="atelier.ch1Cap">Forming stage</span></figcaption>
           </figure>
         </article>
@@ -203,7 +204,7 @@
             <p data-i18n="atelier.ch2P2">Colourway matching, woven labels and private-label packaging are coordinated in the same step, so branding never delays production.</p>
           </div>
           <figure class="at-chapter__media at-lensimg">
-            <img src="static/img/cap-image-23.jpg" alt="Workshop detail — finishing workstations" width="1280" height="960" loading="lazy"/>
+            <picture><source type="image/webp" srcset="static/img/cap-image-23-800.webp"/><img src="static/img/cap-image-23.jpg" alt="Workshop detail — finishing workstations" width="1280" height="960" loading="lazy"/></picture>
             <figcaption class="glass"><span data-i18n="atelier.ch2Cap">Finishing</span></figcaption>
           </figure>
         </article>
@@ -216,7 +217,7 @@
             <p data-i18n="atelier.ch3P2">Export documents and shipment details are coordinated with the production partner, closing the loop from mold to market.</p>
           </div>
           <figure class="at-chapter__media at-lensimg">
-            <img src="static/img/cap-image-25.jpg" alt="Finished caps packed in marked cartons" width="512" height="910" loading="lazy"/>
+            <picture><source type="image/webp" srcset="static/img/cap-image-25-512.webp"/><img src="static/img/cap-image-25.jpg" alt="Finished caps packed in marked cartons" width="512" height="910" loading="lazy"/></picture>
             <figcaption class="glass"><span data-i18n="atelier.ch3Cap">Departure</span></figcaption>
           </figure>
         </article>
@@ -340,9 +341,8 @@
   </div>
 </footer>
 
-<script src="static/js/i18n.js" defer></script>
-<script src="static/js/i18n/lang-en.js" defer></script>
-<script src="static/js/i18n/lang-zh.js" defer></script>
-<script src="static/js/atelier.js?v=20261025" defer></script>
+<script src="static/js/i18n.js?v=20261029" defer></script>
+<script src="static/js/i18n/lang-en.js?v=20261029" defer></script>
+<script src="static/js/atelier.js?v=20261029" defer></script>
 </body>
 </html>
