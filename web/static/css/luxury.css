@@ -1542,3 +1542,150 @@ a.pack-item:hover .pack-item__title { color: var(--gold-bright); }
 
 /* 空标题不占位（CMS 数据缺失时不留下明显空档） */
 .value h3:empty { display: none; }
+
+/* ============================================================================
+   Polish v2 — 质感与层级精修（2026-10-29）
+   只加细节，不改结构与信息：背景噪点/暗角、首屏光晕、信息卡数字水印、
+   浅色主题表面、页脚品牌牌匾与跑马灯边缘渐隐。
+   ========================================================================== */
+
+/* ---------- 1. 背景：轻噪点 + 轻微暗角，消除大面积纯色的“平” ---------- */
+.aurora::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(125% 100% at 50% -18%, transparent 54%, rgba(0,0,0,.34) 100%);
+}
+.aurora::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  opacity: .13;
+  mix-blend-mode: overlay;
+}
+html[data-theme="light"] .aurora::before {
+  background: radial-gradient(125% 100% at 50% -18%, transparent 60%, rgba(80,64,44,.12) 100%);
+}
+html[data-theme="light"] .aurora::after { opacity: .07; mix-blend-mode: multiply; }
+
+/* ---------- 2. Hero：产品图後方的暖色光晕，拉开黑底与白底照片的层次 ---------- */
+.hero__media { position: relative; isolation: isolate; }
+.hero__media::before {
+  content: ""; position: absolute; inset: -9% -12%; z-index: -1; pointer-events: none;
+  background: radial-gradient(52% 52% at 52% 48%, rgba(201,162,75,.30), transparent 72%);
+  filter: blur(26px);
+}
+html[data-theme="light"] .hero__media::before {
+  background: radial-gradient(52% 52% at 52% 48%, rgba(201,162,75,.22), transparent 72%);
+  filter: blur(22px);
+}
+
+/* ---------- 3. Values / Process 卡：大号数字水印与底部金线 ---------- */
+.value {
+  background:
+    radial-gradient(120% 120% at 100% 100%, rgba(201,162,75,.07), transparent 55%),
+    linear-gradient(158deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+  border-color: rgba(255,255,255,.10);
+}
+.value:hover { border-color: rgba(201,162,75,.30); }
+#values .value__num {
+  position: absolute; right: 18px; bottom: 14px; z-index: 0;
+  font-size: clamp(52px, 4.8vw, 80px); line-height: .9;
+  font-style: italic; letter-spacing: 0; color: var(--gold);
+  opacity: .15; pointer-events: none;
+  transition: opacity .4s var(--ease), transform .4s var(--ease);
+}
+#values .value h3, #values .value p { position: relative; z-index: 1; }
+#values .value:hover .value__num { opacity: .26; transform: translateY(-3px); }
+#values .value::after {
+  content: ""; position: absolute; left: 26px; right: 26px; bottom: 0; height: 1px;
+  background: linear-gradient(90deg, rgba(201,162,75,.55), rgba(201,162,75,.06));
+  transform: scaleX(.3); transform-origin: left; opacity: .45;
+  transition: transform .45s var(--ease), opacity .45s var(--ease);
+}
+#values .value:hover::after { transform: scaleX(1); opacity: .9; }
+
+/* 浅色主题：给信息卡更明确的表面与投影，不再“浮在奶油底上” */
+html[data-theme="light"] .value {
+  background:
+    radial-gradient(120% 120% at 100% 100%, rgba(201,162,75,.14), transparent 55%),
+    linear-gradient(158deg, #FFFDF9 0%, #F9F3E9 58%, #F3EADD 100%);
+  border-color: rgba(25,21,18,.10);
+  box-shadow: inset 0 1px 0 #fff, 0 12px 26px rgba(80,64,44,.08);
+}
+html[data-theme="light"] .value:hover {
+  border-color: rgba(138,97,22,.28);
+  box-shadow: inset 0 1px 0 #fff, 0 18px 34px rgba(80,64,44,.12);
+}
+html[data-theme="light"] #values .value__num { color: #8A6116; opacity: .14; }
+
+/* ---------- 4. 跑马灯：左右边缘渐隐，不再硬切 ---------- */
+.marquee {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+/* ---------- 5. 页脚：金色发丝分隔 + 品牌牌匾 ---------- */
+.footer {
+  border-top: 0; position: relative;
+  background-image: radial-gradient(60% 120% at 88% 100%, rgba(201,162,75,.06), transparent 62%);
+}
+.footer::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line) 12%, rgba(201,162,75,.38) 50%, var(--line) 88%, transparent);
+}
+html[data-theme="light"] .footer {
+  background-image: radial-gradient(60% 120% at 88% 100%, rgba(201,162,75,.10), transparent 62%);
+}
+.footer__brand.brand--custom .brand__logo {
+  height: 36px; padding: 6px 12px; border-radius: 9px;
+  background: #FFFDF8;
+  border: 1px solid rgba(201,162,75,.28);
+  box-shadow: 0 12px 26px rgba(0,0,0,.28), inset 0 1px 0 #fff;
+}
+html[data-theme="light"] .footer__brand.brand--custom .brand__logo {
+  background: #FCF8F0;
+  border-color: rgba(138,97,22,.20);
+  box-shadow: 0 8px 18px rgba(80,64,44,.10), inset 0 1px 0 #fff;
+}
+@media (max-width: 560px) {
+  .footer__brand.brand--custom .brand__logo { height: 32px; padding: 5px 10px; }
+}
+
+/* ---------- 6. 文字与选区细节 ---------- */
+.section__head h2, .story__copy h2, .circle__title, .contact__title, .page-hero__title { text-wrap: balance; }
+.lead, .hero__lead, .story__copy p, .pcard__body > p, .value p { text-wrap: pretty; }
+::selection { background: rgba(201,162,75,.85); color: #171003; }
+
+/* ---------- 7. 首屏滚动提示与卡片箭头微动效 ---------- */
+.hero { position: relative; overflow: hidden; }
+.hero__cue {
+  position: absolute; left: 50%; bottom: 38px; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 11px;
+  pointer-events: none;
+  font-size: 9px; font-weight: 600; letter-spacing: .36em; text-transform: uppercase;
+  color: var(--faint);
+}
+.hero__cue i {
+  position: relative; display: block; width: 1px; height: 42px; overflow: hidden;
+  background: linear-gradient(180deg, transparent, rgba(201,162,75,.60));
+}
+.hero__cue i::after {
+  content: ""; position: absolute; left: 0; top: -7px; width: 1px; height: 13px;
+  background: var(--gold-bright);
+  animation: hero-cue 2.4s var(--ease) infinite;
+}
+@keyframes hero-cue {
+  0%   { transform: translateY(0); opacity: 0; }
+  22%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { transform: translateY(50px); opacity: 0; }
+}
+@media (max-width: 900px) { .hero__cue { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero__cue i::after { animation: none; opacity: .65; top: 14px; }
+}
+
+.pcard__cta span[aria-hidden="true"] {
+  display: inline-block;
+  transition: transform var(--t-fast) var(--ease);
+}
+.pcard__cta:hover span[aria-hidden="true"] { transform: translateX(4px); }
